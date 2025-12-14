@@ -1,0 +1,170 @@
+<?php
+
+use App\Http\Controllers\Admin\ClientController as AdminClientController;
+use App\Http\Controllers\Admin\CounselorController as AdminCounselorController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Client\BookingController;
+use App\Http\Controllers\Client\OnboardingController;
+use App\Http\Controllers\Counselor\CaseLogController;
+use App\Http\Controllers\Counselor\DashboardController as CounselorDashboardController;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Route Separation (per spec):
+| - guest: Login pages
+| - / (Root): Client/Student Portal (auth, role:client)
+| - /counselor: Counselor Portal (auth, role:counselor, verify.device)
+| - /admin: Admin Portal (auth, role:admin)
+|
+*/
+
+// ============================================================================
+// GUEST ROUTES (Login Pages)
+// ============================================================================
+
+Route::middleware('guest')->group(function () {
+    // Student Login (Default)
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+
+    // Counselor Login
+    Route::get('/counselor/login', [AuthController::class, 'showCounselorLoginForm'])->name('counselor.login');
+    Route::post('/counselor/login', [AuthController::class, 'counselorLogin']);
+
+    // Admin Login
+    Route::get('/admin/login', [AuthController::class, 'showAdminLoginForm'])->name('admin.login');
+    Route::post('/admin/login', [AuthController::class, 'adminLogin']);
+
+    // Student Registration
+    Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
+});
+
+// Logout (requires auth)
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+// ============================================================================
+// CLIENT/STUDENT PORTAL (Root: /)
+// ============================================================================
+
+Route::middleware(['auth', 'role:client'])->group(function () {
+    // Student Welcome Page (Landing after login)
+    Route::get('/', [BookingController::class, 'welcome'])->name('client.welcome');
+
+    // Profile completion/onboarding
+    Route::get('/onboarding', [OnboardingController::class, 'show'])->name('client.onboarding');
+    Route::post('/onboarding', [OnboardingController::class, 'complete'])->name('client.onboarding.complete');
+
+    // Booking Flow
+    Route::prefix('booking')->name('booking.')->group(function () {
+        // Step 1: Choose Counselor
+        Route::get('/counselors', [BookingController::class, 'chooseCounselor'])->name('choose-counselor');
+
+        // Step 2: Date & Time Selection
+        Route::get('/schedule/{counselor}', [BookingController::class, 'schedule'])->name('schedule');
+
+        // Step 3: Reason Input
+        Route::get('/reason', [BookingController::class, 'reason'])->name('reason');
+        Route::post('/reason', [BookingController::class, 'reason'])->name('reason.post');
+
+        // Step 4: Store appointment
+        Route::post('/store', [BookingController::class, 'store'])->name('store');
+
+        // Confirmation / Email Sent Page
+        Route::get('/confirmation', [BookingController::class, 'confirmation'])->name('confirmation');
+    });
+
+    // View appointments
+    Route::get('/appointments', [BookingController::class, 'appointments'])->name('client.appointments');
+});
+
+// ============================================================================
+// COUNSELOR PORTAL (/counselor)
+// ============================================================================
+
+Route::middleware(['auth', 'role:counselor', 'verify.device'])
+    ->prefix('counselor')
+    ->name('counselor.')
+    ->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [CounselorDashboardController::class, 'index'])->name('dashboard');
+
+        // Pending Appointments (Calendar View)
+        Route::get('/pending', function () {
+            return view('counselor.pending');
+        })->name('pending');
+
+        // Today's Appointments
+        Route::get('/today', function () {
+            return view('counselor.today');
+        })->name('today');
+
+        // Session Management
+        Route::prefix('session')->name('session.')->group(function () {
+            Route::post('/{appointment}/start', function ($appointment) {
+                // TODO: Implement session start
+            })->name('start');
+
+            Route::post('/{appointment}/end', function ($appointment) {
+                // TODO: Implement session end
+            })->name('end');
+        });
+
+        // Case Logs
+        Route::prefix('case-logs')->name('case-logs.')->group(function () {
+            Route::get('/', [CaseLogController::class, 'index'])->name('index');
+            Route::get('/create/{appointment}', [CaseLogController::class, 'create'])->name('create');
+            Route::post('/store/{appointment}', [CaseLogController::class, 'store'])->name('store');
+            Route::get('/{caseLog}', [CaseLogController::class, 'show'])->name('show');
+            Route::get('/{caseLog}/edit', [CaseLogController::class, 'edit'])->name('edit');
+            Route::put('/{caseLog}', [CaseLogController::class, 'update'])->name('update');
+        });
+
+        // Client History
+        Route::get('/clients/{client}/history', function ($client) {
+            return view('counselor.client-history', compact('client'));
+        })->name('client-history');
+    });
+
+// ============================================================================
+// ADMIN PORTAL (/admin)
+// ============================================================================
+
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+        // Counselor Management
+        Route::prefix('counselors')->name('counselors.')->group(function () {
+            Route::get('/', [AdminCounselorController::class, 'index'])->name('index');
+            Route::get('/create', [AdminCounselorController::class, 'create'])->name('create');
+            Route::post('/', [AdminCounselorController::class, 'store'])->name('store');
+            Route::get('/{counselor}/edit', [AdminCounselorController::class, 'edit'])->name('edit');
+            Route::put('/{counselor}', [AdminCounselorController::class, 'update'])->name('update');
+            Route::delete('/{counselor}', [AdminCounselorController::class, 'destroy'])->name('destroy');
+            // Device Reset
+            Route::post('/{counselor}/reset-device', [AdminCounselorController::class, 'resetDevice'])->name('reset-device');
+        });
+
+        // Client/User Management
+        Route::prefix('clients')->name('clients.')->group(function () {
+            Route::get('/', [AdminClientController::class, 'index'])->name('index');
+            Route::get('/create', [AdminClientController::class, 'create'])->name('create');
+            Route::post('/', [AdminClientController::class, 'store'])->name('store');
+            Route::get('/{client}', [AdminClientController::class, 'show'])->name('show');
+            Route::delete('/{client}', [AdminClientController::class, 'destroy'])->name('destroy');
+        });
+
+        // Reports (optional)
+        Route::get('/reports', function () {
+            return view('admin.reports');
+        })->name('reports');
+    });

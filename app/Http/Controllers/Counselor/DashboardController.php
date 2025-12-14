@@ -1,0 +1,47 @@
+<?php
+
+namespace App\Http\Controllers\Counselor;
+
+use App\Http\Controllers\Controller;
+use App\Models\Appointment;
+use App\Models\CaseLog;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class DashboardController extends Controller
+{
+    /**
+     * Display the counselor dashboard.
+     */
+    public function index()
+    {
+        $counselor = Auth::user();
+
+        $stats = [
+            'pending_appointments' => Appointment::where('counselor_id', $counselor->id)
+                ->pending()
+                ->count(),
+            'today_appointments' => Appointment::where('counselor_id', $counselor->id)
+                ->today()
+                ->count(),
+            'completed_sessions' => Appointment::where('counselor_id', $counselor->id)
+                ->where('status', Appointment::STATUS_COMPLETED)
+                ->count(),
+            'total_case_logs' => CaseLog::where('counselor_id', $counselor->id)->count(),
+        ];
+
+        $todayAppointments = Appointment::with('client')
+            ->where('counselor_id', $counselor->id)
+            ->today()
+            ->orderBy('scheduled_at')
+            ->get();
+
+        $upcomingAppointments = Appointment::with('client')
+            ->where('counselor_id', $counselor->id)
+            ->upcoming()
+            ->take(5)
+            ->get();
+
+        return view('counselor.dashboard', compact('stats', 'todayAppointments', 'upcomingAppointments'));
+    }
+}
