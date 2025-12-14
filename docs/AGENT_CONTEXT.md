@@ -217,7 +217,202 @@ Admin Reset → Sets device_token to NULL
 
 ---
 
-## 📧 Email Configuration (SendGrid)
+## � Authentication System (IMPLEMENTED)
+
+The authentication system is the central feature of Paghupay, handling three distinct user roles with separate login flows.
+
+### Authentication Overview
+
+| Role      | Login URL          | View File                        | Post-Login Redirect            |
+| --------- | ------------------ | -------------------------------- | ------------------------------ |
+| Client    | `/login`           | `auth/login.blade.php`           | `/` (Welcome) or `/onboarding` |
+| Counselor | `/counselor/login` | `auth/counselor-login.blade.php` | `/counselor/dashboard`         |
+| Admin     | `/admin/login`     | `auth/admin-login.blade.php`     | `/admin/dashboard`             |
+
+### Key Files
+
+```
+app/Http/Controllers/Auth/AuthController.php    # All auth handlers
+app/Http/Middleware/RoleCheck.php               # Role validation
+app/Http/Middleware/VerifyDevice.php            # Counselor device lock
+bootstrap/app.php                               # Middleware aliases
+resources/views/auth/
+├── login.blade.php                             # Student login (blue theme)
+├── counselor-login.blade.php                   # Counselor login (green theme)
+├── admin-login.blade.php                       # Admin login (red theme)
+└── register.blade.php                          # Student registration
+```
+
+### AuthController Methods
+
+| Method                     | Route                   | Purpose                           |
+| -------------------------- | ----------------------- | --------------------------------- |
+| `showLoginForm()`          | GET `/login`            | Display student login form        |
+| `login()`                  | POST `/login`           | Handle student authentication     |
+| `showCounselorLoginForm()` | GET `/counselor/login`  | Display counselor login form      |
+| `counselorLogin()`         | POST `/counselor/login` | Handle counselor authentication   |
+| `showAdminLoginForm()`     | GET `/admin/login`      | Display admin login form          |
+| `adminLogin()`             | POST `/admin/login`     | Handle admin authentication       |
+| `showRegistrationForm()`   | GET `/register`         | Display student registration form |
+| `register()`               | POST `/register`        | Create new student account        |
+| `logout()`                 | POST `/logout`          | Log out any authenticated user    |
+
+### Login Flow Logic
+
+```php
+// Each role-specific login validates the role after authentication:
+if (Auth::attempt($credentials)) {
+    $user = Auth::user();
+
+    // Ensure user has correct role for this login page
+    if ($user->role !== 'expected_role') {
+        Auth::logout();
+        return back()->withErrors([
+            'email' => 'Please use the appropriate login page for your role.',
+        ]);
+    }
+
+    $request->session()->regenerate();
+    return redirect()->intended(route('role.dashboard'));
+}
+```
+
+### Student Registration Flow
+
+1. User visits `/register`
+2. Fills in: Name, Email, Password, Password Confirmation
+3. Must accept Data Privacy Agreement (RA 10173)
+4. Account created with `is_active = false`
+5. Redirected to `/onboarding` to complete profile
+6. After onboarding, `is_active = true`
+
+### Middleware Stack
+
+```php
+// Guest routes (unauthenticated only)
+Route::middleware('guest')->group(function () {
+    // All login and register routes
+});
+
+// Client routes
+Route::middleware(['auth', 'role:client'])->group(function () {
+    // Student portal routes
+});
+
+// Counselor routes (includes device verification)
+Route::middleware(['auth', 'role:counselor', 'verify.device'])->group(function () {
+    // Counselor portal routes
+});
+
+// Admin routes
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    // Admin portal routes
+});
+```
+
+### RoleCheck Middleware Behavior
+
+When a user tries to access a route for a different role:
+
+-   **Admin** → Redirected to `/admin/dashboard`
+-   **Counselor** → Redirected to `/counselor/dashboard`
+-   **Client** → Redirected to `/` (welcome page)
+
+### VerifyDevice Middleware (Counselors Only)
+
+Implements **Trust on First Use (TOFU)** device binding:
+
+```
+1. First Login (device_token is NULL):
+   → Generate SHA-256 token from: uniqid + userAgent + IP
+   → Store token in DB (counselor_profiles.device_token)
+   → Set browser cookie (1 year expiry, httpOnly, secure)
+   → Allow access
+
+2. Subsequent Logins:
+   → Compare cookie token with stored DB token
+   → Match → Allow access
+   → Mismatch → Logout + Error message
+
+3. Device Reset (Admin action):
+   → Sets device_token to NULL
+   → Next login will bind new device
+```
+
+### View Themes by Role
+
+Each login page has a distinct color theme for quick visual identification:
+
+-   **Student**: Blue (`btn-primary`, `bg-primary`)
+-   **Counselor**: Green (`btn-success`, `bg-success`)
+-   **Admin**: Red (`btn-danger`, `bg-danger`)
+
+### Common Auth Helpers in Blade
+
+```blade
+{{-- Check authentication --}}
+@auth
+    <p>Welcome, {{ auth()->user()->name }}</p>
+@endauth
+
+@guest
+    <a href="{{ route('login') }}">Login</a>
+@endguest
+
+{{-- Check specific role --}}
+@if(auth()->user()->role === 'admin')
+    {{-- Admin-only content --}}
+@endif
+
+{{-- Logout form --}}
+<form method="POST" action="{{ route('logout') }}">
+    @csrf
+    <button type="submit">Logout</button>
+</form>
+```
+
+### Creating Test Users
+
+```php
+// In DatabaseSeeder or Tinker
+use App\Models\User;
+use App\Models\CounselorProfile;
+
+// Admin
+User::create([
+    'name' => 'Admin User',
+    'email' => 'admin@tup.edu.ph',
+    'password' => bcrypt('password'),
+    'role' => 'admin',
+    'is_active' => true,
+]);
+
+// Client (Student)
+User::create([
+    'name' => 'Student User',
+    'email' => 'student@tup.edu.ph',
+    'password' => bcrypt('password'),
+    'role' => 'client',
+    'is_active' => true,
+]);
+
+// Counselor (requires profile)
+$counselor = User::create([
+    'name' => 'Dr. Maria Santos',
+    'email' => 'counselor@tup.edu.ph',
+    'password' => bcrypt('password'),
+    'role' => 'counselor',
+    'is_active' => true,
+]);
+CounselorProfile::create([
+    'user_id' => $counselor->id,
+    'position' => 'Head Psychologist',
+]);
+```
+
+---
+
+## �📧 Email Configuration (SendGrid)
 
 ```env
 MAIL_MAILER=smtp
