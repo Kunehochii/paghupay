@@ -38,7 +38,6 @@ class User extends Authenticatable
         'guardian_relationship',
         'guardian_contact',
         'is_active',
-        'temp_password',
     ];
 
     /**
@@ -49,7 +48,6 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-        'temp_password',
     ];
 
     /**

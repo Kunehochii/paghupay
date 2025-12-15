@@ -19,7 +19,7 @@
                         <a class="nav-link" href="{{ route('admin.counselors.index') }}">Counselors</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.clients.index') }}">Clients</a>
+                        <a class="nav-link" href="{{ route('admin.clients.index') }}">Students</a>
                     </li>
                 @elseif(auth()->user()->role === 'counselor')
                     <li class="nav-item">

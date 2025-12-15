@@ -125,7 +125,8 @@ POST /counselor/case-logs/{id}      # Create case log
 GET  /admin/dashboard               # Dashboard
 GET  /admin/counselors              # Counselor list
 POST /admin/counselors/{id}/reset-device  # Reset device lock
-GET  /admin/clients                 # Client list
+GET  /admin/clients                 # Client management (count + add)
+POST /admin/clients                 # Create new client (email only)
 ```
 
 ---
@@ -140,7 +141,6 @@ Primary authentication table for all roles.
 | ----------------- | ------- | -------------------------------- |
 | `role`            | ENUM    | `admin`, `client`, `counselor`   |
 | `is_active`       | BOOLEAN | `false` until profile completion |
-| `temp_password`   | VARCHAR | For initial client setup         |
 | Profile fields... | Various | Nullable until onboarding        |
 
 ### CounselorProfile Table

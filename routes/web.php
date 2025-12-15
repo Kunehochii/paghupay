@@ -39,11 +39,12 @@ Route::middleware('guest')->group(function () {
     // Admin Login
     Route::get('/admin/login', [AuthController::class, 'showAdminLoginForm'])->name('admin.login');
     Route::post('/admin/login', [AuthController::class, 'adminLogin']);
-
-    // Student Registration
-    Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
 });
+
+// Student Registration (Profile Completion + Password Change)
+// Accessible to: logged in inactive clients OR redirects to login
+Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->middleware('auth');
 
 // Logout (requires auth)
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');

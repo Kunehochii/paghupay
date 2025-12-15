@@ -32,7 +32,6 @@ return new class extends Migration
             $table->string('guardian_relationship')->nullable();
             $table->string('guardian_contact')->nullable();
             $table->boolean('is_active')->default(false); // Default false until profile completion
-            $table->string('temp_password')->nullable(); // For initial client setup
             $table->rememberToken();
             $table->timestamps();
         });

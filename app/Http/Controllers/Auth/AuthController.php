@@ -57,9 +57,10 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
-            // Check if profile needs completion
+            // Check if profile needs completion (inactive = needs to change password & complete profile)
             if (!$user->is_active) {
-                return redirect()->route('client.onboarding');
+                return redirect()->route('register')
+                    ->with('info', 'Please change your password and complete your profile to continue.');
             }
 
             return redirect()->intended(route('client.welcome'));
@@ -131,36 +132,105 @@ class AuthController extends Controller
     }
 
     /**
-     * Show registration form.
+     * Show registration form (password change + profile completion).
+     * 
+     * Per spec: Student must be logged in with is_active = false.
+     * They were redirected here after logging in with temp password.
      */
     public function showRegistrationForm()
     {
-        return view('auth.register');
+        // If user is logged in and inactive, show the registration form
+        if (Auth::check() && !Auth::user()->is_active && Auth::user()->role === 'client') {
+            return view('auth.register');
+        }
+
+        // If user is logged in and active, redirect to welcome
+        if (Auth::check() && Auth::user()->is_active) {
+            return redirect()->route('client.welcome');
+        }
+
+        // If not logged in, redirect to login with message
+        return redirect()->route('login')
+            ->with('info', 'Please log in with your temporary password first.');
     }
 
     /**
-     * Handle student registration.
+     * Handle student registration (password change + profile completion).
+     * 
+     * Per spec: Student must be logged in with is_active = false.
+     * Student provides: current password (temp), new password, and profile fields.
      */
     public function register(Request $request)
     {
+        // Ensure user is logged in and inactive
+        if (!Auth::check() || Auth::user()->is_active || Auth::user()->role !== 'client') {
+            return redirect()->route('login')
+                ->with('error', 'Invalid registration attempt.');
+        }
+
+        $user = Auth::user();
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            // Password change
+            'current_password' => 'required|string',
             'password' => 'required|string|min:8|confirmed',
+            
+            // Personal information
+            'name' => 'required|string|max:255',
+            'nickname' => 'required|string|max:255',
+            'course_year_section' => 'required|string|max:255',
+            'birthdate' => 'required|date',
+            'birthplace' => 'required|string|max:255',
+            'sex' => 'required|in:Male,Female',
+            'contact_number' => 'required|string|max:20',
+            'nationality' => 'required|string|max:100',
+            'fb_account' => 'nullable|string|max:255',
+            'address' => 'required|string|max:500',
+            'home_address' => 'required|string|max:500',
+            
+            // Guardian information
+            'guardian_name' => 'required|string|max:255',
+            'guardian_relationship' => 'required|string|max:100',
+            'guardian_contact' => 'required|string|max:20',
+            
+            // Terms
             'agree_terms' => 'required|accepted',
+        ], [
+            'current_password.required' => 'Please enter your temporary password.',
+            'agree_terms.accepted' => 'You must agree to the Data Privacy Policy to proceed.',
         ]);
 
-        $user = User::create([
+        // Verify current password (the temp password they logged in with)
+        if (!Hash::check($validated['current_password'], $user->password)) {
+            return back()
+                ->withInput()
+                ->withErrors(['current_password' => 'The current password is incorrect.']);
+        }
+
+        // Update user with new password and profile data
+        $user->update([
             'name' => $validated['name'],
-            'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => 'client',
-            'is_active' => false, // Requires profile completion
+            'is_active' => true,
+            
+            // Profile fields
+            'nickname' => $validated['nickname'],
+            'course_year_section' => $validated['course_year_section'],
+            'birthdate' => $validated['birthdate'],
+            'birthplace' => $validated['birthplace'],
+            'sex' => $validated['sex'],
+            'contact_number' => $validated['contact_number'],
+            'nationality' => $validated['nationality'],
+            'fb_account' => $validated['fb_account'],
+            'address' => $validated['address'],
+            'home_address' => $validated['home_address'],
+            'guardian_name' => $validated['guardian_name'],
+            'guardian_relationship' => $validated['guardian_relationship'],
+            'guardian_contact' => $validated['guardian_contact'],
         ]);
 
-        Auth::login($user);
-
-        return redirect()->route('client.onboarding');
+        return redirect()->route('client.welcome')
+            ->with('success', 'Registration completed successfully! Welcome to Paghupay.');
     }
 
     /**

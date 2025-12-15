@@ -144,10 +144,53 @@ Extension table for users with role: counselor.
 
 ### **3.1 Registration & Onboarding**
 
--   **Flow:** Student Login Page \-\> Link to “Register” \-\> **Registration Form** \-\> **Terms of Agreement** \-\> **Student Welcome Page**.
--   **Registration Form:** User fills in all profile fields (nickname, course, address, etc.) which were initially null.
--   **Terms:** Must check “Agree to Data Privacy Act” to proceed.
--   **Outcome:** users.is_active set to true.
+**Pre-requisite:** Admin creates student account with email only → System generates temp password (hashed) → Plain temp password emailed to student.
+
+**Security Note:** Temporary password is NOT stored in plain text. It's hashed in the `password` field and only exists in the email sent to the student.
+
+**Registration Flow:**
+
+1. Student receives email with temporary password
+2. Student visits `/login` and logs in with temp password
+3. System detects `is_active = false` → Redirects to `/register` (Change Password + Profile)
+4. Student enters:
+    - **Current Password** (temporary password from email)
+    - **New Password**
+    - **Confirm New Password**
+    - **All Profile Fields** (see below)
+5. System validates current password matches stored hash
+6. On success → Password updated, profile saved, `is_active = true`
+7. Redirect to **Student Welcome Page**
+
+**Profile Completion Form Fields:**
+| Field | Type | Required | Notes |
+| :-------------------- | :------- | :------- | :------------------------------ |
+| nickname | TEXT | YES | Preferred name |
+| course_year_section | TEXT | YES | e.g., "BSIT-4A" |
+| birthdate | DATE | YES | Date picker |
+| birthplace | TEXT | YES | |
+| sex | SELECT | YES | Male / Female |
+| contact_number | TEXT | YES | Mobile number |
+| fb_account | TEXT | NO | Facebook Profile Link/Name |
+| nationality | TEXT | YES | Default: "Filipino" |
+| address | TEXTAREA | YES | Current Address |
+| home_address | TEXTAREA | YES | Permanent Address |
+| guardian_name | TEXT | YES | |
+| guardian_relationship | TEXT | YES | e.g., "Mother", "Father" |
+| guardian_contact | TEXT | YES | Guardian's contact number |
+
+**Terms Agreement:**
+
+-   Checkbox: "I agree to the Data Privacy Act (RA 10173)"
+-   Must be checked to proceed
+
+**Outcome:**
+
+-   `users.password` updated to new hashed password (replaces temp password hash)
+-   `users.is_active` set to true
+-   `users.name` set to full name from form
+-   All profile fields populated
+-   Redirect to **Student Welcome Page**
 
 ### **3.2 Booking Flow (Complete Cycle)**
 
@@ -226,10 +269,104 @@ Extension table for users with role: counselor.
 
 ### **5.3 User (Client) Management**
 
--   **Flow:** Dashboard \-\> **Clients/Users Card**.
--   **Add User:**
-    -   **Form:** **Email Address** (Only).
-    -   **System:** Generates temp_password, creates Inactive Client, sends Email.
+**Dashboard View:**
+
+-   **Users Card:** Displays total count of registered clients (students)
+-   **Card Content:**
+    -   Large number showing total user count
+    -   Arrow icon (→) on the right side
+-   **Click Action:** Navigate to **Users Management Page**
+
+**Users Management Page:**
+
+-   **Header:** "Student Management"
+-   **Stats Display:** "Total Students: {count}"
+-   **Action Button:** "Add New Student" button
+-   **Note:** No user list displayed (privacy consideration) - only the count
+
+**Add Student Flow:**
+
+1. **Trigger:** Click "Add New Student" button
+2. **Modal Dialog:**
+    - **Title:** "Add New Student"
+    - **Form Fields:**
+        - **Email Address** (required)
+        - Validation: Must end with `@tupv.edu.ph`
+    - **Buttons:** "Cancel" | "Send Invitation"
+3. **Backend Logic:**
+
+    ```php
+    // Validate email domain
+    if (!str_ends_with($email, '@tupv.edu.ph')) {
+        return error('Only @tupv.edu.ph emails are allowed');
+    }
+
+    // Generate 8-character temporary password
+    $tempPassword = Str::random(8);
+
+    // Create inactive user (temp password is ONLY stored as hash)
+    User::create([
+        'name' => 'Pending Registration',
+        'email' => $email,
+        'password' => bcrypt($tempPassword),  // Hashed, not plain text
+        'role' => 'client',
+        'is_active' => false,
+    ]);
+
+    // Send email with temp password (only place it exists in plain text)
+    Mail::to($email)->send(new StudentInvitation($email, $tempPassword));
+    ```
+
+    **Security:** The plain text temp password only exists in:
+
+    1. Memory during account creation
+    2. The email sent to the student
+
+    It is NEVER stored in the database in plain text.
+
+4. **Success Modal:**
+    - **Title:** "Invitation Sent!"
+    - **Message:** "An email with login credentials has been sent to {email}."
+    - **Button:** "Done"
+5. **User Count:** Automatically updates on page
+
+**Email Template (StudentInvitation):**
+
+```
+Subject: Welcome to Paghupay - TUP-V Guidance & Counseling System
+
+Dear Student,
+
+You have been registered in the Paghupay Guidance & Counseling System.
+
+Please complete your registration using the following credentials:
+
+Email: {email}
+Temporary Password: {temp_password}
+
+Visit: {app_url}/register
+
+IMPORTANT: You will be asked to create a new password and complete your profile.
+
+Best regards,
+TUP-V Guidance Office
+```
+
+**Validation Rules:**
+
+-   Email must be unique in users table
+-   Email must end with `@tupv.edu.ph`
+-   Duplicate email shows error: "This email is already registered."
+
+**Routes:**
+
+```php
+// Admin client management routes
+Route::get('/admin/clients', [ClientController::class, 'index'])
+    ->name('admin.clients.index');
+Route::post('/admin/clients', [ClientController::class, 'store'])
+    ->name('admin.clients.store');
+```
 
 ## **6\. Security Implementation** ✅ IMPLEMENTED
 
