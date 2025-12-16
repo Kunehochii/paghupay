@@ -1,20 +1,22 @@
 # **Spec-Driven Development: TUP-V Guidance & Counseling System**
 
-Version: 1.7 (Authentication Implemented)
+Version: 1.8 (Client Booking Flow Implemented)
 
 ## **Implementation Status**
 
-| Feature             | Status         | Notes                                     |
-| :------------------ | :------------- | :---------------------------------------- |
-| Database Schema     | ✅ Implemented | All migrations created                    |
-| Authentication      | ✅ Implemented | All login pages, registration, middleware |
-| Device Lock (TOFU)  | ✅ Implemented | VerifyDevice middleware complete          |
-| Role-Based Access   | ✅ Implemented | RoleCheck middleware complete             |
-| Client Booking Flow | ⏳ Pending     |                                           |
-| Counselor Dashboard | ⏳ Pending     |                                           |
-| Admin Management    | ⏳ Pending     |                                           |
-| Data Encryption     | ⏳ Pending     | Model casts defined, needs testing        |
-| Email Notifications | ⏳ Pending     |                                           |
+| Feature             | Status         | Notes                                                        |
+| :------------------ | :------------- | :----------------------------------------------------------- |
+| Database Schema     | ✅ Implemented | All migrations created (including time_slots, blocked_dates) |
+| Authentication      | ✅ Implemented | All login pages, registration, middleware                    |
+| Device Lock (TOFU)  | ✅ Implemented | VerifyDevice middleware complete                             |
+| Role-Based Access   | ✅ Implemented | RoleCheck middleware complete                                |
+| Client Booking Flow | ✅ Implemented | Full 4-step booking with email confirmation                  |
+| Time Slots System   | ✅ Implemented | Morning/Afternoon slots with availability check              |
+| Blocked Dates       | ✅ Implemented | Admin can block dates, weekends auto-disabled                |
+| Counselor Dashboard | ⏳ Pending     |                                                              |
+| Admin Management    | ⏳ Pending     |                                                              |
+| Data Encryption     | ⏳ Pending     | Model casts defined, needs testing                           |
+| Email Notifications | ✅ Implemented | Appointment confirmation email via SendGrid                  |
 
 ---
 
@@ -124,6 +126,39 @@ Extension table for users with role: counselor.
 | description   | TEXT      | **\[Encrypted\]** Specific activity |
 | activity_date | DATE      | When this activity is set for       |
 
+### **1.7 Time Slots Table (time_slots)** ✅ NEW
+
+Defines available appointment time slots.
+
+| Column     | Type      | Nullable | Description                            |
+| :--------- | :-------- | :------- | :------------------------------------- |
+| id         | BIGSERIAL | NO       | Primary Key                            |
+| type       | ENUM      | NO       | `morning` or `afternoon`               |
+| start_time | TIME      | NO       | Slot start time (e.g., 09:00:00)       |
+| end_time   | TIME      | NO       | Slot end time (e.g., 10:30:00)         |
+| is_active  | BOOLEAN   | NO       | Default true, can be disabled by admin |
+| created_at | TIMESTAMP | NO       |                                        |
+
+**Seeded Data:**
+| Type | Start Time | End Time |
+| :-------- | :--------- | :------- |
+| morning | 09:00 | 10:30 |
+| morning | 10:30 | 12:00 |
+| afternoon | 13:00 | 14:30 |
+| afternoon | 14:30 | 16:00 |
+
+### **1.8 Blocked Dates Table (blocked_dates)** ✅ NEW
+
+Dates when appointments cannot be booked.
+
+| Column       | Type      | Nullable | Description                           |
+| :----------- | :-------- | :------- | :------------------------------------ |
+| id           | BIGSERIAL | NO       | Primary Key                           |
+| blocked_date | DATE      | NO       | The date that is blocked (unique)     |
+| reason       | VARCHAR   | YES      | Reason for blocking (e.g., "Holiday") |
+| created_by   | BIGINT    | YES      | FK \-\> users.id (admin who blocked)  |
+| created_at   | TIMESTAMP | NO       |                                       |
+
 ## **2\. Authentication & Login Pages** ✅ IMPLEMENTED
 
 **Distinct Login Pages Required:**
@@ -192,14 +227,65 @@ Extension table for users with role: counselor.
 -   All profile fields populated
 -   Redirect to **Student Welcome Page**
 
-### **3.2 Booking Flow (Complete Cycle)**
+### **3.2 Booking Flow (Complete Cycle)** ✅ IMPLEMENTED
 
--   **Start:** **Student Welcome Page**.
--   **Step 1:** Click “Start” \-\> Redirect to **Choose Counselor Page**.
--   **Step 2:** Select Counselor \-\> Redirect to **Date & Time Selection**.
--   **Step 3:** Select Date/Time \-\> Redirect to **Reason Input**.
--   **Step 4:** Submit \-\> Redirect to **“Receive Email” Page**.
--   **Step 5:** Click “Back” \-\> Returns to **Student Welcome Page**.
+**Implementation Files:**
+
+-   Controller: `app/Http/Controllers/Client/BookingController.php`
+-   Views: `resources/views/client/booking/` (index, choose-counselor, schedule, reason, thankyou)
+-   Mail: `app/Mail/AppointmentConfirmation.php`
+-   Email Template: `resources/views/emails/appointment-confirmation.blade.php`
+
+**Flow Overview:**
+
+-   **Start:** **Student Welcome Page** (`/`) → Click "Start Booking"
+-   **Step 1:** **Booking Start Page** (`/booking`) → Click "Start"
+-   **Step 2:** **Choose Counselor Page** (`/booking/counselors`) → Select counselor card → Click "Next"
+-   **Step 3:** **Schedule Page** (`/booking/schedule/{counselor}`) → Select date & time slot → Click "Next"
+-   **Step 4:** **Reason Page** (`/booking/reason`) → Enter reason → Click "Submit Booking"
+-   **Step 5:** **Thank You Page** (`/booking/thankyou`) → Confirmation with details
+
+**Booking Rules:**
+
+1. **Weekends Disabled:** Students cannot book on Saturdays or Sundays
+2. **Blocked Dates:** Admin can block specific dates (holidays, events)
+3. **Time Slot Availability:** Each counselor has limited slots per day
+4. **No Double Booking:** Same counselor cannot have two appointments at the same time
+
+**Time Slot System:**
+
+-   Slots are defined in `time_slots` table
+-   Split between morning and afternoon
+-   Each slot shows availability status
+-   API endpoint `/booking/counselor/{id}/slots?date=YYYY-MM-DD` returns real-time availability
+
+**Session Storage During Booking:**
+
+```php
+session('booking.counselor_id')    // Selected counselor ID
+session('booking.scheduled_date')  // Selected date (Y-m-d)
+session('booking.time_slot_id')    // Selected time slot ID
+```
+
+**Email Notification:**
+
+-   Sent immediately after successful booking via SendGrid
+-   Template includes: appointment details, status (pending), next steps
+-   `appointments.email_sent` flag tracks delivery status
+
+**Routes:**
+
+```php
+GET  /booking                           # Start page
+GET  /booking/counselors                # Step 1: Choose counselor
+POST /booking/counselors                # Store counselor selection
+GET  /booking/schedule/{counselor}      # Step 2: Date & time
+POST /booking/schedule/{counselor}      # Store schedule selection
+GET  /booking/counselor/{id}/slots      # API: Available slots for date
+GET  /booking/reason                    # Step 3: Enter reason
+POST /booking/store                     # Submit booking
+GET  /booking/thankyou                  # Confirmation page
+```
 
 ## **4\. Counselor Portal Flows**
 

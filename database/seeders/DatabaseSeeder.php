@@ -50,8 +50,12 @@ class DatabaseSeeder extends Seeder
             'is_active' => false, // Needs onboarding
         ]);
 
+        // Seed Time Slots
+        $this->call(TimeSlotSeeder::class);
+
         $this->command->info('Seeded: Admin (admin@tup.edu.ph / admin123)');
         $this->command->info('Seeded: Counselor (maria.santos@tup.edu.ph / counselor123)');
         $this->command->info('Seeded: Student (juan.delacruz@tup.edu.ph / student123)');
+        $this->command->info('Seeded: Time Slots (4 slots - 2 morning, 2 afternoon)');
     }
 }

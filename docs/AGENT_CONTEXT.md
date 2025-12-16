@@ -33,7 +33,7 @@ paghupay/
 │   │   │   ├── Auth/
 │   │   │   │   └── AuthController.php         # Login/Register handlers
 │   │   │   ├── Client/
-│   │   │   │   ├── BookingController.php      # Appointment booking flow
+│   │   │   │   ├── BookingController.php      # Appointment booking flow (4-step)
 │   │   │   │   └── OnboardingController.php   # Profile completion
 │   │   │   └── Counselor/
 │   │   │       ├── CaseLogController.php      # Case log management
@@ -41,30 +41,48 @@ paghupay/
 │   │   └── Middleware/
 │   │       ├── RoleCheck.php                  # Role-based access control
 │   │       └── VerifyDevice.php               # Device binding (TOFU)
+│   ├── Mail/
+│   │   ├── StudentInvitation.php              # Student invite email
+│   │   └── AppointmentConfirmation.php        # Booking confirmation email
 │   └── Models/
 │       ├── User.php                           # Central auth + profile
 │       ├── CounselorProfile.php               # Counselor extension
 │       ├── Appointment.php                    # Booking records
 │       ├── CaseLog.php                        # Session documentation
 │       ├── TreatmentGoal.php                  # Treatment planning
-│       └── TreatmentActivity.php              # Goal activities
+│       ├── TreatmentActivity.php              # Goal activities
+│       ├── TimeSlot.php                       # Available booking time slots
+│       └── BlockedDate.php                    # Dates blocked for booking
 ├── database/
-│   └── migrations/
-│       ├── 0001_01_01_000000_create_users_table.php
-│       ├── 2024_12_14_000001_create_counselor_profiles_table.php
-│       ├── 2024_12_14_000002_create_appointments_table.php
-│       ├── 2024_12_14_000003_create_case_logs_table.php
-│       ├── 2024_12_14_000004_create_treatment_goals_table.php
-│       └── 2024_12_14_000005_create_treatment_activities_table.php
+│   ├── migrations/
+│   │   ├── 0001_01_01_000000_create_users_table.php
+│   │   ├── 2024_12_14_000001_create_counselor_profiles_table.php
+│   │   ├── 2024_12_14_000002_create_appointments_table.php
+│   │   ├── 2024_12_14_000003_create_case_logs_table.php
+│   │   ├── 2024_12_14_000004_create_treatment_goals_table.php
+│   │   ├── 2024_12_14_000005_create_treatment_activities_table.php
+│   │   ├── 2024_12_16_000001_create_time_slots_table.php
+│   │   └── 2024_12_16_000002_create_blocked_dates_table.php
+│   └── seeders/
+│       ├── DatabaseSeeder.php                 # Main seeder
+│       └── TimeSlotSeeder.php                 # Seeds time slots
 ├── resources/views/
 │   ├── auth/                    # Login/register pages
 │   ├── client/                  # Student portal views
 │   │   └── booking/             # Booking flow steps
+│   │       ├── index.blade.php        # Booking start page
+│   │       ├── choose-counselor.blade.php  # Step 1
+│   │       ├── schedule.blade.php     # Step 2: Date & time
+│   │       ├── reason.blade.php       # Step 3: Reason input
+│   │       └── thankyou.blade.php     # Confirmation page
 │   ├── counselor/               # Counselor portal views
 │   │   └── case-logs/           # Case log views
 │   ├── admin/                   # Admin portal views
 │   │   ├── counselors/          # Counselor management
 │   │   └── clients/             # Client management
+│   ├── emails/                  # Email templates
+│   │   ├── student-invitation.blade.php
+│   │   └── appointment-confirmation.blade.php
 │   ├── layouts/                 # Base layouts
 │   │   ├── app.blade.php        # Main layout
 │   │   └── partials/
@@ -74,7 +92,7 @@ paghupay/
 │   └── web.php                  # All route definitions
 ├── docs/
 │   ├── AGENT_CONTEXT.md         # This file
-│   └── PAGHUPAY_SPEC.md         # Full specification (move here)
+│   └── PAGHUPAY_SPEC.md         # Full specification
 └── storage/
     └── app/public/uploads/
         └── counselors/          # Counselor profile pictures
@@ -105,11 +123,17 @@ GET  /register                      # Student registration
 // Client Routes (/)
 GET  /                              # Welcome page
 GET  /onboarding                    # Profile completion
+
+// Booking Flow Routes (/booking)
+GET  /booking                       # Booking start page
 GET  /booking/counselors            # Step 1: Choose counselor
+POST /booking/counselors            # Store counselor selection
 GET  /booking/schedule/{counselor}  # Step 2: Pick date/time
+POST /booking/schedule/{counselor}  # Store schedule selection
+GET  /booking/counselor/{id}/slots  # API: Get available slots for date
 GET  /booking/reason                # Step 3: Enter reason
-POST /booking/store                 # Step 4: Submit booking
-GET  /booking/confirmation          # Confirmation page
+POST /booking/store                 # Submit booking
+GET  /booking/thankyou              # Thank you / confirmation page
 GET  /appointments                  # View appointments
 
 // Counselor Routes (/counselor)
@@ -175,6 +199,32 @@ Extension for counselor-specific data.
 | Column        | Type | Notes            |
 | ------------- | ---- | ---------------- |
 | `description` | TEXT | **🔐 ENCRYPTED** |
+
+### TimeSlot Table (NEW)
+
+Available booking time slots.
+
+| Column       | Type    | Notes                    |
+| ------------ | ------- | ------------------------ |
+| `type`       | ENUM    | `morning` or `afternoon` |
+| `start_time` | TIME    | Slot start (e.g., 09:00) |
+| `end_time`   | TIME    | Slot end (e.g., 10:30)   |
+| `is_active`  | BOOLEAN | Can be disabled by admin |
+
+**Default Slots:**
+
+-   Morning: 9:00-10:30, 10:30-12:00
+-   Afternoon: 1:00-2:30, 2:30-4:00
+
+### BlockedDate Table (NEW)
+
+Dates when booking is unavailable.
+
+| Column         | Type    | Notes                             |
+| -------------- | ------- | --------------------------------- |
+| `blocked_date` | DATE    | Unique, the blocked date          |
+| `reason`       | VARCHAR | Optional reason (e.g., "Holiday") |
+| `created_by`   | BIGINT  | FK to users (admin)               |
 
 ---
 
@@ -412,7 +462,95 @@ CounselorProfile::create([
 
 ---
 
-## �📧 Email Configuration (SendGrid)
+## 📅 Client Booking Flow (IMPLEMENTED)
+
+The complete 4-step booking flow for students to schedule appointments with counselors.
+
+### Booking Overview
+
+| Step | Route                           | View                              | Purpose                |
+| ---- | ------------------------------- | --------------------------------- | ---------------------- |
+| 0    | `/booking`                      | `client/booking/index`            | Start booking page     |
+| 1    | `/booking/counselors`           | `client/booking/choose-counselor` | Select counselor       |
+| 2    | `/booking/schedule/{counselor}` | `client/booking/schedule`         | Pick date & time slot  |
+| 3    | `/booking/reason`               | `client/booking/reason`           | Enter reason for visit |
+| 4    | `/booking/thankyou`             | `client/booking/thankyou`         | Confirmation page      |
+
+### Key Files
+
+```
+app/Http/Controllers/Client/BookingController.php  # All booking logic
+app/Models/TimeSlot.php                            # Time slot model
+app/Models/BlockedDate.php                         # Blocked dates model
+app/Mail/AppointmentConfirmation.php               # Confirmation email
+resources/views/client/booking/
+├── index.blade.php              # Start page with "Book Now" button
+├── choose-counselor.blade.php   # Counselor cards with selection
+├── schedule.blade.php           # Date picker + time slot selection
+├── reason.blade.php             # Textarea for reason + summary
+└── thankyou.blade.php           # Success message + next steps
+resources/views/emails/
+└── appointment-confirmation.blade.php  # Email template
+```
+
+### BookingController Methods
+
+| Method                | Route                               | Purpose                    |
+| --------------------- | ----------------------------------- | -------------------------- |
+| `index()`             | GET `/booking`                      | Show booking start page    |
+| `chooseCounselor()`   | GET `/booking/counselors`           | Display counselor list     |
+| `selectCounselor()`   | POST `/booking/counselors`          | Store selected counselor   |
+| `schedule()`          | GET `/booking/schedule/{id}`        | Show date/time selection   |
+| `selectSchedule()`    | POST `/booking/schedule/{id}`       | Store selected schedule    |
+| `getAvailableSlots()` | GET `/booking/counselor/{id}/slots` | API: Get slots for date    |
+| `reason()`            | GET `/booking/reason`               | Show reason input form     |
+| `store()`             | POST `/booking/store`               | Submit booking, send email |
+| `thankyou()`          | GET `/booking/thankyou`             | Show confirmation page     |
+
+### Booking Rules
+
+1. **Weekends Disabled**: No Saturday/Sunday bookings
+2. **Blocked Dates**: Admin-blocked dates unavailable
+3. **Slot Availability**: Real-time check via AJAX
+4. **No Double Booking**: One slot per counselor per time
+
+### Session Data During Booking
+
+```php
+session('booking.counselor_id')    // Selected counselor
+session('booking.scheduled_date')  // Selected date (Y-m-d)
+session('booking.time_slot_id')    // Selected time slot
+session('last_appointment_id')     // For thank you page
+```
+
+### Time Slot API Response
+
+```json
+GET /booking/counselor/{id}/slots?date=2024-12-20
+
+{
+  "morning": [
+    {"id": 1, "type": "morning", "formatted_time": "9:00 AM - 10:30 AM", "is_available": true},
+    {"id": 2, "type": "morning", "formatted_time": "10:30 AM - 12:00 PM", "is_available": false}
+  ],
+  "afternoon": [
+    {"id": 3, "type": "afternoon", "formatted_time": "1:00 PM - 2:30 PM", "is_available": true},
+    {"id": 4, "type": "afternoon", "formatted_time": "2:30 PM - 4:00 PM", "is_available": true}
+  ]
+}
+```
+
+### Email Notification
+
+Sent automatically after booking via SendGrid:
+
+-   Template: `resources/views/emails/appointment-confirmation.blade.php`
+-   Includes: Counselor name, date, time, status (pending), next steps
+-   Tracks delivery: `appointments.email_sent` flag
+
+---
+
+## 📧 Email Configuration (SendGrid)
 
 ```env
 MAIL_MAILER=smtp

@@ -63,20 +63,30 @@ Route::middleware(['auth', 'role:client'])->group(function () {
 
     // Booking Flow
     Route::prefix('booking')->name('booking.')->group(function () {
+        // Booking Start Page
+        Route::get('/', [BookingController::class, 'index'])->name('index');
+
         // Step 1: Choose Counselor
         Route::get('/counselors', [BookingController::class, 'chooseCounselor'])->name('choose-counselor');
+        Route::post('/counselors', [BookingController::class, 'selectCounselor'])->name('select-counselor');
 
         // Step 2: Date & Time Selection
         Route::get('/schedule/{counselor}', [BookingController::class, 'schedule'])->name('schedule');
+        Route::post('/schedule/{counselor}', [BookingController::class, 'selectSchedule'])->name('select-schedule');
+
+        // API: Get available time slots for a date
+        Route::get('/counselor/{counselor}/slots', [BookingController::class, 'getAvailableSlots'])->name('get-slots');
 
         // Step 3: Reason Input
         Route::get('/reason', [BookingController::class, 'reason'])->name('reason');
-        Route::post('/reason', [BookingController::class, 'reason'])->name('reason.post');
 
         // Step 4: Store appointment
         Route::post('/store', [BookingController::class, 'store'])->name('store');
 
-        // Confirmation / Email Sent Page
+        // Thank You / Confirmation Page
+        Route::get('/thankyou', [BookingController::class, 'thankyou'])->name('thankyou');
+
+        // Legacy Confirmation (redirect to thankyou)
         Route::get('/confirmation', [BookingController::class, 'confirmation'])->name('confirmation');
     });
 
