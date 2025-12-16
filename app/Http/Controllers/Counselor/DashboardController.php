@@ -23,6 +23,7 @@ class DashboardController extends Controller
                 ->count(),
             'today_appointments' => Appointment::where('counselor_id', $counselor->id)
                 ->today()
+                ->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_ACCEPTED])
                 ->count(),
             'completed_sessions' => Appointment::where('counselor_id', $counselor->id)
                 ->where('status', Appointment::STATUS_COMPLETED)
@@ -30,18 +31,32 @@ class DashboardController extends Controller
             'total_case_logs' => CaseLog::where('counselor_id', $counselor->id)->count(),
         ];
 
-        $todayAppointments = Appointment::with('client')
+        // Check for active session
+        $activeSession = CaseLog::with(['appointment.client'])
+            ->where('counselor_id', $counselor->id)
+            ->whereNotNull('start_time')
+            ->whereNull('end_time')
+            ->first();
+
+        $todayAppointments = Appointment::with(['client', 'caseLog'])
             ->where('counselor_id', $counselor->id)
             ->today()
+            ->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_ACCEPTED])
             ->orderBy('scheduled_at')
             ->get();
 
         $upcomingAppointments = Appointment::with('client')
             ->where('counselor_id', $counselor->id)
-            ->upcoming()
+            ->pending()
+            ->where('scheduled_at', '>', now())
             ->take(5)
             ->get();
 
-        return view('counselor.dashboard', compact('stats', 'todayAppointments', 'upcomingAppointments'));
+        return view('counselor.dashboard', compact(
+            'stats',
+            'todayAppointments',
+            'upcomingAppointments',
+            'activeSession'
+        ));
     }
 }

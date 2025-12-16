@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Client\BookingController;
 use App\Http\Controllers\Client\OnboardingController;
+use App\Http\Controllers\Counselor\AppointmentController;
 use App\Http\Controllers\Counselor\CaseLogController;
 use App\Http\Controllers\Counselor\DashboardController as CounselorDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -105,25 +106,13 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
         // Dashboard
         Route::get('/dashboard', [CounselorDashboardController::class, 'index'])->name('dashboard');
 
-        // Pending Appointments (Calendar View)
-        Route::get('/pending', function () {
-            return view('counselor.pending');
-        })->name('pending');
-
-        // Today's Appointments
-        Route::get('/today', function () {
-            return view('counselor.today');
-        })->name('today');
-
-        // Session Management
-        Route::prefix('session')->name('session.')->group(function () {
-            Route::post('/{appointment}/start', function ($appointment) {
-                // TODO: Implement session start
-            })->name('start');
-
-            Route::post('/{appointment}/end', function ($appointment) {
-                // TODO: Implement session end
-            })->name('end');
+        // Appointments Management
+        Route::prefix('appointments')->name('appointments.')->group(function () {
+            Route::get('/', [AppointmentController::class, 'index'])->name('index');
+            Route::post('/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('cancel');
+            Route::post('/{appointment}/start-session', [AppointmentController::class, 'startSession'])->name('start-session');
+            Route::post('/{appointment}/end-session', [AppointmentController::class, 'endSession'])->name('end-session');
+            Route::get('/active-session', [AppointmentController::class, 'activeSession'])->name('active-session');
         });
 
         // Case Logs
