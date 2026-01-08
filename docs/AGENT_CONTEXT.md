@@ -76,7 +76,16 @@ paghupay/
 │   │       ├── reason.blade.php       # Step 3: Reason input
 │   │       └── thankyou.blade.php     # Confirmation page
 │   ├── counselor/               # Counselor portal views
-│   │   └── case-logs/           # Case log views
+│   │   ├── dashboard.blade.php  # Dashboard with stats
+│   │   ├── appointments/        # Appointments management
+│   │   │   └── index.blade.php  # 3-tab view (Pending, Calendar, Day)
+│   │   ├── case-logs/           # Case log views
+│   │   │   ├── index.blade.php  # List with search
+│   │   │   ├── create.blade.php # Create form
+│   │   │   ├── show.blade.php   # Detail view
+│   │   │   ├── edit.blade.php   # Edit form
+│   │   │   └── pdf.blade.php    # PDF export template
+│   │   └── about.blade.php      # About page
 │   ├── admin/                   # Admin portal views
 │   │   ├── counselors/          # Counselor management
 │   │   └── clients/             # Client management
@@ -85,6 +94,7 @@ paghupay/
 │   │   └── appointment-confirmation.blade.php
 │   ├── layouts/                 # Base layouts
 │   │   ├── app.blade.php        # Main layout
+│   │   ├── counselor.blade.php  # Counselor sidebar layout
 │   │   └── partials/
 │   │       └── navbar.blade.php # Navigation
 │   └── components/              # Reusable components
@@ -137,13 +147,23 @@ GET  /booking/thankyou              # Thank you / confirmation page
 GET  /appointments                  # View appointments
 
 // Counselor Routes (/counselor)
-GET  /counselor/dashboard           # Dashboard
-GET  /counselor/pending             # Pending appointments
-GET  /counselor/today               # Today's appointments
-POST /counselor/session/{id}/start  # Start session timer
-POST /counselor/session/{id}/end    # End session timer
-GET  /counselor/case-logs           # Case log list
-POST /counselor/case-logs/{id}      # Create case log
+GET  /counselor/dashboard                      # Dashboard with stats
+GET  /counselor/appointments                   # Appointments management (3-tab view)
+POST /counselor/appointments/{id}/accept       # Accept pending appointment
+POST /counselor/appointments/{id}/cancel       # Cancel appointment
+POST /counselor/appointments/{id}/start-session # Start session timer
+POST /counselor/appointments/{id}/end-session  # End session, create case log
+GET  /counselor/appointments/active-session    # Get current active session
+GET  /counselor/case-logs                      # Case log list with search/stats
+GET  /counselor/case-logs/create               # Create new case log
+POST /counselor/case-logs/store                # Save new case log
+GET  /counselor/case-logs/{id}                 # View case log details
+GET  /counselor/case-logs/{id}/edit            # Edit case log
+PUT  /counselor/case-logs/{id}                 # Update case log
+DELETE /counselor/case-logs/{id}               # Delete case log
+GET  /counselor/case-logs/{id}/export-pdf      # Export case log to PDF
+GET  /counselor/about                          # About page
+GET  /counselor/clients/{id}/history           # Client appointment history
 
 // Admin Routes (/admin)
 GET  /admin/dashboard               # Dashboard
@@ -550,6 +570,122 @@ Sent automatically after booking via SendGrid:
 
 ---
 
+## 🧑‍⚕️ Counselor Dashboard (IMPLEMENTED)
+
+The complete counselor portal with sidebar navigation, dashboard, appointments management, and case logs.
+
+### Dashboard Overview
+
+| Section      | Route                                  | View                                  | Purpose                               |
+| ------------ | -------------------------------------- | ------------------------------------- | ------------------------------------- |
+| Dashboard    | `/counselor/dashboard`                 | `counselor/dashboard`                 | Stats overview                        |
+| Appointments | `/counselor/appointments`              | `counselor/appointments/index`        | Calendar view, pending requests       |
+| Case Logs    | `/counselor/case-logs`                 | `counselor/case-logs/index`           | List all case logs                    |
+| About        | `/counselor/about`                     | `counselor/about`                     | About the application                 |
+
+### Key Files
+
+```
+app/Http/Controllers/Counselor/
+├── DashboardController.php          # Dashboard with stats
+├── AppointmentController.php        # Appointments + calendar logic
+└── CaseLogController.php            # Case logs CRUD + PDF export
+resources/views/layouts/
+└── counselor.blade.php              # Sidebar layout (profile, nav menu)
+resources/views/counselor/
+├── dashboard.blade.php              # Stats cards
+├── appointments/
+│   └── index.blade.php              # 3 tabs: Pending, Calendar, Day View
+├── case-logs/
+│   ├── index.blade.php              # List with search, stats
+│   ├── create.blade.php             # Create form with student selection
+│   ├── show.blade.php               # Detail view
+│   ├── edit.blade.php               # Edit form with treatment plan
+│   └── pdf.blade.php                # PDF export template
+└── about.blade.php                  # About page
+```
+
+### Layout: Sidebar Navigation
+
+**File**: `resources/views/layouts/counselor.blade.php`
+
+Features:
+- Profile dropdown with logout
+- Navigation menu: Dashboard, Appointments (with pending badge), Case Logs, About Us
+- Active state highlighting
+- Responsive mobile support
+
+### DashboardController Methods
+
+| Method   | Route                      | Purpose                                            |
+| -------- | -------------------------- | -------------------------------------------------- |
+| `index()` | GET `/counselor/dashboard` | Show stats: pending requests, today's, this month's |
+
+**Stats Displayed**:
+- Pending Appointment Requests count
+- Today's Appointments count
+- This Month's Appointments count
+
+### AppointmentController Methods (Enhanced)
+
+| Method               | Route                                           | Purpose                              |
+| -------------------- | ----------------------------------------------- | ------------------------------------ |
+| `index()`            | GET `/counselor/appointments`                   | Show appointments with 3-tab view    |
+| `accept()`           | POST `/counselor/appointments/{id}/accept`      | Accept pending appointment           |
+| `cancel()`           | POST `/counselor/appointments/{id}/cancel`      | Cancel appointment                   |
+| `startSession()`     | POST `/counselor/appointments/{id}/start-session` | Start session timer                |
+| `endSession()`       | POST `/counselor/appointments/{id}/end-session` | End session, create case log       |
+| `activeSession()`    | GET `/counselor/appointments/active-session`    | Get current active session           |
+
+**Appointments View Features**:
+- **Pending Requests Tab**: List of pending appointments with Accept/Decline buttons
+- **Calendar View Tab**: Full month calendar with dots showing appointments per day
+- **Day View Tab**: List of appointments for selected day with Start Session/Cancel buttons
+
+**Calendar Building Logic**:
+```php
+// Builds 7-column calendar grid (Sun-Sat)
+// Shows dots for days with appointments
+// Color coding: Today (blue), Selected (green), Has appointments (dots)
+```
+
+### CaseLogController Methods (Enhanced)
+
+| Method       | Route                                        | Purpose                                 |
+| ------------ | -------------------------------------------- | --------------------------------------- |
+| `index()`    | GET `/counselor/case-logs`                   | List with stats, search functionality   |
+| `create()`   | GET `/counselor/case-logs/create`            | Create form with student selection      |
+| `store()`    | POST `/counselor/case-logs/store`            | Save new case log                       |
+| `show()`     | GET `/counselor/case-logs/{id}`              | View case log details                   |
+| `edit()`     | GET `/counselor/case-logs/{id}/edit`         | Edit case log                           |
+| `update()`   | PUT `/counselor/case-logs/{id}`              | Update case log                         |
+| `destroy()`  | DELETE `/counselor/case-logs/{id}`           | Delete case log                         |
+| `exportPdf()` | GET `/counselor/case-logs/{id}/export-pdf`  | Export case log to PDF                  |
+
+**Case Logs Index Features**:
+- Stats cards: Total logs, This month logs, Average duration
+- Search functionality by student name/TUPV ID
+- Table with columns: Created Date, TUPV ID, Log #, Duration, Actions
+- Actions: View, Edit, Export PDF, Delete
+
+**Case Log Create/Edit Features**:
+- Student selection dropdown (for create)
+- Date and duration fields
+- Progress report textarea
+- Additional notes textarea
+- Dynamic Treatment Plan section:
+  - Add/remove goals
+  - Add/remove activities per goal
+  - Activity date picker
+
+**PDF Export**:
+- Clean printable layout
+- Includes all case log details
+- Treatment goals and activities formatted
+- Auto-prints on page load
+
+---
+
 ## 📧 Email Configuration (SendGrid)
 
 ```env
@@ -657,4 +793,4 @@ php artisan serve
 
 ---
 
-_Last Updated: December 14, 2025_
+_Last Updated: January 9, 2026 (Counselor Dashboard Implemented)_
