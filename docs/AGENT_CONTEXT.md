@@ -87,8 +87,13 @@ paghupay/
 │   │   │   └── pdf.blade.php    # PDF export template
 │   │   └── about.blade.php      # About page
 │   ├── admin/                   # Admin portal views
+│   │   ├── dashboard.blade.php  # Admin dashboard with stats
 │   │   ├── counselors/          # Counselor management
+│   │   │   ├── index.blade.php  # List all counselors
+│   │   │   ├── create.blade.php # Add new counselor form
+│   │   │   └── edit.blade.php   # Edit counselor form
 │   │   └── clients/             # Client management
+│   │       └── index.blade.php  # Client stats + add modal
 │   ├── emails/                  # Email templates
 │   │   ├── student-invitation.blade.php
 │   │   └── appointment-confirmation.blade.php
@@ -693,7 +698,101 @@ Features:
 
 ---
 
-## 📧 Email Configuration (SendGrid)
+## � Admin Portal (IMPLEMENTED)
+
+The complete admin portal with sidebar navigation, dashboard, counselor management, and client management.
+
+### Admin Overview
+
+| Section    | Route               | View                     | Purpose                      |
+| ---------- | ------------------- | ------------------------ | ---------------------------- |
+| Dashboard  | `/admin/dashboard`  | `admin/dashboard`        | Stats overview, quick links  |
+| Counselors | `/admin/counselors` | `admin/counselors/index` | Counselor list, CRUD, device |
+| Clients    | `/admin/clients`    | `admin/clients/index`    | Client stats, add via modal  |
+
+### Key Files
+
+```
+app/Http/Controllers/Admin/
+├── DashboardController.php          # Dashboard with stats
+├── CounselorController.php          # Counselor CRUD + device reset
+└── ClientController.php             # Client management + email invite
+resources/views/admin/
+├── dashboard.blade.php              # Stats cards with sidebar
+├── counselors/
+│   ├── index.blade.php              # List with device status, actions
+│   ├── create.blade.php             # Add form with photo upload
+│   └── edit.blade.php               # Edit form with device reset
+└── clients/
+    └── index.blade.php              # Stats cards + add modal
+```
+
+### DashboardController Methods
+
+| Method    | Route                  | Purpose                                               |
+| --------- | ---------------------- | ----------------------------------------------------- |
+| `index()` | GET `/admin/dashboard` | Show stats: counselors, clients, today's appointments |
+
+**Stats Displayed**:
+
+-   Total Counselors count (clickable card)
+-   Total Students count with active count (clickable card)
+-   Today's Appointments count
+-   Recent Appointments table
+
+### CounselorController Methods
+
+| Method          | Route                                      | Purpose                       |
+| --------------- | ------------------------------------------ | ----------------------------- |
+| `index()`       | GET `/admin/counselors`                    | List all counselors           |
+| `create()`      | GET `/admin/counselors/create`             | Show add form                 |
+| `store()`       | POST `/admin/counselors`                   | Create counselor with profile |
+| `edit()`        | GET `/admin/counselors/{id}/edit`          | Show edit form                |
+| `update()`      | PUT `/admin/counselors/{id}`               | Update counselor              |
+| `destroy()`     | DELETE `/admin/counselors/{id}`            | Delete counselor              |
+| `resetDevice()` | POST `/admin/counselors/{id}/reset-device` | Reset device lock             |
+
+**Counselor Index Features**:
+
+-   Stats card: Total counselors count
+-   Table with columns: Photo, Name, Email, Position, Device Status, Actions
+-   Device Status: Shows "Device Bound" with date or "No Device Bound"
+-   Actions: Reset Device (if bound), Edit, Delete (with confirmation modals)
+
+**Counselor Create/Edit Features**:
+
+-   Photo upload with live preview
+-   Name, Email, Position fields
+-   Auto-generates temporary password on create
+-   Device status display with reset button on edit
+
+### ClientController Methods
+
+| Method     | Route                       | Purpose                          |
+| ---------- | --------------------------- | -------------------------------- |
+| `index()`  | GET `/admin/clients`        | Show stats + add modal           |
+| `create()` | GET `/admin/clients/create` | Redirect to modal (not used)     |
+| `store()`  | POST `/admin/clients`       | Create client, send invite email |
+
+**Client Index Features**:
+
+-   Stats cards: Total Students, Active Students, Pending Registration
+-   Privacy note (no user list displayed)
+-   Add Student modal with email validation (@tupv.edu.ph)
+-   AJAX form submission with success feedback
+
+**Add Student Flow**:
+
+1. Admin clicks "Add New Student" button
+2. Modal opens with email input field
+3. Validates email ends with @tupv.edu.ph
+4. Generates 8-character temp password (hashed in DB)
+5. Sends invitation email via SendGrid
+6. Shows success confirmation
+
+---
+
+## �📧 Email Configuration (SendGrid)
 
 ```env
 MAIL_MAILER=smtp
@@ -800,4 +899,4 @@ php artisan serve
 
 ---
 
-_Last Updated: January 9, 2026 (Counselor Dashboard Implemented)_
+_Last Updated: January 9, 2026 (Admin Management Implemented)_
