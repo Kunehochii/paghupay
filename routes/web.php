@@ -68,10 +68,8 @@ Route::middleware(['auth', 'role:client'])->group(function () {
 
     // Booking Flow
     Route::prefix('booking')->name('booking.')->group(function () {
-        // Booking Start Page
-        Route::get('/', [BookingController::class, 'index'])->name('index');
-
-        // Step 1: Choose Counselor
+        // Step 1: Choose Counselor (Start button from home goes here)
+        Route::get('/', [BookingController::class, 'chooseCounselor'])->name('index');
         Route::get('/counselors', [BookingController::class, 'chooseCounselor'])->name('choose-counselor');
         Route::post('/counselors', [BookingController::class, 'selectCounselor'])->name('select-counselor');
 
