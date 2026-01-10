@@ -614,9 +614,9 @@
         setInterval(updateTimer, 1000);
     });
 
-    // Select date from calendar
+    // Select date from calendar - navigate to day view
     function selectDate(date) {
-        window.location.href = `{{ route('counselor.appointments.index') }}?date=${date}`;
+        window.location.href = `{{ route('counselor.appointments.day') }}?date=${date}`;
     }
 
     // Toggle full calendar view

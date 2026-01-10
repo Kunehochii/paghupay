@@ -14,15 +14,18 @@
     
     <style>
         :root {
-            --sidebar-width: 280px;
+            --sidebar-width: 300px;
             --sidebar-collapsed-width: 70px;
-            --counselor-primary: #198754;
-            --counselor-primary-dark: #146c43;
+            --color-primary-bg: #69d297;
+            --color-primary-light: #a7f0ba;
+            --color-secondary: #3d9f9b;
+            --color-secondary-dark: #235675;
+            --color-btn-primary: #3d9f9b;
         }
 
         body {
             min-height: 100vh;
-            background-color: #f8f9fa;
+            background-color: #ffffff;
         }
 
         /* Sidebar Styles */
@@ -32,67 +35,50 @@
             left: 0;
             width: var(--sidebar-width);
             height: 100vh;
-            background: linear-gradient(180deg, var(--counselor-primary) 0%, var(--counselor-primary-dark) 100%);
+            background: white;
             z-index: 1000;
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
         }
 
-        .sidebar-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .sidebar-brand {
-            color: white;
-            font-size: 1.25rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .sidebar-brand:hover {
-            color: rgba(255,255,255,0.9);
-        }
-
-        /* Profile Section */
+        /* Profile Section at Top */
         .sidebar-profile {
             padding: 1.25rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: white;
+            border-bottom: 1px solid #e9ecef;
         }
 
         .profile-dropdown {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.75rem;
+            padding: 0.5rem;
             border-radius: 0.5rem;
-            background: rgba(255,255,255,0.1);
             cursor: pointer;
             transition: background 0.2s;
             text-decoration: none;
-            color: white;
+            color: var(--color-secondary-dark);
         }
 
         .profile-dropdown:hover {
-            background: rgba(255,255,255,0.2);
-            color: white;
+            background: #f8f9fa;
+            color: var(--color-secondary-dark);
         }
 
         .profile-avatar {
-            width: 45px;
-            height: 45px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.2);
+            background: #e9ecef;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.25rem;
-            color: white;
+            color: var(--color-secondary-dark);
             overflow: hidden;
+            border: 2px solid var(--color-secondary);
         }
 
         .profile-avatar img {
@@ -108,31 +94,28 @@
 
         .profile-name {
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 1rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            color: var(--color-secondary-dark);
         }
 
-        .profile-role {
-            font-size: 0.75rem;
-            opacity: 0.8;
-        }
-
-        /* Navigation */
-        .sidebar-nav {
-            flex: 1;
+        /* Navigation Section */
+        .sidebar-nav-wrapper {
+            background: white;
             padding: 1rem 0;
-            overflow-y: auto;
         }
 
-        .nav-section {
-            padding: 0.5rem 1.25rem;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: rgba(255,255,255,0.5);
-            margin-top: 0.5rem;
+        .nav-section-label {
+            padding: 0.75rem 1.25rem 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .sidebar-nav {
+            padding: 0;
         }
 
         .sidebar-nav .nav-link {
@@ -140,27 +123,29 @@
             align-items: center;
             gap: 0.75rem;
             padding: 0.875rem 1.25rem;
-            color: rgba(255,255,255,0.85);
+            color: var(--color-secondary-dark);
             text-decoration: none;
             transition: all 0.2s;
-            border-left: 3px solid transparent;
+            border-left: 4px solid transparent;
+            font-weight: 500;
         }
 
         .sidebar-nav .nav-link:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
+            background: #f8f9fa;
+            color: var(--color-secondary-dark);
         }
 
         .sidebar-nav .nav-link.active {
-            background: rgba(255,255,255,0.15);
-            color: white;
-            border-left-color: white;
+            background: #f0f0f0;
+            color: var(--color-secondary-dark);
+            border-left-color: var(--color-secondary);
         }
 
         .sidebar-nav .nav-link i {
             font-size: 1.25rem;
             width: 24px;
             text-align: center;
+            color: var(--color-secondary-dark);
         }
 
         .nav-badge {
@@ -169,46 +154,174 @@
             padding: 0.25rem 0.5rem;
         }
 
+        /* Sidebar Footer - Secondary Teal Background */
+        .sidebar-footer {
+            flex: 1;
+            background: var(--color-secondary-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .sidebar-footer-content {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .sidebar-footer-content small {
+            color: rgba(255,255,255,0.8);
+        }
+
         /* Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
             min-height: 100vh;
             transition: margin-left 0.3s ease;
-        }
-
-        .content-header {
-            background: white;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background-color: #f5f5f5;
         }
 
         .content-body {
-            padding: 1.5rem;
+            padding: 1.5rem 2rem;
         }
 
         /* Dropdown Menu */
         .sidebar .dropdown-menu {
-            background: #2c3e50;
-            border: none;
+            background: white;
+            border: 1px solid #e9ecef;
             min-width: 200px;
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+            border-radius: 0.5rem;
         }
 
         .sidebar .dropdown-menu .dropdown-item {
-            color: rgba(255,255,255,0.85);
-            padding: 0.5rem 1rem;
+            color: var(--color-secondary-dark);
+            padding: 0.625rem 1rem;
         }
 
         .sidebar .dropdown-menu .dropdown-item:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
+            background: #f8f9fa;
+            color: var(--color-secondary-dark);
+        }
+
+        .sidebar .dropdown-menu .dropdown-item i {
+            color: var(--color-secondary-dark);
         }
 
         .sidebar .dropdown-menu .dropdown-divider {
-            border-color: rgba(255,255,255,0.1);
+            border-color: #e9ecef;
+        }
+
+        /* Search Bar Styles */
+        .search-bar-wrapper {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            max-width: 600px;
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .search-input {
+            padding-left: 2.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+
+        .search-input:focus {
+            background: white;
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 0.2rem rgba(61, 159, 155, 0.15);
+        }
+
+        /* Welcome Banner */
+        .welcome-banner {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 0.5rem;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .welcome-banner h5 {
+            color: var(--color-secondary-dark);
+            margin: 0;
+            font-weight: 500;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-card {
+            background: white;
+            border: 2px solid var(--color-secondary-dark);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            height: 100%;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .dashboard-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .dashboard-card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--color-secondary-dark);
+            margin-bottom: 1rem;
+        }
+
+        .dashboard-card-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--color-secondary-dark);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-card-subtitle {
+            font-size: 0.875rem;
+            color: var(--color-secondary-dark);
+        }
+
+        .dashboard-card-arrow {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .dashboard-card-arrow i {
+            font-size: 1.5rem;
+            color: var(--color-secondary-dark);
+            border: 2px solid var(--color-secondary-dark);
+            border-radius: 50%;
+            padding: 0.5rem;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .card-link:hover {
+            color: inherit;
         }
 
         /* Responsive */
@@ -233,7 +346,7 @@
         /* Mobile Header */
         .mobile-header {
             display: none;
-            background: var(--counselor-primary);
+            background: var(--color-secondary);
             color: white;
             padding: 1rem;
             position: sticky;
@@ -257,27 +370,17 @@
             display: block;
         }
 
-        /* Card Hover Effect */
-        .card-hover {
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
-        }
-
         /* Custom Scrollbar */
         .sidebar-nav::-webkit-scrollbar {
             width: 5px;
         }
 
         .sidebar-nav::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.1);
+            background: #f1f1f1;
         }
 
         .sidebar-nav::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.3);
+            background: #ccc;
             border-radius: 3px;
         }
     </style>
@@ -299,15 +402,7 @@
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
-        <!-- Brand -->
-        <div class="sidebar-header">
-            <a href="{{ route('counselor.dashboard') }}" class="sidebar-brand">
-                <i class="bi bi-heart-pulse"></i>
-                <span>Paghupay</span>
-            </a>
-        </div>
-
-        <!-- Profile Section -->
+        <!-- Profile Section at Top -->
         <div class="sidebar-profile">
             <div class="dropdown">
                 <a href="#" class="profile-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -319,14 +414,11 @@
                         @endif
                     </div>
                     <div class="profile-info">
-                        <div class="profile-name">{{ auth()->user()->name }}</div>
-                        <div class="profile-role">
-                            {{ auth()->user()->counselorProfile->position ?? 'Counselor' }}
-                        </div>
+                        <div class="profile-name">{{ Str::limit(auth()->user()->name, 20) }}</div>
                     </div>
-                    <i class="bi bi-chevron-down"></i>
+                    <i class="bi bi-chevron-down" style="color: var(--color-secondary-dark);"></i>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu">
                     <li>
                         <a class="dropdown-item" href="#">
                             <i class="bi bi-person-circle me-2"></i> My Profile
@@ -345,63 +437,70 @@
             </div>
         </div>
 
-        <!-- Navigation -->
-        <nav class="sidebar-nav">
-            <div class="nav-section">Main Menu</div>
-            
-            <a href="{{ route('counselor.dashboard') }}" 
-               class="nav-link {{ request()->routeIs('counselor.dashboard') ? 'active' : '' }}">
-                <i class="bi bi-speedometer2"></i>
-                <span>Dashboard</span>
-            </a>
+        <!-- Navigation Section (White Background) -->
+        <div class="sidebar-nav-wrapper">
+            <div class="nav-section-label">Primary Menu</div>
+            <nav class="sidebar-nav">
+                <a href="{{ route('counselor.dashboard') }}" 
+                   class="nav-link {{ request()->routeIs('counselor.dashboard') ? 'active' : '' }}">
+                    <i class="bi bi-bar-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
 
-            <a href="{{ route('counselor.appointments.index') }}" 
-               class="nav-link {{ request()->routeIs('counselor.appointments.*') ? 'active' : '' }}">
-                <i class="bi bi-calendar-event"></i>
-                <span>Appointments</span>
-                @php
-                    $pendingCount = \App\Models\Appointment::where('counselor_id', auth()->id())->pending()->count();
-                @endphp
-                @if($pendingCount > 0)
-                    <span class="nav-badge badge bg-warning text-dark">{{ $pendingCount }}</span>
-                @endif
-            </a>
+                <a href="{{ route('counselor.appointments.index') }}" 
+                   class="nav-link {{ request()->routeIs('counselor.appointments.*') ? 'active' : '' }}">
+                    <i class="bi bi-calendar3"></i>
+                    <span>Appointment</span>
+                    @php
+                        $pendingCount = \App\Models\Appointment::where('counselor_id', auth()->id())->pending()->count();
+                    @endphp
+                    @if($pendingCount > 0)
+                        <span class="nav-badge badge bg-warning text-dark">{{ $pendingCount }}</span>
+                    @endif
+                </a>
 
-            <a href="{{ route('counselor.case-logs.index') }}" 
-               class="nav-link {{ request()->routeIs('counselor.case-logs.*') ? 'active' : '' }}">
-                <i class="bi bi-journal-text"></i>
-                <span>Case Logs</span>
-            </a>
+                <a href="{{ route('counselor.case-logs.index') }}" 
+                   class="nav-link {{ request()->routeIs('counselor.case-logs.*') ? 'active' : '' }}">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Case Logs</span>
+                </a>
 
-            <div class="nav-section mt-4">Information</div>
+                <a href="{{ route('counselor.about') }}" 
+                   class="nav-link {{ request()->routeIs('counselor.about') ? 'active' : '' }}">
+                    <i class="bi bi-people"></i>
+                    <span>About us</span>
+                </a>
+            </nav>
+        </div>
 
-            <a href="{{ route('counselor.about') }}" 
-               class="nav-link {{ request()->routeIs('counselor.about') ? 'active' : '' }}">
-                <i class="bi bi-info-circle"></i>
-                <span>About Us</span>
-            </a>
-        </nav>
-
-        <!-- Footer -->
-        <div class="p-3 border-top border-light border-opacity-25">
-            <small class="text-white-50 d-block text-center">
-                © {{ date('Y') }} TUP-V Guidance
-            </small>
+        <!-- Footer Section (Teal Background) -->
+        <div class="sidebar-footer">
+            <div class="sidebar-footer-content">
+                <small>© {{ date('Y') }}. All Rights Reserved</small>
+            </div>
         </div>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
+        {{-- Search Bar --}}
+        <div class="search-bar-wrapper">
+            <div class="search-input-wrapper">
+                <i class="bi bi-search"></i>
+                <input type="text" class="form-control search-input" placeholder="Search">
+            </div>
+        </div>
+
         {{-- Flash Messages --}}
         @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show m-3 mb-0" role="alert">
+        <div class="alert alert-success alert-dismissible fade show mx-4 mt-3 mb-0" role="alert">
             <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         @endif
 
         @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show m-3 mb-0" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show mx-4 mt-3 mb-0" role="alert">
             <i class="bi bi-exclamation-circle me-2"></i>{{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>

@@ -17,9 +17,9 @@ use Illuminate\Support\Facades\Mail;
 class AppointmentController extends Controller
 {
     /**
-     * Display the appointments page with calendar.
+     * Display the full calendar view for appointments.
      */
-    public function index(Request $request)
+    public function calendar(Request $request)
     {
         $counselor = Auth::user();
         $selectedDate = $request->query('date');
@@ -107,6 +107,127 @@ class AppointmentController extends Controller
         // Get all appointments for the visible range
         $appointments = Appointment::with('client')
             ->where('counselor_id', $counselorId)
+            ->whereBetween('scheduled_at', [$startDate, $endDate->endOfDay()])
+            ->orderBy('scheduled_at')
+            ->get()
+            ->groupBy(function ($apt) {
+                return $apt->scheduled_at->format('Y-m-d');
+            });
+
+        $days = [];
+        $currentDate = $startDate->copy();
+
+        while ($currentDate <= $endDate) {
+            $dateKey = $currentDate->format('Y-m-d');
+            $days[] = [
+                'date' => $dateKey,
+                'dayNumber' => $currentDate->day,
+                'isToday' => $currentDate->isToday(),
+                'isCurrentMonth' => $currentDate->month === $month->month,
+                'isWeekend' => $currentDate->isWeekend(),
+                'appointments' => $appointments->get($dateKey, collect()),
+            ];
+            $currentDate->addDay();
+        }
+
+        return $days;
+    }
+
+    /**
+     * Display the day view for appointments (Canva design - Today's Appointments).
+     * Shows only accepted appointments with Start Session and Cancel buttons.
+     */
+    public function dayView(Request $request)
+    {
+        $counselor = Auth::user();
+        $selectedDate = $request->query('date');
+
+        // Parse the selected date or default to today
+        $date = $selectedDate 
+            ? Carbon::parse($selectedDate)
+            : now();
+
+        $isToday = $date->isToday();
+        $displayDate = $date->format('j M Y');
+
+        // Get only accepted appointments for the selected date
+        // Also include appointments with active sessions (in progress)
+        $appointments = Appointment::with(['client', 'caseLog'])
+            ->where('counselor_id', $counselor->id)
+            ->whereDate('scheduled_at', $date)
+            ->where('status', Appointment::STATUS_ACCEPTED)
+            ->orderBy('scheduled_at')
+            ->get();
+
+        return view('counselor.appointments.day', compact(
+            'appointments',
+            'selectedDate',
+            'isToday',
+            'displayDate'
+        ));
+    }
+
+    /**
+     * Display the pending appointments page (Canva design).
+     */
+    public function pending(Request $request)
+    {
+        $counselor = Auth::user();
+        $selectedMonth = $request->query('month');
+
+        // Parse current month for calendar
+        $currentMonth = $selectedMonth 
+            ? Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth()
+            : now()->startOfMonth();
+        
+        $prevMonth = $currentMonth->copy()->subMonth();
+        $nextMonth = $currentMonth->copy()->addMonth();
+
+        // Pending appointments (upcoming only)
+        $pendingAppointments = Appointment::with('client')
+            ->where('counselor_id', $counselor->id)
+            ->pending()
+            ->where('scheduled_at', '>', now())
+            ->orderBy('scheduled_at')
+            ->get();
+
+        // Pending count for current month
+        $pendingCount = Appointment::where('counselor_id', $counselor->id)
+            ->pending()
+            ->whereMonth('scheduled_at', now()->month)
+            ->whereYear('scheduled_at', now()->year)
+            ->count();
+
+        // Build calendar days for pending appointments
+        $calendarDays = $this->buildPendingCalendarDays($currentMonth, $counselor->id);
+
+        return view('counselor.appointments.pending', compact(
+            'pendingAppointments',
+            'pendingCount',
+            'currentMonth',
+            'prevMonth',
+            'nextMonth',
+            'calendarDays'
+        ));
+    }
+
+    /**
+     * Build calendar days array for pending appointments view.
+     */
+    private function buildPendingCalendarDays(Carbon $month, int $counselorId): array
+    {
+        $startOfMonth = $month->copy()->startOfMonth();
+        $endOfMonth = $month->copy()->endOfMonth();
+        
+        // Start from the beginning of the week containing the first day
+        $startDate = $startOfMonth->copy()->startOfWeek(Carbon::SUNDAY);
+        // End at the end of the week containing the last day
+        $endDate = $endOfMonth->copy()->endOfWeek(Carbon::SATURDAY);
+
+        // Get pending appointments for the visible range
+        $appointments = Appointment::with('client')
+            ->where('counselor_id', $counselorId)
+            ->where('status', Appointment::STATUS_PENDING)
             ->whereBetween('scheduled_at', [$startDate, $endDate->endOfDay()])
             ->orderBy('scheduled_at')
             ->get()
@@ -247,7 +368,7 @@ class AppointmentController extends Controller
         }
 
         return redirect()
-            ->route('counselor.appointments.index')
+            ->route('counselor.appointments.day')
             ->with('success', 'Appointment cancelled successfully.');
     }
 
@@ -285,7 +406,7 @@ class AppointmentController extends Controller
         }
 
         return redirect()
-            ->route('counselor.appointments.index', ['today' => true])
+            ->route('counselor.appointments.day')
             ->with('success', 'Session started successfully.');
     }
 

@@ -23,7 +23,7 @@ class DashboardController extends Controller
                 ->count(),
             'today_appointments' => Appointment::where('counselor_id', $counselor->id)
                 ->today()
-                ->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_ACCEPTED])
+                ->where('status', Appointment::STATUS_ACCEPTED)
                 ->count(),
             'completed_sessions' => Appointment::where('counselor_id', $counselor->id)
                 ->where('status', Appointment::STATUS_COMPLETED)
