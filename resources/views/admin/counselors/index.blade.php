@@ -1,103 +1,79 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Counselor Management')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse" style="min-height: calc(100vh - 56px);">
-            <div class="position-sticky pt-3">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link text-white-50" href="{{ route('admin.dashboard') }}">
-                            <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active text-white" href="{{ route('admin.counselors.index') }}">
-                            <i class="bi bi-person-badge me-2"></i>Counselors
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white-50" href="{{ route('admin.clients.index') }}">
-                            <i class="bi bi-people me-2"></i>Students
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-secondary-dark">
+            <i class="bi bi-person-badge me-2"></i>Counselor Management
+        </h1>
+        <a href="{{ route('admin.counselors.create') }}" class="btn btn-paghupay">
+            <i class="bi bi-plus-lg me-1"></i>Add New Counselor
+        </a>
+    </div>
 
-        <!-- Main Content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">
-                    <i class="bi bi-person-badge me-2 text-success"></i>Counselor Management
-                </h1>
-                <a href="{{ route('admin.counselors.create') }}" class="btn btn-success">
-                    <i class="bi bi-plus-lg me-1"></i>Add New Counselor
-                </a>
-            </div>
+    <!-- Flash Messages -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
-            <!-- Flash Messages -->
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-x-circle me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <!-- Stats Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div>
+                    <div class="card-label">Total Counselors</div>
+                    <div class="card-value">{{ $counselors->total() }}</div>
                 </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="bi bi-x-circle me-2"></i>{{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-
-            <!-- Stats Card -->
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm bg-success text-white">
-                        <div class="card-body text-center py-4">
-                            <i class="bi bi-person-badge fs-1 mb-2 d-block"></i>
-                            <h1 class="display-3 fw-bold mb-1">{{ $counselors->total() }}</h1>
-                            <p class="mb-0 opacity-75">Total Counselors</p>
-                        </div>
-                    </div>
+                <div class="card-arrow">
+                    <i class="bi bi-person-badge"></i>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Counselors Table -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-list-ul me-2 text-muted"></i>All Counselors
-                    </h5>
-                </div>
-                <div class="card-body">
-                    @if($counselors->count() > 0)
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width: 60px;"></th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Position</th>
-                                        <th>Device Status</th>
-                                        <th class="text-end">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($counselors as $counselor)
-                                        <tr>
-                                            <td>
-                                                @if($counselor->counselorProfile?->picture_url)
-                                                    <img src="{{ Storage::url($counselor->counselorProfile->picture_url) }}" 
-                                                         alt="{{ $counselor->name }}"
-                                                         class="rounded-circle"
-                                                         style="width: 45px; height: 45px; object-fit: cover;">
-                                                @else
+    <!-- Counselors Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ul me-2 text-muted"></i>All Counselors
+            </h5>
+        </div>
+        <div class="card-body">
+            @if($counselors->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;"></th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Position</th>
+                                <th>Device Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($counselors as $counselor)
+                                <tr>
+                                    <td>
+                                        @if($counselor->counselorProfile?->picture_url)
+                                            <img src="{{ Storage::url($counselor->counselorProfile->picture_url) }}" 
+                                                 alt="{{ $counselor->name }}"
+                                                 class="rounded-circle"
+                                                 style="width: 45px; height: 45px; object-fit: cover;">
+                                        @else
                                                     <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center"
                                                          style="width: 45px; height: 45px;">
                                                         <i class="bi bi-person-fill text-success"></i>
@@ -225,35 +201,11 @@
                             <i class="bi bi-person-badge fs-1 mb-3 d-block"></i>
                             <h5>No Counselors Yet</h5>
                             <p class="mb-3">Get started by adding your first counselor.</p>
-                            <a href="{{ route('admin.counselors.create') }}" class="btn btn-success">
+                            <a href="{{ route('admin.counselors.create') }}" class="btn btn-paghupay">
                                 <i class="bi bi-plus-lg me-1"></i>Add New Counselor
                             </a>
                         </div>
                     @endif
                 </div>
             </div>
-        </main>
-    </div>
-</div>
-
-@push('styles')
-<style>
-    .sidebar {
-        position: fixed;
-        top: 56px;
-        bottom: 0;
-        left: 0;
-        z-index: 100;
-        padding: 0;
-        overflow-x: hidden;
-        overflow-y: auto;
-    }
-    @media (max-width: 767.98px) {
-        .sidebar {
-            position: static;
-            min-height: auto !important;
-        }
-    }
-</style>
-@endpush
 @endsection
