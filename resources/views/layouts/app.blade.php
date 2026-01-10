@@ -15,15 +15,8 @@
     @stack('styles')
 </head>
 <body class="@yield('bodyClass', 'bg-light')">
-    <!-- Navigation -->
-    @auth
-        @unless(View::hasSection('hideNavbar'))
-            @include('layouts.partials.navbar')
-        @endunless
-    @endauth
-
     <!-- Main Content -->
-    <main class="@auth @unless(View::hasSection('hideNavbar')) py-4 @endunless @endauth">
+    <main>
         @yield('content')
     </main>
 
