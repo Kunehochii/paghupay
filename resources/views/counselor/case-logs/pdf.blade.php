@@ -222,17 +222,7 @@
             </div>
             <div class="info-item">
                 <label>Duration</label>
-                <strong>
-                    @if($caseLog->session_duration)
-                        @if($caseLog->session_duration >= 60)
-                            {{ floor($caseLog->session_duration / 60) }} hour(s) {{ $caseLog->session_duration % 60 }} minute(s)
-                        @else
-                            {{ $caseLog->session_duration }} minute(s)
-                        @endif
-                    @else
-                        N/A
-                    @endif
-                </strong>
+                <strong>{{ $caseLog->formatted_duration }}</strong>
             </div>
             <div class="info-item">
                 <label>Counselor</label>

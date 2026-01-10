@@ -38,6 +38,8 @@ class User extends Authenticatable
         'guardian_relationship',
         'guardian_contact',
         'is_active',
+        'agreed_to_confidentiality',
+        'agreed_at',
     ];
 
     /**
@@ -62,6 +64,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'birthdate' => 'date',
             'is_active' => 'boolean',
+            'agreed_to_confidentiality' => 'boolean',
+            'agreed_at' => 'datetime',
         ];
     }
 

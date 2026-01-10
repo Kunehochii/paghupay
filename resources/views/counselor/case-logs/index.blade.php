@@ -41,7 +41,7 @@
         <div class="card border-0 shadow-sm bg-primary bg-opacity-10">
             <div class="card-body text-center py-4">
                 <i class="bi bi-clock-history text-primary" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-0 text-primary">{{ $avgDuration }} min</h3>
+                <h3 class="mt-2 mb-0 text-primary">{{ $avgDuration }}</h3>
                 <small class="text-muted">Avg. Session Duration</small>
             </div>
         </div>
@@ -123,13 +123,7 @@
                             </td>
                             <td>
                                 @if($caseLog->session_duration)
-                                    <span class="badge bg-info">
-                                        @if($caseLog->session_duration >= 60)
-                                            {{ floor($caseLog->session_duration / 60) }}h {{ $caseLog->session_duration % 60 }}m
-                                        @else
-                                            {{ $caseLog->session_duration }}m
-                                        @endif
-                                    </span>
+                                    <span class="badge bg-info">{{ $caseLog->formatted_duration }}</span>
                                 @else
                                     <span class="text-muted">-</span>
                                 @endif

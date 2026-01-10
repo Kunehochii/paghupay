@@ -64,13 +64,7 @@
             <div class="col-md-3 mb-3">
                 <label class="text-muted small d-block">Duration</label>
                 @if($caseLog->session_duration)
-                    <span class="badge bg-info fs-6">
-                        @if($caseLog->session_duration >= 60)
-                            {{ floor($caseLog->session_duration / 60) }}h {{ $caseLog->session_duration % 60 }}m
-                        @else
-                            {{ $caseLog->session_duration }}m
-                        @endif
-                    </span>
+                    <span class="badge bg-info fs-6">{{ $caseLog->formatted_duration }}</span>
                 @else
                     <span class="text-muted">N/A</span>
                 @endif

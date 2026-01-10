@@ -121,7 +121,7 @@
             </div>
             <div class="detail-row">
                 <span class="detail-label">Session Duration</span>
-                <span class="detail-value">{{ $caseLog->session_duration }} minutes</span>
+                <span class="detail-value">{{ $caseLog->formatted_duration }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">Status</span>

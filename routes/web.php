@@ -58,6 +58,10 @@ Route::middleware(['auth', 'role:client'])->group(function () {
     // Student Welcome Page (Landing after login)
     Route::get('/', [BookingController::class, 'welcome'])->name('client.welcome');
 
+    // Confidentiality Agreement
+    Route::get('/agreement', [BookingController::class, 'showAgreement'])->name('client.agreement');
+    Route::post('/agreement', [BookingController::class, 'acceptAgreement'])->name('client.agreement.accept');
+
     // Profile completion/onboarding
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('client.onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'complete'])->name('client.onboarding.complete');

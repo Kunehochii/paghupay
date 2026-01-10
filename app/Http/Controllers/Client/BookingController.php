@@ -23,6 +23,11 @@ class BookingController extends Controller
     {
         $client = Auth::user();
         
+        // Check if user has agreed to confidentiality
+        if (!$client->agreed_to_confidentiality) {
+            return redirect()->route('client.agreement');
+        }
+        
         $upcomingAppointments = Appointment::with('counselor')
             ->where('client_id', $client->id)
             ->upcoming()
@@ -30,6 +35,36 @@ class BookingController extends Controller
             ->get();
 
         return view('client.welcome', compact('upcomingAppointments'));
+    }
+
+    /**
+     * Show the confidentiality agreement page.
+     */
+    public function showAgreement()
+    {
+        $client = Auth::user();
+        
+        // If already agreed, redirect to welcome
+        if ($client->agreed_to_confidentiality) {
+            return redirect()->route('client.welcome');
+        }
+        
+        return view('client.agreement');
+    }
+
+    /**
+     * Accept the confidentiality agreement.
+     */
+    public function acceptAgreement(Request $request)
+    {
+        $client = Auth::user();
+        
+        $client->update([
+            'agreed_to_confidentiality' => true,
+            'agreed_at' => now(),
+        ]);
+        
+        return redirect()->route('client.welcome');
     }
 
     /**

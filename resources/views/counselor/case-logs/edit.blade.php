@@ -44,17 +44,7 @@
             </div>
             <div class="col-md-3">
                 <small class="text-muted d-block">Duration</small>
-                <strong class="text-primary">
-                    @if($caseLog->session_duration)
-                        @if($caseLog->session_duration >= 60)
-                            {{ floor($caseLog->session_duration / 60) }}h {{ $caseLog->session_duration % 60 }}m
-                        @else
-                            {{ $caseLog->session_duration }}m
-                        @endif
-                    @else
-                        N/A
-                    @endif
-                </strong>
+                <strong class="text-primary">{{ $caseLog->formatted_duration }}</strong>
             </div>
         </div>
     </div>

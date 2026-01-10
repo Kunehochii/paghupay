@@ -34,14 +34,17 @@ class CaseLogController extends Controller
             ->whereYear('created_at', now()->year)
             ->count();
 
-        $avgDuration = CaseLog::where('counselor_id', $counselorId)
+        $avgDurationSeconds = CaseLog::where('counselor_id', $counselorId)
             ->whereNotNull('session_duration')
             ->avg('session_duration');
+
+        // Format average duration (stored in seconds)
+        $avgDuration = $this->formatDuration((int) round($avgDurationSeconds ?? 0));
 
         return view('counselor.case-logs.index', [
             'caseLogs' => $caseLogs,
             'thisMonthCount' => $thisMonthCount,
-            'avgDuration' => round($avgDuration ?? 0),
+            'avgDuration' => $avgDuration,
         ]);
     }
 
@@ -280,6 +283,28 @@ class CaseLogController extends Controller
                 ->back()
                 ->withInput()
                 ->with('error', 'Failed to update case log: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Format duration in seconds to human-readable string.
+     */
+    private function formatDuration(int $seconds): string
+    {
+        if ($seconds === 0) {
+            return '0s';
+        }
+
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        $secs = $seconds % 60;
+
+        if ($hours > 0) {
+            return "{$hours}h {$minutes}m";
+        } elseif ($minutes > 0) {
+            return "{$minutes}m {$secs}s";
+        } else {
+            return "{$secs}s";
         }
     }
 }
