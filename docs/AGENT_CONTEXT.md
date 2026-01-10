@@ -456,7 +456,7 @@ use App\Models\CounselorProfile;
 // Admin
 User::create([
     'name' => 'Admin User',
-    'email' => 'admin@tup.edu.ph',
+    'email' => 'admin@tupv.edu.ph',
     'password' => bcrypt('password'),
     'role' => 'admin',
     'is_active' => true,
@@ -465,7 +465,7 @@ User::create([
 // Client (Student)
 User::create([
     'name' => 'Student User',
-    'email' => 'student@tup.edu.ph',
+    'email' => 'student@tupv.edu.ph',
     'password' => bcrypt('password'),
     'role' => 'client',
     'is_active' => true,
@@ -474,7 +474,7 @@ User::create([
 // Counselor (requires profile)
 $counselor = User::create([
     'name' => 'Dr. Maria Santos',
-    'email' => 'counselor@tup.edu.ph',
+    'email' => 'counselor@tupv.edu.ph',
     'password' => bcrypt('password'),
     'role' => 'counselor',
     'is_active' => true,
@@ -801,7 +801,7 @@ MAIL_PORT=587
 MAIL_USERNAME=apikey
 MAIL_PASSWORD=your-sendgrid-api-key
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS="guidance@tup.edu.ph"
+MAIL_FROM_ADDRESS="guidance@tupv.edu.ph"
 ```
 
 ---

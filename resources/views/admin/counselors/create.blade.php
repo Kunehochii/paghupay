@@ -119,7 +119,7 @@
                                                id="email" 
                                                name="email" 
                                                value="{{ old('email') }}"
-                                               placeholder="e.g., counselor@tup.edu.ph"
+                                               placeholder="e.g., counselor@tupv.edu.ph"
                                                required>
                                     </div>
                                     @error('email')

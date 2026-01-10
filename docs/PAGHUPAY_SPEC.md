@@ -670,7 +670,7 @@ $$CounselorController::\*\*class\*\*, 'resetDevice'$$
 
 \<**td**\>Dr. Maria Santos\</**td**\>
 
-\<**td**\>maria.santos@tup.edu.ph\</**td**\>
+\<**td**\>maria.santos@tupv.edu.ph\</**td**\>
 
 \<**td**\>Head Psychologist\</**td**\>
 
