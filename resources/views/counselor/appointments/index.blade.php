@@ -296,7 +296,7 @@
                                     </form>
                                     <button type="button" class="btn btn-outline-danger btn-sm" 
                                             data-bs-toggle="modal" 
-                                            data-bs-target="#cancelModal"
+                                            data-bs-target="#rejectModal"
                                             data-appointment-id="{{ $appointment->id }}"
                                             data-client-name="{{ $appointment->client->name }}">
                                         <i class="bi bi-x-circle"></i>
@@ -478,6 +478,7 @@
                                         @elseif($appointment->status === 'cancelled')
                                             <span class="text-muted small">-</span>
                                         @elseif($appointment->caseLog && $appointment->caseLog->start_time && !$appointment->caseLog->end_time)
+                                            {{-- Session in progress --}}
                                             <div class="d-inline-flex align-items-center">
                                                 <span class="badge bg-dark me-2 session-timer" data-start="{{ $appointment->caseLog->start_time->toISOString() }}">00:00:00</span>
                                                 <form action="{{ route('counselor.appointments.end-session', $appointment->id) }}" method="POST" class="d-inline">
@@ -487,7 +488,23 @@
                                                     </button>
                                                 </form>
                                             </div>
-                                        @else
+                                        @elseif($appointment->status === 'pending')
+                                            {{-- Pending appointment: Show Accept/Decline buttons --}}
+                                            <form action="{{ route('counselor.appointments.accept', $appointment->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="bi bi-check-circle"></i> Accept
+                                                </button>
+                                            </form>
+                                            <button type="button" class="btn btn-sm btn-outline-danger ms-1" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#rejectModal"
+                                                    data-appointment-id="{{ $appointment->id }}"
+                                                    data-client-name="{{ $appointment->client->name }}">
+                                                <i class="bi bi-x-circle"></i> Decline
+                                            </button>
+                                        @elseif($appointment->status === 'accepted')
+                                            {{-- Accepted appointment: Show Start/Cancel buttons --}}
                                             <form action="{{ route('counselor.appointments.start-session', $appointment->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 <button type="submit" class="btn btn-sm btn-success">
@@ -538,6 +555,37 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Appointment</button>
                     <button type="submit" class="btn btn-danger">Cancel Appointment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Reject Modal (for declining pending requests) --}}
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title"><i class="bi bi-x-circle"></i> Decline Appointment Request</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="rejectForm" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <p>You are about to decline the appointment request from <strong id="rejectClientName"></strong>.</p>
+                    <div class="mb-3">
+                        <label for="rejectReason" class="form-label">Reason for Declining <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejectReason" name="reason" rows="3" required 
+                                  placeholder="e.g., Schedule conflict, please book another time slot..."></textarea>
+                    </div>
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        The student will be notified via email and can book a new appointment.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-secondary">Decline Request</button>
                 </div>
             </form>
         </div>
@@ -600,6 +648,19 @@
             
             document.getElementById('cancelClientName').textContent = clientName;
             document.getElementById('cancelForm').action = `/counselor/appointments/${appointmentId}/cancel`;
+        });
+    }
+
+    // Reject modal (for declining pending requests)
+    const rejectModal = document.getElementById('rejectModal');
+    if (rejectModal) {
+        rejectModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const appointmentId = button.getAttribute('data-appointment-id');
+            const clientName = button.getAttribute('data-client-name');
+            
+            document.getElementById('rejectClientName').textContent = clientName;
+            document.getElementById('rejectForm').action = `/counselor/appointments/${appointmentId}/reject`;
         });
     }
 </script>

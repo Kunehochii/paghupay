@@ -114,6 +114,7 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
         Route::prefix('appointments')->name('appointments.')->group(function () {
             Route::get('/', [AppointmentController::class, 'index'])->name('index');
             Route::post('/{appointment}/accept', [AppointmentController::class, 'accept'])->name('accept');
+            Route::post('/{appointment}/reject', [AppointmentController::class, 'reject'])->name('reject');
             Route::post('/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('cancel');
             Route::post('/{appointment}/start-session', [AppointmentController::class, 'startSession'])->name('start-session');
             Route::post('/{appointment}/end-session', [AppointmentController::class, 'endSession'])->name('end-session');

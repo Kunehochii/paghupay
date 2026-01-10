@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Counselor;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AppointmentAccepted;
 use App\Mail\AppointmentCancelled;
+use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
 use App\Models\CancelReason;
 use App\Models\CaseLog;
@@ -148,9 +150,64 @@ class AppointmentController extends Controller
 
         $appointment->update(['status' => Appointment::STATUS_ACCEPTED]);
 
+        // Send acceptance email to client
+        try {
+            Mail::to($appointment->client->email)
+                ->send(new AppointmentAccepted($appointment));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send appointment acceptance email: ' . $e->getMessage());
+        }
+
         return redirect()
             ->back()
-            ->with('success', 'Appointment accepted successfully.');
+            ->with('success', 'Appointment accepted successfully. The student has been notified via email.');
+    }
+
+    /**
+     * Reject a pending appointment.
+     */
+    public function reject(Request $request, Appointment $appointment)
+    {
+        if ($appointment->counselor_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($appointment->status !== Appointment::STATUS_PENDING) {
+            return redirect()
+                ->back()
+                ->with('error', 'This appointment is not pending.');
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        // Update appointment status to cancelled (rejected is effectively cancelled before acceptance)
+        $appointment->update(['status' => Appointment::STATUS_CANCELLED]);
+
+        // Create cancel reason record for tracking
+        CancelReason::create([
+            'appointment_id' => $appointment->id,
+            'cancelled_by' => Auth::id(),
+            'reason' => $validated['reason'],
+            'email_sent' => false,
+        ]);
+
+        // Send rejection email to client
+        try {
+            Mail::to($appointment->client->email)
+                ->send(new AppointmentRejected($appointment, $validated['reason']));
+            
+            // Update email sent flag
+            CancelReason::where('appointment_id', $appointment->id)
+                ->update(['email_sent' => true]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send appointment rejection email: ' . $e->getMessage());
+        }
+
+        return redirect()
+            ->route('counselor.appointments.index')
+            ->with('success', 'Appointment request declined. The student has been notified via email.');
     }
 
     /**
@@ -204,11 +261,11 @@ class AppointmentController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        // Check if appointment is valid for starting a session
-        if (!in_array($appointment->status, [Appointment::STATUS_PENDING, Appointment::STATUS_ACCEPTED])) {
+        // Check if appointment is accepted (must accept before starting session)
+        if ($appointment->status !== Appointment::STATUS_ACCEPTED) {
             return redirect()
                 ->back()
-                ->with('error', 'Cannot start session for this appointment.');
+                ->with('error', 'You must accept the appointment before starting a session.');
         }
 
         // Check if case log already exists
@@ -226,9 +283,6 @@ class AppointmentController extends Controller
             // Update existing case log with start time
             $caseLog->update(['start_time' => now()]);
         }
-
-        // Update appointment status to accepted (in progress)
-        $appointment->update(['status' => Appointment::STATUS_ACCEPTED]);
 
         return redirect()
             ->route('counselor.appointments.index', ['today' => true])
