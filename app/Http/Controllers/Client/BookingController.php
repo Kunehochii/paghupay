@@ -149,12 +149,28 @@ class BookingController extends Controller
      */
     public function selectSchedule(Request $request, User $counselor)
     {
+        // DEBUG: Log incoming request
+        Log::info('=== SELECT SCHEDULE - INCOMING REQUEST ===', [
+            'raw_scheduled_date' => $request->scheduled_date,
+            'raw_time_slot_id' => $request->time_slot_id,
+            'all_input' => $request->all(),
+            'server_now' => now()->toDateTimeString(),
+            'server_today' => today()->toDateString(),
+        ]);
+
         $request->validate([
             'scheduled_date' => 'required|date|after_or_equal:today',
             'time_slot_id' => 'required|exists:time_slots,id',
         ]);
 
         $scheduledDate = Carbon::parse($request->scheduled_date);
+        
+        // DEBUG: Log parsed date
+        Log::info('=== SELECT SCHEDULE - PARSED DATE ===', [
+            'input_date_string' => $request->scheduled_date,
+            'parsed_carbon' => $scheduledDate->toDateTimeString(),
+            'parsed_date_only' => $scheduledDate->toDateString(),
+        ]);
 
         // Check if it's a weekend
         if ($scheduledDate->isWeekend()) {
@@ -182,6 +198,11 @@ class BookingController extends Controller
         $request->session()->put('booking.counselor_id', $counselor->id);
         $request->session()->put('booking.scheduled_date', $request->scheduled_date);
         $request->session()->put('booking.time_slot_id', $request->time_slot_id);
+        
+        // DEBUG: Log session storage
+        Log::info('=== SELECT SCHEDULE - SESSION STORED ===', [
+            'stored_date' => $request->session()->get('booking.scheduled_date'),
+        ]);
 
         return redirect()->route('booking.reason');
     }
@@ -227,11 +248,31 @@ class BookingController extends Controller
         $scheduledDate = $request->session()->get('booking.scheduled_date');
         $timeSlotId = $request->session()->get('booking.time_slot_id');
 
+        // DEBUG: Log session data before creating appointment
+        Log::info('=== STORE APPOINTMENT - SESSION DATA ===', [
+            'counselor_id' => $counselorId,
+            'scheduled_date_from_session' => $scheduledDate,
+            'time_slot_id' => $timeSlotId,
+        ]);
+
         $timeSlot = TimeSlot::findOrFail($timeSlotId);
         $counselor = User::findOrFail($counselorId);
 
+        // DEBUG: Log time slot info
+        Log::info('=== STORE APPOINTMENT - TIME SLOT ===', [
+            'time_slot_start_time' => $timeSlot->start_time,
+            'time_slot_raw' => $timeSlot->getOriginal('start_time'),
+        ]);
+
         // Combine date and time
         $scheduledAt = Carbon::parse($scheduledDate)->setTimeFromTimeString($timeSlot->start_time);
+
+        // DEBUG: Log final scheduled_at
+        Log::info('=== STORE APPOINTMENT - FINAL DATETIME ===', [
+            'input_date' => $scheduledDate,
+            'input_time' => $timeSlot->start_time,
+            'combined_scheduled_at' => $scheduledAt->toDateTimeString(),
+        ]);
 
         $appointment = Appointment::create([
             'client_id' => Auth::id(),
@@ -240,6 +281,13 @@ class BookingController extends Controller
             'scheduled_at' => $scheduledAt,
             'reason' => $validated['reason'],
             'email_sent' => false,
+        ]);
+
+        // DEBUG: Log created appointment
+        Log::info('=== STORE APPOINTMENT - CREATED ===', [
+            'appointment_id' => $appointment->id,
+            'saved_scheduled_at' => $appointment->scheduled_at,
+            'saved_scheduled_at_raw' => $appointment->getOriginal('scheduled_at'),
         ]);
 
         // Send confirmation email

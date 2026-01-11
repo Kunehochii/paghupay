@@ -551,8 +551,53 @@ document.addEventListener('DOMContentLoaded', function() {
         'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
     ];
 
+    // DEBUG: Log initial state
+    console.log('=== CALENDAR INIT ===');
+    console.log('Browser current date:', currentDate);
+    console.log('Browser timezone offset (minutes):', currentDate.getTimezoneOffset());
+
     // Initialize calendar
     renderCalendar();
+
+    // DEBUG: Add form submit listener - intercept and log, then submit via AJAX to see response
+    document.getElementById('scheduleForm').addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent normal submission temporarily
+        
+        const formData = new FormData(this);
+        const formAction = this.action;
+        
+        console.log('=== FORM SUBMITTING ===');
+        console.log('Form action URL:', formAction);
+        console.log('scheduled_date value:', formData.get('scheduled_date'));
+        console.log('time_slot_id value:', formData.get('time_slot_id'));
+        
+        // Submit via fetch to see response
+        fetch(formAction, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            console.log('=== SERVER RESPONSE ===');
+            console.log('Status:', response.status);
+            console.log('Redirect URL:', response.url);
+            
+            // Follow redirect manually
+            if (response.redirected || response.status === 302 || response.status === 200) {
+                console.log('Redirecting to:', response.url);
+                window.location.href = response.url;
+            }
+            return response.text();
+        })
+        .then(html => {
+            console.log('Response body (first 500 chars):', html.substring(0, 500));
+        })
+        .catch(error => {
+            console.error('Submit error:', error);
+        });
+    });
 
     // Month navigation
     document.getElementById('prevMonth').addEventListener('click', function() {
@@ -645,9 +690,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function selectDate(dateString, day) {
+        // DEBUG: Log date selection
+        console.log('=== DATE SELECTED ===');
+        console.log('Day clicked:', day);
+        console.log('Date string generated:', dateString);
+        console.log('Current calendar year:', currentDate.getFullYear());
+        console.log('Current calendar month:', currentDate.getMonth(), '(' + monthNames[currentDate.getMonth()] + ')');
+        
         // Update selection
         selectedDate = dateString;
         scheduledDateInput.value = dateString;
+        
+        // DEBUG: Verify hidden input value
+        console.log('Hidden input value set to:', scheduledDateInput.value);
 
         // Update calendar UI
         document.querySelectorAll('.calendar-day').forEach(btn => {
@@ -669,9 +724,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('noSlotsMessage').style.display = 'none';
         document.getElementById('loadingSlots').style.display = 'block';
 
-        fetch(`/booking/counselor/${counselorId}/slots?date=${date}`)
-            .then(response => response.json())
+        const url = `/booking/counselor/${counselorId}/slots?date=${date}`;
+        console.log('=== FETCHING SLOTS ===');
+        console.log('Request URL:', url);
+
+        fetch(url)
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data:', data);
                 document.getElementById('loadingSlots').style.display = 'none';
                 renderTimeSlots(data);
             })
