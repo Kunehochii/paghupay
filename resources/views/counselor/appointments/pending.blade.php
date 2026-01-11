@@ -260,6 +260,14 @@
         text-transform: uppercase;
     }
 
+    .weekday .weekday-short {
+        display: inline;
+    }
+
+    .weekday .weekday-full {
+        display: none;
+    }
+
     .weekday.weekend {
         color: #bbb;
     }
@@ -298,6 +306,18 @@
         justify-content: center;
     }
 
+    .calendar-day.today .day-number-full {
+        background: var(--color-secondary-dark);
+        color: white;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
     .calendar-day.weekend .day-number {
         color: #bbb;
     }
@@ -310,6 +330,11 @@
         font-size: 0.95rem;
         font-weight: 500;
         color: #333;
+    }
+
+    /* Day header (shown only in full view) */
+    .day-header {
+        display: none;
     }
 
     /* Appointment Dots above the date */
@@ -358,15 +383,110 @@
     }
 
     /* Calendar Full View Mode */
+    .calendar-full-view .appointments-left {
+        display: none;
+    }
+
+    .calendar-full-view .appointments-right {
+        flex: 1;
+        width: 100%;
+    }
+
+    .calendar-full-view .calendar-header {
+        background: white;
+        padding: 20px 30px;
+        border-bottom: none;
+    }
+
+    .calendar-full-view .calendar-month-title {
+        color: #333;
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .calendar-full-view .calendar-nav-btn {
+        color: #333;
+        font-size: 1.2rem;
+    }
+
+    .calendar-full-view .calendar-nav-btn:hover {
+        color: var(--color-secondary);
+    }
+
+    .calendar-full-view .calendar-grid {
+        padding: 20px 30px 30px;
+    }
+
+    .calendar-full-view .calendar-weekdays {
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .calendar-full-view .weekday {
+        font-size: 0.85rem;
+        padding: 10px 0;
+    }
+
+    .calendar-full-view .weekday .weekday-short {
+        display: none;
+    }
+
+    .calendar-full-view .weekday .weekday-full {
+        display: inline;
+    }
+
+    .calendar-full-view .calendar-days {
+        gap: 10px;
+    }
+
     .calendar-full-view .calendar-day {
-        min-height: 70px;
+        min-height: 90px;
         align-items: flex-start;
-        padding: 5px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        justify-content: flex-start;
+    }
+
+    .calendar-full-view .calendar-day:hover:not(.empty) {
+        background: #eef5f5;
+    }
+
+    .calendar-full-view .calendar-day.weekend {
+        background: #fff;
+    }
+
+    .calendar-full-view .calendar-day.other-month {
+        background: #fff;
     }
 
     .calendar-full-view .day-number {
-        align-self: flex-start;
-        margin-bottom: 4px;
+        display: none;
+    }
+
+    .calendar-full-view .day-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        width: 100%;
+        margin-bottom: 6px;
+    }
+
+    .day-number-full {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .calendar-full-view .day-block-icon {
+        display: block;
+        color: #999;
+        font-size: 0.9rem;
+    }
+
+    .day-block-icon {
+        display: none;
     }
 
     .calendar-full-view .appointment-dots {
@@ -378,26 +498,60 @@
         width: 100%;
     }
 
+    .calendar-full-view .view-calendar-wrapper {
+        display: none;
+    }
+
     .appointment-names {
         display: none;
         width: 100%;
     }
 
     .appointment-name {
-        font-size: 0.65rem;
-        background: rgba(61, 159, 155, 0.15);
+        font-size: 0.7rem;
+        background: rgba(61, 159, 155, 0.2);
         color: var(--color-secondary-dark);
-        padding: 2px 4px;
-        border-radius: 3px;
-        margin-bottom: 2px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        margin-bottom: 3px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        border-left: 3px solid var(--color-secondary);
     }
 
     .appointment-more {
-        font-size: 0.6rem;
+        font-size: 0.65rem;
         color: #888;
+    }
+
+    /* Back Button */
+    .btn-back-calendar {
+        display: none;
+        padding: 8px 20px;
+        background-color: var(--color-secondary-dark);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-back-calendar:hover {
+        background-color: #1a4560;
+        color: white;
+    }
+
+    .calendar-full-view .btn-back-calendar {
+        display: inline-block;
+    }
+
+    .calendar-full-view .calendar-nav-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     /* Empty State */
@@ -447,7 +601,7 @@
 <div class="appointments-title">Your Appointments</div>
 
 {{-- Main Card --}}
-<div class="appointments-main-card">
+<div class="appointments-main-card" id="mainCard">
     {{-- Left Section - Pending Stats & Upcoming List --}}
     <div class="appointments-left">
         {{-- Pending Stats --}}
@@ -496,26 +650,31 @@
         <div class="calendar-section" id="calendarCard">
             {{-- Calendar Header --}}
             <div class="calendar-header">
-                <a href="{{ route('counselor.appointments.index', ['month' => $prevMonth->format('Y-m')]) }}" class="calendar-nav-btn">
-                    <i class="bi bi-arrow-left"></i>
-                </a>
-                <span class="calendar-month-title">{{ $currentMonth->format('F') }}</span>
-                <a href="{{ route('counselor.appointments.index', ['month' => $nextMonth->format('Y-m')]) }}" class="calendar-nav-btn">
-                    <i class="bi bi-arrow-right"></i>
-                </a>
+                <div class="calendar-nav-group">
+                    <a href="{{ route('counselor.appointments.index', ['month' => $prevMonth->format('Y-m')]) }}" class="calendar-nav-btn">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </div>
+                <span class="calendar-month-title">{{ strtoupper($currentMonth->format('F Y')) }}</span>
+                <div class="calendar-nav-group">
+                    <a href="{{ route('counselor.appointments.index', ['month' => $nextMonth->format('Y-m')]) }}" class="calendar-nav-btn">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <button type="button" class="btn-back-calendar" id="backCalendarBtn">Back</button>
+                </div>
             </div>
 
             {{-- Calendar Grid --}}
             <div class="calendar-grid">
                 {{-- Weekday Headers --}}
                 <div class="calendar-weekdays">
-                    <div class="weekday weekend">S</div>
-                    <div class="weekday">M</div>
-                    <div class="weekday">T</div>
-                    <div class="weekday">W</div>
-                    <div class="weekday">T</div>
-                    <div class="weekday">F</div>
-                    <div class="weekday weekend">S</div>
+                    <div class="weekday weekend"><span class="weekday-short">S</span><span class="weekday-full">SUN</span></div>
+                    <div class="weekday"><span class="weekday-short">M</span><span class="weekday-full">MON</span></div>
+                    <div class="weekday"><span class="weekday-short">T</span><span class="weekday-full">TUE</span></div>
+                    <div class="weekday"><span class="weekday-short">W</span><span class="weekday-full">WED</span></div>
+                    <div class="weekday"><span class="weekday-short">T</span><span class="weekday-full">THU</span></div>
+                    <div class="weekday"><span class="weekday-short">F</span><span class="weekday-full">FRI</span></div>
+                    <div class="weekday weekend"><span class="weekday-short">S</span><span class="weekday-full">SAT</span></div>
                 </div>
 
                 {{-- Calendar Days --}}
@@ -524,24 +683,32 @@
                         <div class="calendar-day {{ $day['isToday'] ? 'today' : '' }} {{ $day['isWeekend'] ? 'weekend' : '' }} {{ !$day['isCurrentMonth'] ? 'other-month' : '' }} {{ $day['dayNumber'] === null ? 'empty' : '' }}"
                              @if($day['date']) data-date="{{ $day['date'] }}" onclick="selectDate('{{ $day['date'] }}')" @endif>
                             @if($day['dayNumber'])
-                                {{-- Appointment Dots (max 2) --}}
+                                {{-- Appointment Dots (compact view) --}}
                                 <div class="appointment-dots">
                                     @foreach($day['appointments']->take(2) as $apt)
                                         <div class="appointment-dot {{ $apt->status }}"></div>
                                     @endforeach
                                 </div>
+                                {{-- Day Header with number and block icon (full view) --}}
+                                <div class="day-header">
+                                    <span class="day-number-full">{{ str_pad($day['dayNumber'], 2, '0', STR_PAD_LEFT) }}</span>
+                                    @if($day['isWeekend'] || ($day['isCurrentMonth'] && !$day['isToday']))
+                                        <span class="day-block-icon"><i class="bi bi-x-circle"></i></span>
+                                    @endif
+                                </div>
+                                {{-- Day number (compact view) --}}
+                                <span class="day-number">{{ $day['dayNumber'] }}</span>
                                 {{-- Appointment Names for Full View --}}
                                 <div class="appointment-names">
                                     @foreach($day['appointments']->take(2) as $apt)
                                         <div class="appointment-name {{ $apt->status }}">
-                                            {{ Str::limit($apt->client->name, 12) }}
+                                            {{ Str::limit($apt->client->name, 15) }}
                                         </div>
                                     @endforeach
                                     @if($day['appointments']->count() > 2)
                                         <div class="appointment-more">+{{ $day['appointments']->count() - 2 }} more</div>
                                     @endif
                                 </div>
-                                <span class="day-number">{{ $day['dayNumber'] }}</span>
                             @endif
                         </div>
                     @endforeach
@@ -606,16 +773,16 @@
     // View Calendar toggle
     let isFullView = false;
     document.getElementById('viewCalendarBtn').addEventListener('click', function() {
-        const calendarCard = document.getElementById('calendarCard');
-        isFullView = !isFullView;
-        
-        if (isFullView) {
-            calendarCard.classList.add('calendar-full-view');
-            this.textContent = 'Compact View';
-        } else {
-            calendarCard.classList.remove('calendar-full-view');
-            this.textContent = 'View Calendar';
-        }
+        const mainCard = document.getElementById('mainCard');
+        isFullView = true;
+        mainCard.classList.add('calendar-full-view');
+    });
+
+    // Back button to return to pending appointments view
+    document.getElementById('backCalendarBtn').addEventListener('click', function() {
+        const mainCard = document.getElementById('mainCard');
+        isFullView = false;
+        mainCard.classList.remove('calendar-full-view');
     });
 
     // Select date from calendar - navigate to day view
