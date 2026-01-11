@@ -149,13 +149,18 @@ class AppointmentController extends Controller
 
         $isToday = $date->isToday();
         $displayDate = $date->format('j M Y');
+        
+        // Format for title display (e.g., "JANUARY 14'S APPOINTMENTS")
+        $dateTitle = $isToday 
+            ? "Today's Appointments" 
+            : strtoupper($date->format('F j')) . "'S APPOINTMENTS";
 
-        // Get only accepted appointments for the selected date
-        // Also include appointments with active sessions (in progress)
+        // Get both pending and accepted appointments for the selected date
+        // This allows viewing all appointments for any date clicked from calendar
         $appointments = Appointment::with(['client', 'caseLog'])
             ->where('counselor_id', $counselor->id)
             ->whereDate('scheduled_at', $date)
-            ->where('status', Appointment::STATUS_ACCEPTED)
+            ->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_ACCEPTED])
             ->orderBy('scheduled_at')
             ->get();
 
@@ -163,7 +168,8 @@ class AppointmentController extends Controller
             'appointments',
             'selectedDate',
             'isToday',
-            'displayDate'
+            'displayDate',
+            'dateTitle'
         ));
     }
 
@@ -213,6 +219,7 @@ class AppointmentController extends Controller
 
     /**
      * Build calendar days array for pending appointments view.
+     * Shows both pending and accepted appointments on the calendar.
      */
     private function buildPendingCalendarDays(Carbon $month, int $counselorId): array
     {
@@ -224,10 +231,11 @@ class AppointmentController extends Controller
         // End at the end of the week containing the last day
         $endDate = $endOfMonth->copy()->endOfWeek(Carbon::SATURDAY);
 
-        // Get pending appointments for the visible range
+        // Get both pending and accepted appointments for the visible range
+        // This ensures appointments remain visible on calendar after acceptance
         $appointments = Appointment::with('client')
             ->where('counselor_id', $counselorId)
-            ->where('status', Appointment::STATUS_PENDING)
+            ->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_ACCEPTED])
             ->whereBetween('scheduled_at', [$startDate, $endDate->endOfDay()])
             ->orderBy('scheduled_at')
             ->get()

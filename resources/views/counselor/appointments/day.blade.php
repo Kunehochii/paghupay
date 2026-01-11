@@ -1,6 +1,6 @@
 @extends('layouts.counselor')
 
-@section('title', 'Today\'s Appointments')
+@section('title', $dateTitle ?? 'Today\'s Appointments')
 
 @push('styles')
 <style>
@@ -194,6 +194,84 @@
         color: #333;
     }
 
+    /* Pending Appointment Card - Yellow/Orange theme */
+    .pending-appointment-card {
+        background: #fff3cd;
+        border-radius: 15px;
+        padding: 20px 25px;
+        min-width: 350px;
+        max-width: 400px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        border: 2px solid #ffc107;
+    }
+
+    .pending-appointment-card .appointment-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 4px;
+    }
+
+    .pending-appointment-card .appointment-id {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 4px;
+    }
+
+    .pending-appointment-card .appointment-date {
+        font-size: 0.85rem;
+        color: #888;
+    }
+
+    .pending-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: #ffc107;
+        color: #333;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 6px;
+    }
+
+    .btn-accept-pending {
+        padding: 10px 25px;
+        background-color: var(--color-secondary);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-accept-pending:hover {
+        background-color: #358a87;
+        color: white;
+    }
+
+    .btn-reject-pending {
+        padding: 10px 25px;
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-reject-pending:hover {
+        background-color: #c82333;
+        color: white;
+    }
+
     /* Active Session Card */
     .session-active-card {
         background: linear-gradient(135deg, var(--color-secondary-dark), #1a4057);
@@ -320,10 +398,7 @@
     <div class="day-stats">
         <div class="day-stats-left">
             <div class="day-stats-title">
-                Today Appointments
-                @if($selectedDate && !$isToday)
-                    <span class="selected-date-badge">{{ \Carbon\Carbon::parse($selectedDate)->format('M j, Y') }}</span>
-                @endif
+                {{ $dateTitle ?? 'Today Appointments' }}
             </div>
             <div class="day-stats-value">{{ $appointments->count() }}</div>
             <div class="day-stats-subtitle">{{ $displayDate }}</div>
@@ -349,13 +424,36 @@
                             </form>
                         </div>
                     </div>
+                @elseif($appointment->status === 'pending')
+                    {{-- Pending Appointment Card --}}
+                    <div class="pending-appointment-card" data-name="{{ strtolower($appointment->client->name) }}">
+                        <div class="appointment-info">
+                            <div class="appointment-name">{{ $appointment->client->name }}</div>
+                            <div class="appointment-id">{{ $appointment->client->course_year_section ?? 'N/A' }}</div>
+                            <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y \a\t g:i A') }}</div>
+                            <span class="pending-badge">PENDING</span>
+                        </div>
+                        <div class="appointment-actions">
+                            <form action="{{ route('counselor.appointments.accept', $appointment->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn-accept-pending">Accept</button>
+                            </form>
+                            <button type="button" class="btn-reject-pending"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#rejectModal"
+                                    data-appointment-id="{{ $appointment->id }}"
+                                    data-client-name="{{ $appointment->client->name }}">
+                                Reject
+                            </button>
+                        </div>
+                    </div>
                 @else
-                    {{-- Normal Appointment Card --}}
+                    {{-- Accepted Appointment Card --}}
                     <div class="today-appointment-card" data-name="{{ strtolower($appointment->client->name) }}">
                         <div class="appointment-info">
                             <div class="appointment-name">{{ $appointment->client->name }}</div>
                             <div class="appointment-id">{{ $appointment->client->course_year_section ?? 'N/A' }}</div>
-                            <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y') }}</div>
+                            <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y \a\t g:i A') }}</div>
                         </div>
                         <div class="appointment-actions">
                             <form action="{{ route('counselor.appointments.start-session', $appointment->id) }}" method="POST">
@@ -396,13 +494,36 @@
                             </form>
                         </div>
                     </div>
+                @elseif($appointment->status === 'pending')
+                    {{-- Pending Appointment Card --}}
+                    <div class="pending-appointment-card" data-name="{{ strtolower($appointment->client->name) }}">
+                        <div class="appointment-info">
+                            <div class="appointment-name">{{ $appointment->client->name }}</div>
+                            <div class="appointment-id">{{ $appointment->client->course_year_section ?? 'N/A' }}</div>
+                            <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y \a\t g:i A') }}</div>
+                            <span class="pending-badge">PENDING</span>
+                        </div>
+                        <div class="appointment-actions">
+                            <form action="{{ route('counselor.appointments.accept', $appointment->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn-accept-pending">Accept</button>
+                            </form>
+                            <button type="button" class="btn-reject-pending"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#rejectModal"
+                                    data-appointment-id="{{ $appointment->id }}"
+                                    data-client-name="{{ $appointment->client->name }}">
+                                Reject
+                            </button>
+                        </div>
+                    </div>
                 @else
-                    {{-- Normal Appointment Card --}}
+                    {{-- Accepted Appointment Card --}}
                     <div class="today-appointment-card" data-name="{{ strtolower($appointment->client->name) }}">
                         <div class="appointment-info">
                             <div class="appointment-name">{{ $appointment->client->name }}</div>
                             <div class="appointment-id">{{ $appointment->client->course_year_section ?? 'N/A' }}</div>
-                            <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y') }}</div>
+                            <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y \a\t g:i A') }}</div>
                         </div>
                         <div class="appointment-actions">
                             <form action="{{ route('counselor.appointments.start-session', $appointment->id) }}" method="POST">
@@ -426,7 +547,7 @@
         <div class="empty-state">
             <i class="bi bi-calendar-x"></i>
             <h5>No appointments for this day</h5>
-            <p>There are no accepted appointments scheduled.</p>
+            <p>There are no pending or accepted appointments scheduled.</p>
         </div>
     @endif
 </div>
@@ -456,6 +577,37 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Appointment</button>
                     <button type="submit" class="btn btn-danger">Cancel Appointment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Reject Modal (for pending appointments) --}}
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Reject Appointment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="rejectForm" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <p>You are about to reject the appointment request from <strong id="rejectClientName"></strong>.</p>
+                    <div class="mb-3">
+                        <label for="rejectReason" class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejectReason" name="reason" rows="3" required 
+                                  placeholder="e.g., Schedule conflict, please book another time slot..."></textarea>
+                    </div>
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        The student will be notified via email and can book a new appointment.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Appointment</button>
                 </div>
             </form>
         </div>
@@ -507,6 +659,19 @@
             
             document.getElementById('cancelClientName').textContent = clientName;
             document.getElementById('cancelForm').action = `/counselor/appointments/${appointmentId}/cancel`;
+        });
+    }
+
+    // Reject modal (for pending appointments)
+    const rejectModal = document.getElementById('rejectModal');
+    if (rejectModal) {
+        rejectModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const appointmentId = button.getAttribute('data-appointment-id');
+            const clientName = button.getAttribute('data-client-name');
+            
+            document.getElementById('rejectClientName').textContent = clientName;
+            document.getElementById('rejectForm').action = `/counselor/appointments/${appointmentId}/reject`;
         });
     }
 </script>
