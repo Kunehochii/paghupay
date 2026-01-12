@@ -1,9 +1,28 @@
 # Plan: TUPV ID Authentication Migration
 
-> **Version:** 1.0  
-> **Date:** January 11, 2026  
-> **Status:** Draft  
+> **Version:** 1.1  
+> **Date:** January 12, 2026  
+> **Status:** In Progress  
 > **Database Migration:** PostgreSQL → MySQL
+
+---
+
+## ✅ Completed Changes (January 12, 2026)
+
+### Case Logs - appointment_id Now Nullable
+
+**Issue:** Case logs could not be created manually because `appointment_id` was required.
+
+**Fix Applied:**
+
+-   Created migration `2026_01_12_102551_make_appointment_id_nullable_in_case_logs.php`
+-   Updated original migration for fresh installs
+-   Updated documentation (AGENT_CONTEXT.md, PAGHUPAY_SPEC.md)
+
+**Reason:** Case logs can be created in two ways:
+
+1. **From an appointment** - When counselor ends a session, case log is linked to appointment
+2. **Manually** - For walk-in students or sessions without prior appointment
 
 ---
 
@@ -478,5 +497,5 @@ If issues arise:
 
 **Document Prepared By:** AI Assistant  
 **Review Required:** Project Lead  
-**Approved By:** **********\_\_\_**********  
-**Approval Date:** **********\_\_\_**********
+**Approved By:** ****\*\*****\_\_\_****\*\*****  
+**Approval Date:** ****\*\*****\_\_\_****\*\*****

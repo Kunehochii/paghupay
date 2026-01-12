@@ -154,19 +154,24 @@ Extension table for users with role: counselor.
 
 **Security Note:** Fields marked **\[Encrypted\]** must use application-level encryption (AES-256).
 
-| Column           | Type      | Nullable | Description                       |
-| :--------------- | :-------- | :------- | :-------------------------------- |
-| id               | BIGSERIAL | NO       | Primary Key                       |
-| case_log_id      | VARCHAR   | NO       | Format: TUPV-{UUID}               |
-| appointment_id   | BIGINT    | NO       | FK \-\> appointments.id           |
-| counselor_id     | BIGINT    | NO       | FK \-\> users.id                  |
-| client_id        | BIGINT    | NO       | FK \-\> users.id                  |
-| start_time       | TIMESTAMP | YES      | When session started              |
-| end_time         | TIMESTAMP | YES      | When session ended                |
-| session_duration | INTEGER   | YES      | Minutes                           |
-| progress_report  | TEXT      | YES      | **\[Encrypted\]** Session notes   |
-| additional_notes | TEXT      | YES      | **\[Encrypted\]** Recommendations |
-| created_at       | TIMESTAMP | NO       |                                   |
+| Column           | Type      | Nullable | Description                                                      |
+| :--------------- | :-------- | :------- | :--------------------------------------------------------------- |
+| id               | BIGSERIAL | NO       | Primary Key                                                      |
+| case_log_id      | VARCHAR   | NO       | Format: TUPV-{UUID}                                              |
+| appointment_id   | BIGINT    | YES      | FK \-\> appointments.id (nullable - can be created without appt) |
+| counselor_id     | BIGINT    | NO       | FK \-\> users.id                                                 |
+| client_id        | BIGINT    | NO       | FK \-\> users.id                                                 |
+| start_time       | TIMESTAMP | YES      | When session started                                             |
+| end_time         | TIMESTAMP | YES      | When session ended                                               |
+| session_duration | INTEGER   | YES      | Seconds                                                          |
+| progress_report  | TEXT      | YES      | **\[Encrypted\]** Session notes                                  |
+| additional_notes | TEXT      | YES      | **\[Encrypted\]** Recommendations                                |
+| created_at       | TIMESTAMP | NO       |                                                                  |
+
+> **Note:** `appointment_id` is nullable because case logs can be created:
+>
+> 1. **From an appointment**: When a counselor ends a session from an appointment, the case log is linked to that appointment.
+> 2. **Manually**: Counselors can create case logs for walk-in students or sessions without a prior appointment.
 
 ### **1.5 Treatment Goals Table (treatment_goals)**
 

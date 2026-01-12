@@ -273,7 +273,8 @@ class CaseLogController extends Controller
             ]);
 
             // Check if this is the first save (appointment not yet completed)
-            $isFirstSave = $caseLog->appointment->status !== Appointment::STATUS_COMPLETED;
+            // Only applicable if case log has an associated appointment
+            $isFirstSave = $caseLog->appointment && $caseLog->appointment->status !== Appointment::STATUS_COMPLETED;
 
             // Delete old goals and activities (we'll recreate them)
             $caseLog->treatmentGoals()->each(function ($goal) {
@@ -301,13 +302,15 @@ class CaseLogController extends Controller
                 }
             }
 
-            // If first save, mark appointment as completed and send email
-            if ($isFirstSave) {
+            // If first save and has appointment, mark appointment as completed and send email
+            if ($isFirstSave && $caseLog->appointment) {
                 $caseLog->appointment->update(['status' => Appointment::STATUS_COMPLETED]);
 
                 try {
-                    Mail::to($caseLog->appointment->client->email)
-                        ->send(new AppointmentCompleted($caseLog->appointment, $caseLog));
+                    if ($caseLog->appointment->client && $caseLog->appointment->client->email) {
+                        Mail::to($caseLog->appointment->client->email)
+                            ->send(new AppointmentCompleted($caseLog->appointment, $caseLog));
+                    }
                 } catch (\Exception $e) {
                     \Log::error('Failed to send completion email: ' . $e->getMessage());
                 }
