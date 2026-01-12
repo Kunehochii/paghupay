@@ -398,11 +398,8 @@
 
                     <!-- Links -->
                     <div class="login-links">
-                        <p class="mb-0 text-muted small">
-                            <a href="{{ route('login') }}">Student Login</a>
-                            <span class="mx-2">|</span>
-                            <a href="{{ route('admin.login') }}">Admin Login</a>
-                        </p>
+                        {{-- Other login links removed for security --}}
+                        {{-- Access other login pages via direct URLs only --}}
                     </div>
                 </div>
             </div>

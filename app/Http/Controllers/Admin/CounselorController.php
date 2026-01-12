@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\CounselorInvitation;
 use App\Models\Appointment;
 use App\Models\CaseLog;
 use App\Models\CounselorProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -75,11 +77,27 @@ class CounselorController extends Controller
             'device_token' => null, // Set on first login
         ]);
 
-        // TODO: Send email with temp password via SendGrid
+        // Send email with temp password
+        $emailSent = false;
+        try {
+            Mail::to($user->email)->send(new CounselorInvitation(
+                $user->name,
+                $user->email,
+                $tempPassword,
+                $validated['position']
+            ));
+            $emailSent = true;
+        } catch (\Exception $e) {
+            \Log::error('Failed to send counselor invitation email: ' . $e->getMessage());
+        }
+
+        $message = $emailSent
+            ? "Counselor {$user->name} created successfully. Invitation email sent to {$user->email}."
+            : "Counselor {$user->name} created successfully. Email delivery failed. Temporary password: {$tempPassword}";
 
         return redirect()
             ->route('admin.counselors.index')
-            ->with('success', "Counselor {$user->name} created successfully. Temporary password: {$tempPassword}");
+            ->with($emailSent ? 'success' : 'warning', $message);
     }
 
     /**

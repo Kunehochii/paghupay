@@ -379,15 +379,8 @@
 
                     <!-- Links -->
                     <div class="login-links">
-                        <p class="mb-2">
-                            Don't have an account? 
-                            <a href="{{ route('register') }}">Register here</a>
-                        </p>
-                        <p class="mb-0 text-muted small">
-                            <a href="{{ route('counselor.login') }}">Counselor Login</a>
-                            <span class="mx-2">|</span>
-                            <a href="{{ route('admin.login') }}">Admin Login</a>
-                        </p>
+                        {{-- Registration and other login links removed for security --}}
+                        {{-- Access counselor/admin login pages via direct URLs only --}}
                     </div>
                 </div>
             </div>

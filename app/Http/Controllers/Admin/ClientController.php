@@ -135,27 +135,26 @@ class ClientController extends Controller
     }
 
     /**
-     * Search for students by TUPV ID, email, or name.
+     * Search for students by TUPV ID only.
      * Returns matching students for delete selection.
      */
     public function search(Request $request)
     {
         $query = trim($request->get('q', ''));
         
-        if (strlen($query) < 2) {
+        // Normalize the query - convert to uppercase for TUPV ID format
+        $query = strtoupper($query);
+        
+        if (strlen($query) < 4) {
             return response()->json([
                 'success' => false,
-                'message' => 'Please enter at least 2 characters to search.',
+                'message' => 'Please enter at least 4 characters (e.g., TUPV or the year like 24).',
                 'results' => []
             ]);
         }
 
         $students = User::where('role', 'client')
-            ->where(function ($q) use ($query) {
-                $q->where('tupv_id', 'ILIKE', "%{$query}%")
-                  ->orWhere('email', 'ILIKE', "%{$query}%")
-                  ->orWhere('name', 'ILIKE', "%{$query}%");
-            })
+            ->where('tupv_id', 'LIKE', "%{$query}%")
             ->select(['id', 'tupv_id', 'name', 'email', 'is_active', 'created_at'])
             ->orderBy('tupv_id')
             ->limit(10)

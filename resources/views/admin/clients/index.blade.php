@@ -204,20 +204,20 @@
             <div class="modal-body">
                 <!-- Search Section -->
                 <div class="mb-4">
-                    <label for="studentSearch" class="form-label">Search Student</label>
+                    <label for="studentSearch" class="form-label">Search by TUPV ID</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" 
                                class="form-control" 
                                id="studentSearch" 
-                               placeholder="Enter TUPV ID, email, or name..."
+                               placeholder="Enter TUPV ID (e.g., TUPV-24-0001)"
                                autocomplete="off">
                         <button type="button" class="btn btn-outline-secondary" id="searchBtn">
                             Search
                         </button>
                     </div>
                     <div class="form-text">
-                        <i class="bi bi-info-circle me-1"></i>Search for the student you want to delete (minimum 2 characters)
+                        <i class="bi bi-info-circle me-1"></i>Search by TUPV ID only (minimum 4 characters, e.g., "TUPV" or "24-00")
                     </div>
                 </div>
 
@@ -446,9 +446,9 @@ const searchLoading = document.getElementById('searchLoading');
 
 // Search function
 function searchStudents() {
-    const query = studentSearch.value.trim();
+    const query = studentSearch.value.trim().toUpperCase();
     
-    if (query.length < 2) {
+    if (query.length < 4) {
         searchResults.classList.add('d-none');
         noResults.classList.add('d-none');
         return;
