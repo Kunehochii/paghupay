@@ -14,9 +14,14 @@ class StudentInvitation extends Mailable
     use Queueable, SerializesModels;
 
     /**
+     * The student's TUPV ID.
+     */
+    public string $tupvId;
+
+    /**
      * The student's email address.
      */
-    public string $email;
+    public ?string $email;
 
     /**
      * The temporary password.
@@ -26,8 +31,9 @@ class StudentInvitation extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(string $email, string $tempPassword)
+    public function __construct(string $tupvId, ?string $email, string $tempPassword)
     {
+        $this->tupvId = $tupvId;
         $this->email = $email;
         $this->tempPassword = $tempPassword;
     }
@@ -50,6 +56,7 @@ class StudentInvitation extends Mailable
         return new Content(
             view: 'emails.student-invitation',
             with: [
+                'tupvId' => $this->tupvId,
                 'email' => $this->email,
                 'tempPassword' => $this->tempPassword,
                 'loginUrl' => route('login'),

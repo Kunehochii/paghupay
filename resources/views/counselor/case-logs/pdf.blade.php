@@ -202,6 +202,10 @@
         <div class="section-title">Session Information</div>
         <div class="info-grid">
             <div class="info-item">
+                <label>TUPV ID</label>
+                <strong>{{ $caseLog->client->tupv_id ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
                 <label>Student Name</label>
                 <strong>{{ $caseLog->client->name }}</strong>
             </div>

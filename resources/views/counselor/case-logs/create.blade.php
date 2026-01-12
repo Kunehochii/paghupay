@@ -372,30 +372,45 @@
     <div class="row">
         {{-- Full Width: Main Scrollable Card --}}
         <div class="col-12 col-lg-10 col-xl-9 mx-auto">
-            {{-- Student Selection (Above scrollable card) --}}
+            {{-- Student TUPV ID Input (Above scrollable card) --}}
             <div class="mb-3">
-                <label for="client_id" class="form-label">Select Student <span class="text-danger">*</span></label>
-                <select class="form-select @error('client_id') is-invalid @enderror" id="client_id" name="client_id" required>
-                    <option value="">-- Select a student --</option>
-                    @foreach($clients as $client)
-                        <option value="{{ $client->id }}" 
-                                data-tupv-id="{{ $client->course_year_section ?? 'N/A' }}"
-                                {{ old('client_id') == $client->id ? 'selected' : '' }}>
-                            {{ $client->name }} 
-                            @if($client->course_year_section) - {{ $client->course_year_section }} @endif
-                        </option>
-                    @endforeach
-                </select>
-                @error('client_id')
-                    <div class="invalid-feedback">{{ $message }}</div>
+                <label for="tupv_id" class="form-label">Student TUPV ID <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                    <input type="text" 
+                           class="form-control @error('tupv_id') is-invalid @enderror" 
+                           id="tupv_id" 
+                           name="tupv_id" 
+                           value="{{ old('tupv_id') }}"
+                           placeholder="TUPV-XX-XXXX"
+                           pattern="TUPV-\d{2}-\d{4}"
+                           required>
+                    <button type="button" class="btn btn-outline-secondary" id="validateTupvIdBtn">
+                        <i class="bi bi-search"></i> Verify
+                    </button>
+                </div>
+                <div class="form-text">
+                    <i class="bi bi-info-circle me-1"></i>Format: TUPV-XX-XXXX (e.g., TUPV-24-0001)
+                </div>
+                @error('tupv_id')
+                    <div class="text-danger small mt-1">{{ $message }}</div>
                 @enderror
+                <div id="studentPreview" class="mt-2 d-none">
+                    <span class="badge bg-success p-2">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Student Found: <span id="studentName"></span>
+                    </span>
+                </div>
+                <div id="studentError" class="text-danger small mt-2 d-none">
+                    <i class="bi bi-x-circle me-1"></i>Student not found or not active.
+                </div>
             </div>
 
             {{-- Main Scrollable Case Log Card --}}
             <div class="case-log-container">
                 {{-- Student ID Header --}}
                 <div class="student-id-header">
-                    TUPV ID: <span id="displayTupvId">Select a student</span>
+                    TUPV ID: <span id="displayTupvId">Enter TUPV ID above</span>
                 </div>
 
                 {{-- Progress Report and Additional Info Row --}}
@@ -472,12 +487,100 @@
 @push('scripts')
 <script>
     let goalIndex = 0;
+    let validatedStudent = null;
 
-    // Student selection - Update TUPV ID display
-    document.getElementById('client_id').addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        const tupvId = selectedOption.dataset.tupvId || 'N/A';
-        document.getElementById('displayTupvId').textContent = this.value ? tupvId : 'Select a student';
+    // TUPV ID Validation
+    const tupvIdInput = document.getElementById('tupv_id');
+    const validateBtn = document.getElementById('validateTupvIdBtn');
+    const studentPreview = document.getElementById('studentPreview');
+    const studentName = document.getElementById('studentName');
+    const studentError = document.getElementById('studentError');
+    const displayTupvId = document.getElementById('displayTupvId');
+
+    function validateTupvId() {
+        const tupvId = tupvIdInput.value.toUpperCase().trim();
+        
+        // Check format first
+        const pattern = /^TUPV-\d{2}-\d{4}$/;
+        if (!pattern.test(tupvId)) {
+            studentPreview.classList.add('d-none');
+            studentError.classList.remove('d-none');
+            studentError.innerHTML = '<i class="bi bi-x-circle me-1"></i>Invalid TUPV ID format. Use TUPV-XX-XXXX';
+            displayTupvId.textContent = 'Enter valid TUPV ID';
+            validatedStudent = null;
+            return;
+        }
+
+        // Show loading
+        validateBtn.disabled = true;
+        validateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        fetch('{{ route("counselor.case-logs.validate-tupv-id") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ tupv_id: tupvId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                validatedStudent = data.client;
+                studentName.textContent = data.client.name;
+                studentPreview.classList.remove('d-none');
+                studentError.classList.add('d-none');
+                displayTupvId.textContent = data.client.tupv_id;
+                tupvIdInput.value = data.client.tupv_id; // Ensure uppercase
+            } else {
+                studentPreview.classList.add('d-none');
+                studentError.classList.remove('d-none');
+                studentError.innerHTML = '<i class="bi bi-x-circle me-1"></i>' + (data.message || 'Student not found');
+                displayTupvId.textContent = 'Student not found';
+                validatedStudent = null;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            studentPreview.classList.add('d-none');
+            studentError.classList.remove('d-none');
+            studentError.innerHTML = '<i class="bi bi-x-circle me-1"></i>Error validating TUPV ID';
+            validatedStudent = null;
+        })
+        .finally(() => {
+            validateBtn.disabled = false;
+            validateBtn.innerHTML = '<i class="bi bi-search"></i> Verify';
+        });
+    }
+
+    // Validate on button click
+    validateBtn.addEventListener('click', validateTupvId);
+
+    // Validate on Enter key
+    tupvIdInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            validateTupvId();
+        }
+    });
+
+    // Auto-uppercase and clear validation on change
+    tupvIdInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+        studentPreview.classList.add('d-none');
+        studentError.classList.add('d-none');
+        validatedStudent = null;
+    });
+
+    // Prevent form submission if student not validated
+    document.getElementById('caseLogForm').addEventListener('submit', function(e) {
+        if (!validatedStudent) {
+            e.preventDefault();
+            alert('Please verify the student TUPV ID first by clicking the "Verify" button.');
+            tupvIdInput.focus();
+            return false;
+        }
     });
 
     // Add a new goal row

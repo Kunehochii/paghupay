@@ -106,18 +106,35 @@
                 @csrf
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="email" class="form-label">Student Email Address <span class="text-danger">*</span></label>
+                        <label for="tupv_id" class="form-label">TUPV ID <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="tupv_id" 
+                                   name="tupv_id" 
+                                   placeholder="TUPV-XX-XXXX"
+                                   pattern="TUPV-\d{2}-\d{4}"
+                                   required>
+                        </div>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>Format: TUPV-XX-XXXX (e.g., TUPV-24-0001)
+                        </div>
+                        <div id="tupvIdError" class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Student Email Address <small class="text-muted">(Optional)</small></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                             <input type="email" 
                                    class="form-control" 
                                    id="email" 
                                    name="email" 
-                                   placeholder="student@tupv.edu.ph"
-                                   required>
+                                   placeholder="student@tupv.edu.ph">
                         </div>
                         <div class="form-text">
-                            <i class="bi bi-info-circle me-1"></i>Only @tupv.edu.ph email addresses are accepted.
+                            <i class="bi bi-info-circle me-1"></i>If provided, an invitation email will be sent automatically.
                         </div>
                         <div id="emailError" class="invalid-feedback"></div>
                     </div>
@@ -127,15 +144,16 @@
                         <strong>What happens next:</strong>
                         <ul class="mb-0 mt-2">
                             <li>A temporary password will be generated</li>
-                            <li>An invitation email will be sent to the student</li>
-                            <li>The student can register using the temporary password</li>
+                            <li>If email provided: invitation email will be sent</li>
+                            <li>If no email: you'll receive the temp password to share manually</li>
+                            <li>The student can login using their TUPV ID and password</li>
                         </ul>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-paghupay" id="submitBtn">
-                        <i class="bi bi-send me-1"></i>Send Invitation
+                        <i class="bi bi-person-plus me-1"></i>Create Student
                     </button>
                 </div>
             </form>
@@ -151,10 +169,15 @@
                 <div class="mb-4">
                     <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
                 </div>
-                <h4 class="mb-3">Invitation Sent!</h4>
-                <p class="text-muted mb-4" id="successMessage">
-                    An email with login credentials has been sent.
+                <h4 class="mb-3">Student Created!</h4>
+                <p class="text-muted mb-2" id="successMessage">
+                    Student account has been created successfully.
                 </p>
+                <div id="tempPasswordDisplay" class="d-none alert alert-warning text-start mb-4">
+                    <strong><i class="bi bi-key me-1"></i>Temporary Password:</strong>
+                    <code id="tempPasswordValue" class="fs-5 d-block mt-2"></code>
+                    <small class="text-muted d-block mt-2">Please share this password securely with the student.</small>
+                </div>
                 <button type="button" class="btn btn-paghupay" data-bs-dismiss="modal" onclick="location.reload()">
                     Done
                 </button>
@@ -170,24 +193,35 @@ document.getElementById('addStudentForm').addEventListener('submit', function(e)
     
     const form = this;
     const submitBtn = document.getElementById('submitBtn');
+    const tupvIdInput = document.getElementById('tupv_id');
     const emailInput = document.getElementById('email');
+    const tupvIdError = document.getElementById('tupvIdError');
     const emailError = document.getElementById('emailError');
     
-    // Validate email domain
-    const email = emailInput.value.toLowerCase();
-    // Allow @tupv.edu.ph (production) and @gmail.com (testing)
-    if (!email.endsWith('@tupv.edu.ph') && !email.endsWith('@gmail.com')) {
+    // Validate TUPV ID format
+    const tupvId = tupvIdInput.value.toUpperCase();
+    const tupvIdPattern = /^TUPV-\d{2}-\d{4}$/;
+    if (!tupvIdPattern.test(tupvId)) {
+        tupvIdInput.classList.add('is-invalid');
+        tupvIdError.textContent = 'TUPV ID must be in format TUPV-XX-XXXX (e.g., TUPV-24-0001)';
+        return;
+    }
+    
+    // Validate email domain if provided
+    const email = emailInput.value.toLowerCase().trim();
+    if (email && !email.endsWith('@tupv.edu.ph') && !email.endsWith('@gmail.com')) {
         emailInput.classList.add('is-invalid');
         emailError.textContent = 'Only @tupv.edu.ph email addresses are allowed.';
         return;
     }
     
     // Clear validation state
+    tupvIdInput.classList.remove('is-invalid');
     emailInput.classList.remove('is-invalid');
     
     // Show loading state
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...';
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
     
     // Submit via AJAX
     fetch(form.action, {
@@ -197,7 +231,10 @@ document.getElementById('addStudentForm').addEventListener('submit', function(e)
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json'
         },
-        body: JSON.stringify({ email: email })
+        body: JSON.stringify({ 
+            tupv_id: tupvId,
+            email: email || null 
+        })
     })
     .then(response => response.json())
     .then(data => {
@@ -205,28 +242,54 @@ document.getElementById('addStudentForm').addEventListener('submit', function(e)
             // Hide add modal
             bootstrap.Modal.getInstance(document.getElementById('addStudentModal')).hide();
             
-            // Update success message and show success modal
-            document.getElementById('successMessage').textContent = 
-                `An email with login credentials has been sent to ${data.email}.`;
+            // Update success message
+            let message = `Student account created for TUPV ID: ${data.tupv_id}`;
+            if (data.email_sent) {
+                message += `. Invitation email sent to ${data.email}.`;
+            }
+            document.getElementById('successMessage').textContent = message;
+            
+            // Show temp password if no email was provided
+            const tempPasswordDisplay = document.getElementById('tempPasswordDisplay');
+            if (data.temp_password) {
+                document.getElementById('tempPasswordValue').textContent = data.temp_password;
+                tempPasswordDisplay.classList.remove('d-none');
+            } else {
+                tempPasswordDisplay.classList.add('d-none');
+            }
+            
             new bootstrap.Modal(document.getElementById('successModal')).show();
         } else {
             // Show error
-            emailInput.classList.add('is-invalid');
-            emailError.textContent = data.message || 'An error occurred. Please try again.';
+            if (data.errors && data.errors.tupv_id) {
+                tupvIdInput.classList.add('is-invalid');
+                tupvIdError.textContent = data.errors.tupv_id[0];
+            }
+            if (data.errors && data.errors.email) {
+                emailInput.classList.add('is-invalid');
+                emailError.textContent = data.errors.email[0];
+            }
+            if (!data.errors) {
+                tupvIdInput.classList.add('is-invalid');
+                tupvIdError.textContent = data.message || 'An error occurred. Please try again.';
+            }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        emailInput.classList.add('is-invalid');
-        emailError.textContent = 'An error occurred. Please try again.';
+        tupvIdInput.classList.add('is-invalid');
+        tupvIdError.textContent = 'An error occurred. Please try again.';
     })
     .finally(() => {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="bi bi-send me-1"></i>Send Invitation';
+        submitBtn.innerHTML = '<i class="bi bi-person-plus me-1"></i>Create Student';
     });
 });
 
 // Clear validation on input
+document.getElementById('tupv_id').addEventListener('input', function() {
+    this.classList.remove('is-invalid');
+});
 document.getElementById('email').addEventListener('input', function() {
     this.classList.remove('is-invalid');
 });

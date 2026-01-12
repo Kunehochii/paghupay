@@ -193,7 +193,7 @@
         .form-floating-custom .input-icon {
             position: absolute;
             left: 18px;
-            top: 50%;
+            top: 35%;
             transform: translateY(-50%);
             color: #9e9e9e;
             font-size: 1.1rem;
@@ -320,7 +320,7 @@
 
                     <!-- Title -->
                     <h2 class="login-title">Student Login</h2>
-                    <p class="login-subtitle">Enter your credentials to access your account.</p>
+                    <p class="login-subtitle">Enter your TUPV ID and password to access your account.</p>
 
                     <!-- Alerts -->
                     @if (session('error'))
@@ -340,16 +340,18 @@
                         @csrf
 
                         <div class="form-floating-custom">
-                            <i class="bi bi-envelope input-icon"></i>
-                            <input type="email" 
-                                   class="form-control @error('email') is-invalid @enderror" 
-                                   id="email" 
-                                   name="email" 
-                                   value="{{ old('email') }}" 
-                                   placeholder="TUPV ID"
+                            <i class="bi bi-person-badge input-icon"></i>
+                            <input type="text" 
+                                   class="form-control @error('tupv_id') is-invalid @enderror" 
+                                   id="tupv_id" 
+                                   name="tupv_id" 
+                                   value="{{ old('tupv_id') }}" 
+                                   placeholder="TUPV-XX-XXXX"
+                                   pattern="TUPV-\d{2}-\d{4}"
                                    required 
                                    autofocus>
-                            @error('email')
+                            <small class="text-muted ms-2" style="font-size: 0.75rem;">Format: TUPV-XX-XXXX</small>
+                            @error('tupv_id')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
                         </div>

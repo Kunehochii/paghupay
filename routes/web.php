@@ -125,6 +125,7 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
         Route::prefix('case-logs')->name('case-logs.')->group(function () {
             Route::get('/', [CaseLogController::class, 'index'])->name('index');
             Route::get('/create', [CaseLogController::class, 'create'])->name('create');
+            Route::post('/validate-tupv-id', [CaseLogController::class, 'validateTupvId'])->name('validate-tupv-id');
             Route::post('/store', [CaseLogController::class, 'store'])->name('store');
             Route::get('/{caseLog}', [CaseLogController::class, 'show'])->name('show');
             Route::get('/{caseLog}/edit', [CaseLogController::class, 'edit'])->name('edit');

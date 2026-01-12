@@ -153,7 +153,7 @@
                         @foreach($caseLogs as $index => $caseLog)
                         <tr>
                             <td>{{ $caseLog->created_at->format('m/d/Y') }}</td>
-                            <td>{{ $caseLog->case_log_id }}</td>
+                            <td>{{ $caseLog->client->tupv_id ?? 'N/A' }}</td>
                             <td>{{ str_pad($caseLogs->total() - (($caseLogs->currentPage() - 1) * $caseLogs->perPage()) - $index, 3, '0', STR_PAD_LEFT) }}</td>
                             <td>
                                 @if($caseLog->session_duration)

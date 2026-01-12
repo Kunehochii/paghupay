@@ -174,7 +174,7 @@
 
         <!-- Title -->
         <h2 class="login-title">Admin Login</h2>
-        <p class="login-subtitle">Enter your credentials to access the admin portal.</p>
+        <p class="login-subtitle">Enter your Admin ID and password to access the admin portal.</p>
 
         <!-- Alerts -->
         @if (session('error'))
@@ -194,16 +194,16 @@
             @csrf
 
             <div class="form-floating-custom">
-                <i class="bi bi-envelope input-icon"></i>
-                <input type="email" 
-                       class="form-control @error('email') is-invalid @enderror" 
-                       id="email" 
-                       name="email" 
-                       value="{{ old('email') }}" 
-                       placeholder="Email Address"
+                <i class="bi bi-shield-lock input-icon"></i>
+                <input type="text" 
+                       class="form-control @error('admin_id') is-invalid @enderror" 
+                       id="admin_id" 
+                       name="admin_id" 
+                       value="{{ old('admin_id') }}" 
+                       placeholder="Admin ID"
                        required 
                        autofocus>
-                @error('email')
+                @error('admin_id')
                     <div class="text-danger small mt-1">{{ $message }}</div>
                 @enderror
             </div>

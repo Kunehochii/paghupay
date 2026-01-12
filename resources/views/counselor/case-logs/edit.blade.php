@@ -30,6 +30,7 @@
             <div class="col-md-3">
                 <small class="text-muted d-block">Client</small>
                 <strong>{{ $caseLog->client->name }}</strong>
+                <br><small class="text-muted">{{ $caseLog->client->tupv_id ?? 'N/A' }}</small>
             </div>
             <div class="col-md-3">
                 <small class="text-muted d-block">Session Date</small>

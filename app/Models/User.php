@@ -24,6 +24,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'tupv_id',
+        'admin_id',
         'nickname',
         'course_year_section',
         'birthdate',
