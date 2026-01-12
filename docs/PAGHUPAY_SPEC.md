@@ -1,6 +1,83 @@
 # **Spec-Driven Development: TUP-V Guidance & Counseling System**
 
-Version: 1.6 (Device Lock \+ Data Encryption \+ SendGrid)
+Version: 2.0 (Admin Management Implemented)
+
+## **Implementation Status**
+
+| Feature             | Status         | Notes                                                                 |
+| :------------------ | :------------- | :-------------------------------------------------------------------- |
+| Database Schema     | ✅ Implemented | All migrations created (including time_slots, blocked_dates)          |
+| Authentication      | ✅ Implemented | All login pages, registration, middleware                             |
+| Device Lock (TOFU)  | ✅ Implemented | VerifyDevice middleware complete                                      |
+| Role-Based Access   | ✅ Implemented | RoleCheck middleware complete                                         |
+| Client Booking Flow | ✅ Implemented | Full 4-step booking with email confirmation                           |
+| Time Slots System   | ✅ Implemented | Morning/Afternoon slots with availability check                       |
+| Blocked Dates       | ✅ Implemented | Admin can block dates, weekends auto-disabled                         |
+| Counselor Dashboard | ✅ Implemented | Dashboard, appointments (calendar view), case logs (CRUD, PDF export) |
+| Admin Management    | ✅ Implemented | Dashboard, counselor CRUD with photo upload, client management        |
+| Data Encryption     | ✅ Implemented | AES-256-CBC via Laravel encrypted casts on sensitive fields           |
+| Email Notifications | ✅ Implemented | Appointment confirmation email via SendGrid                           |
+| Design System       | ✅ Implemented | Canva-based design with global color system                           |
+
+---
+
+## **0\. Design System & Color Palette** ✅ NEW
+
+### **0.1 Brand Colors**
+
+| Color Name                | Hex Code  | CSS Variable             | Usage                                    |
+| :------------------------ | :-------- | :----------------------- | :--------------------------------------- |
+| Primary Background        | `#69d297` | `--color-primary-bg`     | Main green background (navbar, sections) |
+| Primary Light Background  | `#a7f0ba` | `--color-primary-light`  | Light green accents                      |
+| Secondary Background      | `#3d9f9b` | `--color-secondary`      | Buttons, logo borders, titles            |
+| Secondary Dark Background | `#235675` | `--color-secondary-dark` | Admin login background, dark accents     |
+| Button Primary            | `#3d9f9b` | `--color-btn-primary`    | All primary action buttons               |
+
+### **0.2 Global CSS Classes**
+
+Located in: `resources/css/app.css`
+
+**Background Classes:**
+
+-   `.bg-primary-green` - Primary green background (#69d297)
+-   `.bg-primary-light` - Light green background (#a7f0ba)
+-   `.bg-secondary-teal` - Teal background (#3d9f9b)
+-   `.bg-secondary-dark` - Dark blue background (#235675)
+
+**Text Classes:**
+
+-   `.text-primary-green` - Green text color
+-   `.text-secondary-teal` - Teal text color
+-   `.text-secondary-dark` - Dark blue text color
+
+**Button Classes:**
+
+-   `.btn-paghupay` - Primary button style (teal)
+
+**Border Classes:**
+
+-   `.border-secondary-teal` - Teal border
+-   `.border-primary-green` - Green border
+
+### **0.3 Login Page Layouts**
+
+| Page            | Layout                                   | Background              |
+| :-------------- | :--------------------------------------- | :---------------------- |
+| Student Login   | Horizontal split (70% green / 30% white) | Green (#69d297) + White |
+| Counselor Login | Horizontal split (70% green / 30% white) | Green (#69d297) + White |
+| Admin Login     | Centered modal only                      | Dark blue (#235675)     |
+
+### **0.4 Image Assets**
+
+Location: `public/images/`
+
+| File Name                | Description                                   |
+| :----------------------- | :-------------------------------------------- |
+| `logo-landscape.png`     | Navbar logo (landscape scene)                 |
+| `logo-guidance.png`      | Circular GSO logo (maroon with head icon)     |
+| `illustration-login.png` | Counseling illustration (two people on couch) |
+
+---
 
 1. **Context:** This is a web-based Guidance and Counseling system deployed on a **Local Intranet (TUPV WiFi)**. It serves three distinct user roles: Admin, Client (Student/Staff), and Counselor.
 2. **Tech Stack Constraints:**
@@ -77,19 +154,24 @@ Extension table for users with role: counselor.
 
 **Security Note:** Fields marked **\[Encrypted\]** must use application-level encryption (AES-256).
 
-| Column           | Type      | Nullable | Description                       |
-| :--------------- | :-------- | :------- | :-------------------------------- |
-| id               | BIGSERIAL | NO       | Primary Key                       |
-| case_log_id      | VARCHAR   | NO       | Format: TUPV-{UUID}               |
-| appointment_id   | BIGINT    | NO       | FK \-\> appointments.id           |
-| counselor_id     | BIGINT    | NO       | FK \-\> users.id                  |
-| client_id        | BIGINT    | NO       | FK \-\> users.id                  |
-| start_time       | TIMESTAMP | YES      | When session started              |
-| end_time         | TIMESTAMP | YES      | When session ended                |
-| session_duration | INTEGER   | YES      | Minutes                           |
-| progress_report  | TEXT      | YES      | **\[Encrypted\]** Session notes   |
-| additional_notes | TEXT      | YES      | **\[Encrypted\]** Recommendations |
-| created_at       | TIMESTAMP | NO       |                                   |
+| Column           | Type      | Nullable | Description                                                      |
+| :--------------- | :-------- | :------- | :--------------------------------------------------------------- |
+| id               | BIGSERIAL | NO       | Primary Key                                                      |
+| case_log_id      | VARCHAR   | NO       | Format: TUPV-{UUID}                                              |
+| appointment_id   | BIGINT    | YES      | FK \-\> appointments.id (nullable - can be created without appt) |
+| counselor_id     | BIGINT    | NO       | FK \-\> users.id                                                 |
+| client_id        | BIGINT    | NO       | FK \-\> users.id                                                 |
+| start_time       | TIMESTAMP | YES      | When session started                                             |
+| end_time         | TIMESTAMP | YES      | When session ended                                               |
+| session_duration | INTEGER   | YES      | Seconds                                                          |
+| progress_report  | TEXT      | YES      | **\[Encrypted\]** Session notes                                  |
+| additional_notes | TEXT      | YES      | **\[Encrypted\]** Recommendations                                |
+| created_at       | TIMESTAMP | NO       |                                                                  |
+
+> **Note:** `appointment_id` is nullable because case logs can be created:
+>
+> 1. **From an appointment**: When a counselor ends a session from an appointment, the case log is linked to that appointment.
+> 2. **Manually**: Counselors can create case logs for walk-in students or sessions without a prior appointment.
 
 ### **1.5 Treatment Goals Table (treatment_goals)**
 
@@ -108,31 +190,166 @@ Extension table for users with role: counselor.
 | description   | TEXT      | **\[Encrypted\]** Specific activity |
 | activity_date | DATE      | When this activity is set for       |
 
-## **2\. Authentication & Login Pages**
+### **1.7 Time Slots Table (time_slots)** ✅ NEW
+
+Defines available appointment time slots.
+
+| Column     | Type      | Nullable | Description                            |
+| :--------- | :-------- | :------- | :------------------------------------- |
+| id         | BIGSERIAL | NO       | Primary Key                            |
+| type       | ENUM      | NO       | `morning` or `afternoon`               |
+| start_time | TIME      | NO       | Slot start time (e.g., 09:00:00)       |
+| end_time   | TIME      | NO       | Slot end time (e.g., 10:30:00)         |
+| is_active  | BOOLEAN   | NO       | Default true, can be disabled by admin |
+| created_at | TIMESTAMP | NO       |                                        |
+
+**Seeded Data:**
+| Type | Start Time | End Time |
+| :-------- | :--------- | :------- |
+| morning | 09:00 | 10:30 |
+| morning | 10:30 | 12:00 |
+| afternoon | 13:00 | 14:30 |
+| afternoon | 14:30 | 16:00 |
+
+### **1.8 Blocked Dates Table (blocked_dates)** ✅ NEW
+
+Dates when appointments cannot be booked.
+
+| Column       | Type      | Nullable | Description                           |
+| :----------- | :-------- | :------- | :------------------------------------ |
+| id           | BIGSERIAL | NO       | Primary Key                           |
+| blocked_date | DATE      | NO       | The date that is blocked (unique)     |
+| reason       | VARCHAR   | YES      | Reason for blocking (e.g., "Holiday") |
+| created_by   | BIGINT    | YES      | FK \-\> users.id (admin who blocked)  |
+| created_at   | TIMESTAMP | NO       |                                       |
+
+## **2\. Authentication & Login Pages** ✅ IMPLEMENTED
 
 **Distinct Login Pages Required:**
 
-1. **Student Login:** /login (Default)
-2. **Counselor Login:** /counselor/login
-3. **Admin Login:** /admin/login
+1. **Student Login:** /login (Default) ✅
+2. **Counselor Login:** /counselor/login ✅
+3. **Admin Login:** /admin/login ✅
+4. **Student Registration:** /register ✅
+
+**Implementation Files:**
+
+-   Controller: `app/Http/Controllers/Auth/AuthController.php`
+-   Views: `resources/views/auth/login.blade.php`, `counselor-login.blade.php`, `admin-login.blade.php`, `register.blade.php`
+-   Middleware: `app/Http/Middleware/RoleCheck.php`, `app/Http/Middleware/VerifyDevice.php`
+-   Routes: `routes/web.php` (guest middleware group)
 
 ## **3\. Client (Student) Portal Flows**
 
 ### **3.1 Registration & Onboarding**
 
--   **Flow:** Student Login Page \-\> Link to “Register” \-\> **Registration Form** \-\> **Terms of Agreement** \-\> **Student Welcome Page**.
--   **Registration Form:** User fills in all profile fields (nickname, course, address, etc.) which were initially null.
--   **Terms:** Must check “Agree to Data Privacy Act” to proceed.
--   **Outcome:** users.is_active set to true.
+**Pre-requisite:** Admin creates student account with email only → System generates temp password (hashed) → Plain temp password emailed to student.
 
-### **3.2 Booking Flow (Complete Cycle)**
+**Security Note:** Temporary password is NOT stored in plain text. It's hashed in the `password` field and only exists in the email sent to the student.
 
--   **Start:** **Student Welcome Page**.
--   **Step 1:** Click “Start” \-\> Redirect to **Choose Counselor Page**.
--   **Step 2:** Select Counselor \-\> Redirect to **Date & Time Selection**.
--   **Step 3:** Select Date/Time \-\> Redirect to **Reason Input**.
--   **Step 4:** Submit \-\> Redirect to **“Receive Email” Page**.
--   **Step 5:** Click “Back” \-\> Returns to **Student Welcome Page**.
+**Registration Flow:**
+
+1. Student receives email with temporary password
+2. Student visits `/login` and logs in with temp password
+3. System detects `is_active = false` → Redirects to `/register` (Change Password + Profile)
+4. Student enters:
+    - **Current Password** (temporary password from email)
+    - **New Password**
+    - **Confirm New Password**
+    - **All Profile Fields** (see below)
+5. System validates current password matches stored hash
+6. On success → Password updated, profile saved, `is_active = true`
+7. Redirect to **Student Welcome Page**
+
+**Profile Completion Form Fields:**
+| Field | Type | Required | Notes |
+| :-------------------- | :------- | :------- | :------------------------------ |
+| nickname | TEXT | YES | Preferred name |
+| course_year_section | TEXT | YES | e.g., "BSIT-4A" |
+| birthdate | DATE | YES | Date picker |
+| birthplace | TEXT | YES | |
+| sex | SELECT | YES | Male / Female |
+| contact_number | TEXT | YES | Mobile number |
+| fb_account | TEXT | NO | Facebook Profile Link/Name |
+| nationality | TEXT | YES | Default: "Filipino" |
+| address | TEXTAREA | YES | Current Address |
+| home_address | TEXTAREA | YES | Permanent Address |
+| guardian_name | TEXT | YES | |
+| guardian_relationship | TEXT | YES | e.g., "Mother", "Father" |
+| guardian_contact | TEXT | YES | Guardian's contact number |
+
+**Terms Agreement:**
+
+-   Checkbox: "I agree to the Data Privacy Act (RA 10173)"
+-   Must be checked to proceed
+
+**Outcome:**
+
+-   `users.password` updated to new hashed password (replaces temp password hash)
+-   `users.is_active` set to true
+-   `users.name` set to full name from form
+-   All profile fields populated
+-   Redirect to **Student Welcome Page**
+
+### **3.2 Booking Flow (Complete Cycle)** ✅ IMPLEMENTED
+
+**Implementation Files:**
+
+-   Controller: `app/Http/Controllers/Client/BookingController.php`
+-   Views: `resources/views/client/booking/` (index, choose-counselor, schedule, reason, thankyou)
+-   Mail: `app/Mail/AppointmentConfirmation.php`
+-   Email Template: `resources/views/emails/appointment-confirmation.blade.php`
+
+**Flow Overview:**
+
+-   **Start:** **Student Welcome Page** (`/`) → Click "Start Booking"
+-   **Step 1:** **Booking Start Page** (`/booking`) → Click "Start"
+-   **Step 2:** **Choose Counselor Page** (`/booking/counselors`) → Select counselor card → Click "Next"
+-   **Step 3:** **Schedule Page** (`/booking/schedule/{counselor}`) → Select date & time slot → Click "Next"
+-   **Step 4:** **Reason Page** (`/booking/reason`) → Enter reason → Click "Submit Booking"
+-   **Step 5:** **Thank You Page** (`/booking/thankyou`) → Confirmation with details
+
+**Booking Rules:**
+
+1. **Weekends Disabled:** Students cannot book on Saturdays or Sundays
+2. **Blocked Dates:** Admin can block specific dates (holidays, events)
+3. **Time Slot Availability:** Each counselor has limited slots per day
+4. **No Double Booking:** Same counselor cannot have two appointments at the same time
+
+**Time Slot System:**
+
+-   Slots are defined in `time_slots` table
+-   Split between morning and afternoon
+-   Each slot shows availability status
+-   API endpoint `/booking/counselor/{id}/slots?date=YYYY-MM-DD` returns real-time availability
+
+**Session Storage During Booking:**
+
+```php
+session('booking.counselor_id')    // Selected counselor ID
+session('booking.scheduled_date')  // Selected date (Y-m-d)
+session('booking.time_slot_id')    // Selected time slot ID
+```
+
+**Email Notification:**
+
+-   Sent immediately after successful booking via SendGrid
+-   Template includes: appointment details, status (pending), next steps
+-   `appointments.email_sent` flag tracks delivery status
+
+**Routes:**
+
+```php
+GET  /booking                           # Start page
+GET  /booking/counselors                # Step 1: Choose counselor
+POST /booking/counselors                # Store counselor selection
+GET  /booking/schedule/{counselor}      # Step 2: Date & time
+POST /booking/schedule/{counselor}      # Store schedule selection
+GET  /booking/counselor/{id}/slots      # API: Available slots for date
+GET  /booking/reason                    # Step 3: Enter reason
+POST /booking/store                     # Submit booking
+GET  /booking/thankyou                  # Confirmation page
+```
 
 ## **4\. Counselor Portal Flows**
 
@@ -202,14 +419,108 @@ Extension table for users with role: counselor.
 
 ### **5.3 User (Client) Management**
 
--   **Flow:** Dashboard \-\> **Clients/Users Card**.
--   **Add User:**
-    -   **Form:** **Email Address** (Only).
-    -   **System:** Generates temp_password, creates Inactive Client, sends Email.
+**Dashboard View:**
 
-## **6\. Security Implementation**
+-   **Users Card:** Displays total count of registered clients (students)
+-   **Card Content:**
+    -   Large number showing total user count
+    -   Arrow icon (→) on the right side
+-   **Click Action:** Navigate to **Users Management Page**
 
-### **6.1 Device Token Generation**
+**Users Management Page:**
+
+-   **Header:** "Student Management"
+-   **Stats Display:** "Total Students: {count}"
+-   **Action Button:** "Add New Student" button
+-   **Note:** No user list displayed (privacy consideration) - only the count
+
+**Add Student Flow:**
+
+1. **Trigger:** Click "Add New Student" button
+2. **Modal Dialog:**
+    - **Title:** "Add New Student"
+    - **Form Fields:**
+        - **Email Address** (required)
+        - Validation: Must end with `@tupv.edu.ph`
+    - **Buttons:** "Cancel" | "Send Invitation"
+3. **Backend Logic:**
+
+    ```php
+    // Validate email domain
+    if (!str_ends_with($email, '@tupv.edu.ph')) {
+        return error('Only @tupv.edu.ph emails are allowed');
+    }
+
+    // Generate 8-character temporary password
+    $tempPassword = Str::random(8);
+
+    // Create inactive user (temp password is ONLY stored as hash)
+    User::create([
+        'name' => 'Pending Registration',
+        'email' => $email,
+        'password' => bcrypt($tempPassword),  // Hashed, not plain text
+        'role' => 'client',
+        'is_active' => false,
+    ]);
+
+    // Send email with temp password (only place it exists in plain text)
+    Mail::to($email)->send(new StudentInvitation($email, $tempPassword));
+    ```
+
+    **Security:** The plain text temp password only exists in:
+
+    1. Memory during account creation
+    2. The email sent to the student
+
+    It is NEVER stored in the database in plain text.
+
+4. **Success Modal:**
+    - **Title:** "Invitation Sent!"
+    - **Message:** "An email with login credentials has been sent to {email}."
+    - **Button:** "Done"
+5. **User Count:** Automatically updates on page
+
+**Email Template (StudentInvitation):**
+
+```
+Subject: Welcome to Paghupay - TUP-V Guidance & Counseling System
+
+Dear Student,
+
+You have been registered in the Paghupay Guidance & Counseling System.
+
+Please complete your registration using the following credentials:
+
+Email: {email}
+Temporary Password: {temp_password}
+
+Visit: {app_url}/register
+
+IMPORTANT: You will be asked to create a new password and complete your profile.
+
+Best regards,
+TUP-V Guidance Office
+```
+
+**Validation Rules:**
+
+-   Email must be unique in users table
+-   Email must end with `@tupv.edu.ph`
+-   Duplicate email shows error: "This email is already registered."
+
+**Routes:**
+
+```php
+// Admin client management routes
+Route::get('/admin/clients', [ClientController::class, 'index'])
+    ->name('admin.clients.index');
+Route::post('/admin/clients', [ClientController::class, 'store'])
+    ->name('admin.clients.store');
+```
+
+## **6\. Security Implementation** ✅ IMPLEMENTED
+
+### **6.1 Device Token Generation** ✅
 
 **On Counselor’s First Login (after account creation):**
 
@@ -227,7 +538,7 @@ _// Set long-lived cookie (1 year)_ Cookie::queue('counselor_device_id', $device
 
 _// Parameters: name, value, minutes, path, domain, secure, httpOnly_
 
-### **6.2 Middleware: VerifyDevice (Trust on First Use)**
+### **6.2 Middleware: VerifyDevice (Trust on First Use)** ✅
 
 **Location:** app/Http/Middleware/VerifyDevice.php
 
@@ -285,7 +596,7 @@ $$'auth', 'role:counselor', 'verify.device'$$
 
 _// All counselor routes here_ });
 
-### **6.3 Middleware: RoleCheck**
+### **6.3 Middleware: RoleCheck** ✅
 
 -   Ensures strict role segregation (Student cannot access Admin/Counselor routes).
 
@@ -423,7 +734,7 @@ $$CounselorController::\*\*class\*\*, 'resetDevice'$$
 
 \<**td**\>Dr. Maria Santos\</**td**\>
 
-\<**td**\>maria.santos@tup.edu.ph\</**td**\>
+\<**td**\>maria.santos@tupv.edu.ph\</**td**\>
 
 \<**td**\>Head Psychologist\</**td**\>
 
@@ -536,7 +847,18 @@ Cancel
 
 ## **8\. Testing Checklist**
 
-### **8.1 Device Lock Testing**
+### **8.1 Authentication Testing** ✅ READY FOR TESTING
+
+-   ☐ Student can access /login and see blue-themed login form
+-   ☐ Counselor can access /counselor/login and see green-themed login form
+-   ☐ Admin can access /admin/login and see red-themed login form
+-   ☐ Student can register at /register with Data Privacy agreement
+-   ☐ Wrong role login attempt shows appropriate error message
+-   ☐ Successful login redirects to correct dashboard per role
+-   ☐ New student registration redirects to /onboarding
+-   ☐ Logout works and redirects to /login
+
+### **8.2 Device Lock Testing** ✅ READY FOR TESTING
 
 -   ☐ Counselor logs in for first time → Device token created and cookie set
 -   ☐ Counselor logs out and back in → Access granted (same device)
@@ -545,20 +867,59 @@ Cancel
 -   ☐ Counselor tries to log in from different computer → Access denied
 -   ☐ Cookie expires after 1 year → New device binding required
 
-### **8.2 Admin Flow Testing**
+### **8.3 Admin Flow Testing**
 
 -   ☐ Device status badge shows correctly (bound vs unbound)
 -   ☐ Reset button is disabled when device is not bound
 -   ☐ Reset confirmation modal displays counselor name
 -   ☐ Reset action clears device_token and device_bound_at
 -   ☐ Success message appears after reset
--   ☐ Table updates to show “No Device Bound” status
+-   ☐ Table updates to show "No Device Bound" status
 
-### **8.3 Security Testing**
+### **8.4 Security Testing** ✅ READY FOR TESTING
 
 -   ☐ Cookie is httpOnly and cannot be read via JavaScript
 -   ☐ Middleware blocks access without valid token
 -   ☐ Role-based access control works (no cross-role access)
 -   ☐ Logout clears authentication but preserves device cookie
 -   ☐ Token tampering results in access denial
--   ☐ **\[New\]** Direct Database Access Check: Run SQL SELECT on case_logs. Ensure progress_report is unreadable ciphertext.
+-   ☑ **\[Verified\]** Direct Database Access Check: Run SQL SELECT on case_logs. Ensure progress_report is unreadable ciphertext.
+
+### **8.5 Data Encryption Testing** ✅ VERIFIED
+
+The following encryption tests have been verified (January 9, 2026):
+
+**Encrypted Fields Verified:**
+| Model | Field | Status |
+| :----------------- | :---------------- | :------- |
+| CaseLog | progress_report | ✅ Encrypted |
+| CaseLog | additional_notes | ✅ Encrypted |
+| TreatmentGoal | description | ✅ Encrypted |
+| TreatmentActivity | description | ✅ Encrypted |
+
+**Manual Verification Steps:**
+
+1. **Via psql or pgAdmin:**
+
+    ```sql
+    SELECT id, case_log_id, progress_report, additional_notes
+    FROM case_logs LIMIT 1;
+    ```
+
+    - Expected: `progress_report` shows `eyJpdiI6...` (base64 ciphertext)
+    - NOT readable plain text
+
+2. **Via Laravel Tinker:**
+    ```php
+    php artisan tinker
+    > $log = \App\Models\CaseLog::first();
+    > $log->progress_report  // Should show decrypted text
+    > \DB::table('case_logs')->first()->progress_report  // Should show ciphertext
+    ```
+
+**Important Security Notes:**
+
+-   Encryption uses Laravel's AES-256-CBC with APP_KEY
+-   If APP_KEY changes, all encrypted data becomes unreadable
+-   Encrypted fields CANNOT be searched with SQL LIKE queries
+-   Always back up APP_KEY securely

@@ -24,6 +24,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'tupv_id',
+        'admin_id',
         'nickname',
         'course_year_section',
         'birthdate',
@@ -38,7 +40,8 @@ class User extends Authenticatable
         'guardian_relationship',
         'guardian_contact',
         'is_active',
-        'temp_password',
+        'agreed_to_confidentiality',
+        'agreed_at',
     ];
 
     /**
@@ -49,7 +52,6 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-        'temp_password',
     ];
 
     /**
@@ -64,6 +66,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'birthdate' => 'date',
             'is_active' => 'boolean',
+            'agreed_to_confidentiality' => 'boolean',
+            'agreed_at' => 'datetime',
         ];
     }
 

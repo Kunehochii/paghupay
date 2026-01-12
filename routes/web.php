@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Client\BookingController;
 use App\Http\Controllers\Client\OnboardingController;
+use App\Http\Controllers\Counselor\AppointmentController;
 use App\Http\Controllers\Counselor\CaseLogController;
 use App\Http\Controllers\Counselor\DashboardController as CounselorDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -39,11 +40,12 @@ Route::middleware('guest')->group(function () {
     // Admin Login
     Route::get('/admin/login', [AuthController::class, 'showAdminLoginForm'])->name('admin.login');
     Route::post('/admin/login', [AuthController::class, 'adminLogin']);
-
-    // Student Registration
-    Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
 });
+
+// Student Registration (Profile Completion + Password Change)
+// Accessible to: logged in inactive clients OR redirects to login
+Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->middleware('auth');
 
 // Logout (requires auth)
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
@@ -56,26 +58,38 @@ Route::middleware(['auth', 'role:client'])->group(function () {
     // Student Welcome Page (Landing after login)
     Route::get('/', [BookingController::class, 'welcome'])->name('client.welcome');
 
+    // Confidentiality Agreement
+    Route::get('/agreement', [BookingController::class, 'showAgreement'])->name('client.agreement');
+    Route::post('/agreement', [BookingController::class, 'acceptAgreement'])->name('client.agreement.accept');
+
     // Profile completion/onboarding
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('client.onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'complete'])->name('client.onboarding.complete');
 
     // Booking Flow
     Route::prefix('booking')->name('booking.')->group(function () {
-        // Step 1: Choose Counselor
+        // Step 1: Choose Counselor (Start button from home goes here)
+        Route::get('/', [BookingController::class, 'chooseCounselor'])->name('index');
         Route::get('/counselors', [BookingController::class, 'chooseCounselor'])->name('choose-counselor');
+        Route::post('/counselors', [BookingController::class, 'selectCounselor'])->name('select-counselor');
 
         // Step 2: Date & Time Selection
         Route::get('/schedule/{counselor}', [BookingController::class, 'schedule'])->name('schedule');
+        Route::post('/schedule/{counselor}', [BookingController::class, 'selectSchedule'])->name('select-schedule');
+
+        // API: Get available time slots for a date
+        Route::get('/counselor/{counselor}/slots', [BookingController::class, 'getAvailableSlots'])->name('get-slots');
 
         // Step 3: Reason Input
         Route::get('/reason', [BookingController::class, 'reason'])->name('reason');
-        Route::post('/reason', [BookingController::class, 'reason'])->name('reason.post');
 
         // Step 4: Store appointment
         Route::post('/store', [BookingController::class, 'store'])->name('store');
 
-        // Confirmation / Email Sent Page
+        // Thank You / Confirmation Page
+        Route::get('/thankyou', [BookingController::class, 'thankyou'])->name('thankyou');
+
+        // Legacy Confirmation (redirect to thankyou)
         Route::get('/confirmation', [BookingController::class, 'confirmation'])->name('confirmation');
     });
 
@@ -94,36 +108,36 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
         // Dashboard
         Route::get('/dashboard', [CounselorDashboardController::class, 'index'])->name('dashboard');
 
-        // Pending Appointments (Calendar View)
-        Route::get('/pending', function () {
-            return view('counselor.pending');
-        })->name('pending');
-
-        // Today's Appointments
-        Route::get('/today', function () {
-            return view('counselor.today');
-        })->name('today');
-
-        // Session Management
-        Route::prefix('session')->name('session.')->group(function () {
-            Route::post('/{appointment}/start', function ($appointment) {
-                // TODO: Implement session start
-            })->name('start');
-
-            Route::post('/{appointment}/end', function ($appointment) {
-                // TODO: Implement session end
-            })->name('end');
+        // Appointments Management
+        Route::prefix('appointments')->name('appointments.')->group(function () {
+            Route::get('/', [AppointmentController::class, 'pending'])->name('index');
+            Route::get('/day', [AppointmentController::class, 'dayView'])->name('day');
+            Route::get('/calendar', [AppointmentController::class, 'calendar'])->name('calendar');
+            Route::post('/{appointment}/accept', [AppointmentController::class, 'accept'])->name('accept');
+            Route::post('/{appointment}/reject', [AppointmentController::class, 'reject'])->name('reject');
+            Route::post('/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('cancel');
+            Route::post('/{appointment}/start-session', [AppointmentController::class, 'startSession'])->name('start-session');
+            Route::post('/{appointment}/end-session', [AppointmentController::class, 'endSession'])->name('end-session');
+            Route::get('/active-session', [AppointmentController::class, 'activeSession'])->name('active-session');
         });
 
         // Case Logs
         Route::prefix('case-logs')->name('case-logs.')->group(function () {
             Route::get('/', [CaseLogController::class, 'index'])->name('index');
-            Route::get('/create/{appointment}', [CaseLogController::class, 'create'])->name('create');
-            Route::post('/store/{appointment}', [CaseLogController::class, 'store'])->name('store');
+            Route::get('/create', [CaseLogController::class, 'create'])->name('create');
+            Route::post('/validate-tupv-id', [CaseLogController::class, 'validateTupvId'])->name('validate-tupv-id');
+            Route::post('/store', [CaseLogController::class, 'store'])->name('store');
             Route::get('/{caseLog}', [CaseLogController::class, 'show'])->name('show');
             Route::get('/{caseLog}/edit', [CaseLogController::class, 'edit'])->name('edit');
             Route::put('/{caseLog}', [CaseLogController::class, 'update'])->name('update');
+            Route::delete('/{caseLog}', [CaseLogController::class, 'destroy'])->name('destroy');
+            Route::get('/{caseLog}/export-pdf', [CaseLogController::class, 'exportPdf'])->name('export-pdf');
         });
+
+        // About Page
+        Route::get('/about', function () {
+            return view('counselor.about');
+        })->name('about');
 
         // Client History
         Route::get('/clients/{client}/history', function ($client) {
@@ -157,6 +171,7 @@ Route::middleware(['auth', 'role:admin'])
         // Client/User Management
         Route::prefix('clients')->name('clients.')->group(function () {
             Route::get('/', [AdminClientController::class, 'index'])->name('index');
+            Route::get('/search', [AdminClientController::class, 'search'])->name('search');
             Route::get('/create', [AdminClientController::class, 'create'])->name('create');
             Route::post('/', [AdminClientController::class, 'store'])->name('store');
             Route::get('/{client}', [AdminClientController::class, 'show'])->name('show');

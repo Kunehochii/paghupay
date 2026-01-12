@@ -72,6 +72,14 @@ class Appointment extends Model
     }
 
     /**
+     * Get the cancel reason for this appointment.
+     */
+    public function cancelReason(): HasOne
+    {
+        return $this->hasOne(CancelReason::class);
+    }
+
+    /**
      * Check if appointment is pending.
      */
     public function isPending(): bool

@@ -3,27 +3,33 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\StudentInvitation;
 use App\Models\User;
+use App\Models\Appointment;
+use App\Models\CaseLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class ClientController extends Controller
 {
     /**
-     * Display a listing of clients.
+     * Display client management page (count + add).
+     * Per spec: Only shows count, no user list for privacy.
      */
     public function index()
     {
-        $clients = User::where('role', 'client')
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $clientCount = User::where('role', 'client')->count();
+        $activeCount = User::where('role', 'client')->where('is_active', true)->count();
+        $pendingCount = User::where('role', 'client')->where('is_active', false)->count();
 
-        return view('admin.clients.index', compact('clients'));
+        return view('admin.clients.index', compact('clientCount', 'activeCount', 'pendingCount'));
     }
 
     /**
      * Show the form for creating a new client.
+     * Note: This is handled via modal in index view per spec.
      */
     public function create()
     {
@@ -33,33 +39,87 @@ class ClientController extends Controller
     /**
      * Store a newly created client.
      * 
-     * Per spec: Admin only provides email address.
+     * Per spec: Admin provides TUPV ID (required) and email (optional).
      * System generates temp_password and creates inactive client.
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'email' => 'required|email|unique:users,email',
+            'tupv_id' => [
+                'required',
+                'string',
+                'regex:/^TUPV-\d{2}-\d{4}$/',
+                'unique:users,tupv_id',
+            ],
+            'email' => [
+                'nullable',
+                'email',
+                'unique:users,email',
+                function ($attribute, $value, $fail) {
+                    if ($value) {
+                        $email = strtolower($value);
+                        // Allow @tupv.edu.ph (production) and @gmail.com (testing)
+                        if (!str_ends_with($email, '@tupv.edu.ph') && !str_ends_with($email, '@gmail.com')) {
+                            $fail('Only @tupv.edu.ph email addresses are allowed.');
+                        }
+                    }
+                },
+            ],
+        ], [
+            'tupv_id.required' => 'TUPV ID is required.',
+            'tupv_id.regex' => 'TUPV ID must be in format TUPV-XX-XXXX (e.g., TUPV-24-0001)',
+            'tupv_id.unique' => 'This TUPV ID is already registered.',
+            'email.email' => 'Please enter a valid email address.',
+            'email.unique' => 'This email is already registered.',
         ]);
 
-        // Generate temporary password
-        $tempPassword = Str::random(12);
+        // Generate 8-character temporary password
+        $tempPassword = Str::random(8);
 
-        // Create inactive client (pending profile completion)
+        // Create inactive client - temp password is ONLY stored as hash (secure)
+        // The plain text temp password only exists in the email sent to student
         $user = User::create([
-            'name' => 'New Student', // Placeholder until onboarding
-            'email' => $validated['email'],
-            'password' => Hash::make($tempPassword),
+            'name' => 'Pending Registration',
+            'tupv_id' => strtoupper($validated['tupv_id']),
+            'email' => $validated['email'] ? strtolower($validated['email']) : null,
+            'password' => Hash::make($tempPassword), // Hashed, not plain text
             'role' => 'client',
             'is_active' => false,
-            'temp_password' => $tempPassword,
         ]);
 
-        // TODO: Send email with temp password via SendGrid
+        // Send email with temp password via SendGrid (only if email provided)
+        // This is the ONLY place the plain text password exists
+        $emailSent = false;
+        if ($user->email) {
+            try {
+                Mail::to($user->email)->send(new StudentInvitation($user->tupv_id, $user->email, $tempPassword));
+                $emailSent = true;
+            } catch (\Exception $e) {
+                // Log the error but don't fail the request
+                \Log::error('Failed to send student invitation email: ' . $e->getMessage());
+            }
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Student account created successfully.',
+                'tupv_id' => $user->tupv_id,
+                'email' => $user->email,
+                'email_sent' => $emailSent,
+                'temp_password' => !$user->email ? $tempPassword : null, // Only return if no email (admin must share manually)
+            ]);
+        }
+
+        $message = $emailSent 
+            ? "Invitation sent to {$user->email}. TUPV ID: {$user->tupv_id}" 
+            : ($user->email 
+                ? "Account created for TUPV ID: {$user->tupv_id}, but email delivery failed." 
+                : "Account created for TUPV ID: {$user->tupv_id}. Temporary password: {$tempPassword} (please share this securely)");
 
         return redirect()
             ->route('admin.clients.index')
-            ->with('success', "Client account created. Temporary password sent to {$validated['email']}.");
+            ->with($emailSent ? 'success' : 'warning', $message);
     }
 
     /**
@@ -75,16 +135,84 @@ class ClientController extends Controller
     }
 
     /**
-     * Remove the specified client.
+     * Search for students by TUPV ID only.
+     * Returns matching students for delete selection.
+     */
+    public function search(Request $request)
+    {
+        $query = trim($request->get('q', ''));
+        
+        // Normalize the query - convert to uppercase for TUPV ID format
+        $query = strtoupper($query);
+        
+        if (strlen($query) < 4) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please enter at least 4 characters (e.g., TUPV or the year like 24).',
+                'results' => []
+            ]);
+        }
+
+        $students = User::where('role', 'client')
+            ->where('tupv_id', 'LIKE', "%{$query}%")
+            ->select(['id', 'tupv_id', 'name', 'email', 'is_active', 'created_at'])
+            ->orderBy('tupv_id')
+            ->limit(10)
+            ->get();
+
+        // Get related data counts for each student
+        $results = $students->map(function ($student) {
+            return [
+                'id' => $student->id,
+                'tupv_id' => $student->tupv_id,
+                'name' => $student->name,
+                'email' => $student->email,
+                'is_active' => $student->is_active,
+                'created_at' => $student->created_at->format('M d, Y'),
+                'appointments_count' => Appointment::where('client_id', $student->id)->count(),
+                'case_logs_count' => CaseLog::where('client_id', $student->id)->count(),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'results' => $results,
+            'count' => $results->count()
+        ]);
+    }
+
+    /**
+     * Remove the specified client (graduated student).
+     * Note: All related records (appointments, case_logs, etc.) will be
+     * automatically deleted due to CASCADE foreign keys.
      */
     public function destroy($id)
     {
         $client = User::where('role', 'client')->findOrFail($id);
-        $email = $client->email;
+        
+        // Get counts for logging/confirmation
+        $appointmentsCount = Appointment::where('client_id', $client->id)->count();
+        $caseLogsCount = CaseLog::where('client_id', $client->id)->count();
+        
+        $tupvId = $client->tupv_id;
+        $name = $client->name;
+        
+        // Delete will cascade to all related records
         $client->delete();
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Student {$tupvId} ({$name}) deleted successfully.",
+                'deleted_records' => [
+                    'appointments' => $appointmentsCount,
+                    'case_logs' => $caseLogsCount,
+                ]
+            ]);
+        }
 
         return redirect()
             ->route('admin.clients.index')
-            ->with('success', "Client {$email} deleted successfully.");
+            ->with('success', "Student {$tupvId} ({$name}) deleted successfully. {$appointmentsCount} appointment(s) and {$caseLogsCount} case log(s) were also removed.");
     }
 }

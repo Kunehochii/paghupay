@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -6,6 +6,91 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+}
+
+/*
+|--------------------------------------------------------------------------
+| Paghupay Global Color System
+|--------------------------------------------------------------------------
+|
+| Primary Background:      #69d297 (Green - main background)
+| Primary Light Background: #a7f0ba (Light green - accents)
+| Secondary Background:    #3d9f9b (Teal - buttons, borders)
+| Secondary Dark Background: #235675 (Dark blue - admin areas)
+| Button Primary:          #3d9f9b (Teal)
+|
+*/
+
+:root {
+    /* Primary Colors */
+    --color-primary-bg: #69d297;
+    --color-primary-light: #a7f0ba;
+
+    /* Secondary Colors */
+    --color-secondary: #3d9f9b;
+    --color-secondary-dark: #235675;
+
+    /* Button Colors */
+    --color-btn-primary: #3d9f9b;
+    --color-btn-primary-hover: #358a87;
+
+    /* Text Colors */
+    --color-text-dark: #235675;
+    --color-text-light: #ffffff;
+    --color-text-muted: #6c757d;
+}
+
+/* Background Utility Classes */
+.bg-primary-green {
+    background-color: var(--color-primary-bg) !important;
+}
+
+.bg-primary-light {
+    background-color: var(--color-primary-light) !important;
+}
+
+.bg-secondary-teal {
+    background-color: var(--color-secondary) !important;
+}
+
+.bg-secondary-dark {
+    background-color: var(--color-secondary-dark) !important;
+}
+
+/* Text Color Utility Classes */
+.text-primary-green {
+    color: var(--color-primary-bg) !important;
+}
+
+.text-secondary-teal {
+    color: var(--color-secondary) !important;
+}
+
+.text-secondary-dark {
+    color: var(--color-secondary-dark) !important;
+}
+
+/* Button Utility Classes */
+.btn-paghupay {
+    background-color: var(--color-btn-primary);
+    border-color: var(--color-btn-primary);
+    color: var(--color-text-light);
+}
+
+.btn-paghupay:hover {
+    background-color: var(--color-btn-primary-hover);
+    border-color: var(--color-btn-primary-hover);
+    color: var(--color-text-light);
+}
+
+/* Border Utility Classes */
+.border-secondary-teal {
+    border-color: var(--color-secondary) !important;
+}
+
+.border-primary-green {
+    border-color: var(--color-primary-bg) !important;
 }

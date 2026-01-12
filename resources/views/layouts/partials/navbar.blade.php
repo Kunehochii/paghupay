@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<nav class="navbar navbar-expand-lg navbar-dark {{ auth()->user()->role === 'counselor' ? 'bg-success' : (auth()->user()->role === 'admin' ? 'bg-danger' : 'bg-primary') }}">
     <div class="container">
         <a class="navbar-brand" href="/">
             <i class="bi bi-heart-pulse me-2"></i>
@@ -19,17 +19,14 @@
                         <a class="nav-link" href="{{ route('admin.counselors.index') }}">Counselors</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.clients.index') }}">Clients</a>
+                        <a class="nav-link" href="{{ route('admin.clients.index') }}">Students</a>
                     </li>
                 @elseif(auth()->user()->role === 'counselor')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('counselor.dashboard') }}">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('counselor.pending') }}">Pending</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('counselor.today') }}">Today</a>
+                        <a class="nav-link" href="{{ route('counselor.appointments.index') }}">Appointments</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('counselor.case-logs.index') }}">Case Logs</a>

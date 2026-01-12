@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->string('tupv_id', 15)->nullable()->unique(); // TUPV-XX-XXXX for students
+            $table->string('admin_id', 20)->nullable()->unique(); // ADMIN-XXX for admins
             $table->string('name');
-            $table->string('email')->unique();
+            $table->string('email')->nullable()->unique(); // Nullable for students, required for counselors
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('role', ['admin', 'client', 'counselor']);
@@ -32,9 +34,12 @@ return new class extends Migration
             $table->string('guardian_relationship')->nullable();
             $table->string('guardian_contact')->nullable();
             $table->boolean('is_active')->default(false); // Default false until profile completion
-            $table->string('temp_password')->nullable(); // For initial client setup
             $table->rememberToken();
             $table->timestamps();
+            
+            // Indexes for login performance
+            $table->index('tupv_id', 'idx_users_tupv_id');
+            $table->index('admin_id', 'idx_users_admin_id');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
