@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
+use App\Models\CaseLog;
 use App\Models\CounselorProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -134,6 +136,8 @@ class CounselorController extends Controller
 
     /**
      * Remove the specified counselor.
+     * Note: All related records (appointments, case_logs, etc.) will be
+     * automatically deleted due to CASCADE foreign keys.
      */
     public function destroy($id)
     {
@@ -141,17 +145,21 @@ class CounselorController extends Controller
             ->where('role', 'counselor')
             ->findOrFail($id);
 
+        // Get counts for logging/confirmation
+        $appointmentsCount = Appointment::where('counselor_id', $counselor->id)->count();
+        $caseLogsCount = CaseLog::where('counselor_id', $counselor->id)->count();
+
         // Delete picture if exists
         if ($counselor->counselorProfile?->picture_url) {
             Storage::disk('public')->delete($counselor->counselorProfile->picture_url);
         }
 
         $name = $counselor->name;
-        $counselor->delete(); // Cascades to counselor_profile
+        $counselor->delete(); // Cascades to counselor_profile, appointments, case_logs
 
         return redirect()
             ->route('admin.counselors.index')
-            ->with('success', "Counselor {$name} deleted successfully.");
+            ->with('success', "Counselor {$name} deleted successfully. {$appointmentsCount} appointment(s) and {$caseLogsCount} case log(s) were also removed.");
     }
 
     /**

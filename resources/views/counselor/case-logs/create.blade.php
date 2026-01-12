@@ -596,16 +596,16 @@
                         <i class="bi bi-x"></i>
                     </button>
                 </td>
-                <td class="activity-header">ACTIVITY 1</td>
-                <td class="activity-header">ACTIVITY 2</td>
-                <td class="activity-header">ACTIVITY 3</td>
-            </tr>
-            <tr class="goal-row" data-goal-index="${goalIndex}">
                 <td class="goal-description-cell" colspan="3">
                     <textarea class="goal-description-input" 
                               name="goals[${goalIndex}][description]" 
                               placeholder="Enter goal description..."></textarea>
                 </td>
+            </tr>
+            <tr class="goal-row" data-goal-index="${goalIndex}">
+                <td class="activity-header">ACTIVITY 1</td>
+                <td class="activity-header">ACTIVITY 2</td>
+                <td class="activity-header">ACTIVITY 3</td>
             </tr>
             <tr class="goal-row" data-goal-index="${goalIndex}">
                 <td class="activity-cell">

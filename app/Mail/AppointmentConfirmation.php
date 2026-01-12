@@ -6,13 +6,31 @@ use App\Models\Appointment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 
 class AppointmentConfirmation extends Mailable
 {
     use Queueable, SerializesModels;
+
+    /**
+     * Get the message headers.
+     */
+    public function headers(): Headers
+    {
+        return new Headers(
+            messageId: uniqid('paghupay-', true) . '@' . parse_url(config('app.url'), PHP_URL_HOST),
+            references: [],
+            text: [
+                'X-Mailer' => 'Paghupay/1.0',
+                'X-Priority' => '3',
+                'List-Unsubscribe' => '<mailto:' . config('mail.from.address') . '?subject=Unsubscribe>',
+            ],
+        );
+    }
 
     /**
      * The appointment instance.
@@ -34,6 +52,9 @@ class AppointmentConfirmation extends Mailable
     {
         return new Envelope(
             subject: 'Appointment Booking Confirmation - Paghupay',
+            replyTo: [
+                new Address(config('mail.from.address'), 'TUP-V Guidance Office'),
+            ],
         );
     }
 

@@ -167,10 +167,16 @@
                                                     </div>
                                                     <div class="modal-body">
                                                         <p>Are you sure you want to delete <strong>{{ $counselor->name }}</strong>?</p>
-                                                        <p class="text-danger mb-0">
-                                                            <i class="bi bi-exclamation-circle me-1"></i>
-                                                            This action cannot be undone. All associated data will be permanently removed.
-                                                        </p>
+                                                        <div class="alert alert-danger mb-0">
+                                                            <i class="bi bi-exclamation-octagon me-2"></i>
+                                                            <strong>This action cannot be undone!</strong>
+                                                            <p class="mb-0 mt-2">The following will be permanently deleted:</p>
+                                                            <ul class="mb-0">
+                                                                <li>Counselor profile and photo</li>
+                                                                <li>All appointment records with this counselor</li>
+                                                                <li>All case logs created by this counselor</li>
+                                                            </ul>
+                                                        </div>
                                                     </div>
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -178,7 +184,7 @@
                                                             @csrf
                                                             @method('DELETE')
                                                             <button type="submit" class="btn btn-danger">
-                                                                <i class="bi bi-trash me-1"></i>Delete
+                                                                <i class="bi bi-trash me-1"></i>Delete Permanently
                                                             </button>
                                                         </form>
                                                     </div>

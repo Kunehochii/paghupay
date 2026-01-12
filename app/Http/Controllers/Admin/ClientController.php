@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\StudentInvitation;
 use App\Models\User;
+use App\Models\Appointment;
+use App\Models\CaseLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -133,16 +135,85 @@ class ClientController extends Controller
     }
 
     /**
-     * Remove the specified client.
+     * Search for students by TUPV ID, email, or name.
+     * Returns matching students for delete selection.
+     */
+    public function search(Request $request)
+    {
+        $query = trim($request->get('q', ''));
+        
+        if (strlen($query) < 2) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please enter at least 2 characters to search.',
+                'results' => []
+            ]);
+        }
+
+        $students = User::where('role', 'client')
+            ->where(function ($q) use ($query) {
+                $q->where('tupv_id', 'ILIKE', "%{$query}%")
+                  ->orWhere('email', 'ILIKE', "%{$query}%")
+                  ->orWhere('name', 'ILIKE', "%{$query}%");
+            })
+            ->select(['id', 'tupv_id', 'name', 'email', 'is_active', 'created_at'])
+            ->orderBy('tupv_id')
+            ->limit(10)
+            ->get();
+
+        // Get related data counts for each student
+        $results = $students->map(function ($student) {
+            return [
+                'id' => $student->id,
+                'tupv_id' => $student->tupv_id,
+                'name' => $student->name,
+                'email' => $student->email,
+                'is_active' => $student->is_active,
+                'created_at' => $student->created_at->format('M d, Y'),
+                'appointments_count' => Appointment::where('client_id', $student->id)->count(),
+                'case_logs_count' => CaseLog::where('client_id', $student->id)->count(),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'results' => $results,
+            'count' => $results->count()
+        ]);
+    }
+
+    /**
+     * Remove the specified client (graduated student).
+     * Note: All related records (appointments, case_logs, etc.) will be
+     * automatically deleted due to CASCADE foreign keys.
      */
     public function destroy($id)
     {
         $client = User::where('role', 'client')->findOrFail($id);
-        $email = $client->email;
+        
+        // Get counts for logging/confirmation
+        $appointmentsCount = Appointment::where('client_id', $client->id)->count();
+        $caseLogsCount = CaseLog::where('client_id', $client->id)->count();
+        
+        $tupvId = $client->tupv_id;
+        $name = $client->name;
+        
+        // Delete will cascade to all related records
         $client->delete();
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Student {$tupvId} ({$name}) deleted successfully.",
+                'deleted_records' => [
+                    'appointments' => $appointmentsCount,
+                    'case_logs' => $caseLogsCount,
+                ]
+            ]);
+        }
 
         return redirect()
             ->route('admin.clients.index')
-            ->with('success', "Client {$email} deleted successfully.");
+            ->with('success', "Student {$tupvId} ({$name}) deleted successfully. {$appointmentsCount} appointment(s) and {$caseLogsCount} case log(s) were also removed.");
     }
 }

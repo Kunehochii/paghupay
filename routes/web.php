@@ -171,6 +171,7 @@ Route::middleware(['auth', 'role:admin'])
         // Client/User Management
         Route::prefix('clients')->name('clients.')->group(function () {
             Route::get('/', [AdminClientController::class, 'index'])->name('index');
+            Route::get('/search', [AdminClientController::class, 'search'])->name('search');
             Route::get('/create', [AdminClientController::class, 'create'])->name('create');
             Route::post('/', [AdminClientController::class, 'store'])->name('store');
             Route::get('/{client}', [AdminClientController::class, 'show'])->name('show');
