@@ -2,8 +2,6 @@
 
 namespace App\Mail;
 
-use App\Models\Appointment;
-use App\Models\CaseLog;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -13,7 +11,7 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 
-class AppointmentCompleted extends Mailable
+class CounselorInvitation extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -34,22 +32,34 @@ class AppointmentCompleted extends Mailable
     }
 
     /**
-     * The appointment instance.
+     * The counselor's name.
      */
-    public Appointment $appointment;
+    public string $name;
 
     /**
-     * The case log instance.
+     * The counselor's email address.
      */
-    public CaseLog $caseLog;
+    public string $email;
+
+    /**
+     * The temporary password.
+     */
+    public string $tempPassword;
+
+    /**
+     * The counselor's position (optional).
+     */
+    public ?string $position;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Appointment $appointment, CaseLog $caseLog)
+    public function __construct(string $name, string $email, string $tempPassword, ?string $position = null)
     {
-        $this->appointment = $appointment->load(['counselor', 'client']);
-        $this->caseLog = $caseLog;
+        $this->name = $name;
+        $this->email = $email;
+        $this->tempPassword = $tempPassword;
+        $this->position = $position;
     }
 
     /**
@@ -58,7 +68,7 @@ class AppointmentCompleted extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Appointment Completed - Paghupay',
+            subject: 'Welcome to Paghupay - Your Counselor Account Has Been Created',
             replyTo: [
                 new Address(config('mail.from.address'), 'TUP-V Guidance Office'),
             ],
@@ -71,7 +81,14 @@ class AppointmentCompleted extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.appointment-completed',
+            view: 'emails.counselor-invitation',
+            with: [
+                'name' => $this->name,
+                'email' => $this->email,
+                'tempPassword' => $this->tempPassword,
+                'position' => $this->position,
+                'loginUrl' => route('counselor.login'),
+            ],
         );
     }
 

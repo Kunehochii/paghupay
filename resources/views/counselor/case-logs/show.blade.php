@@ -44,6 +44,7 @@
                     </div>
                     <div>
                         <strong>{{ $caseLog->client->name }}</strong>
+                        <br><small class="text-muted">{{ $caseLog->client->tupv_id ?? 'N/A' }}</small>
                         @if($caseLog->client->course_year_section)
                         <br><small class="text-muted">{{ $caseLog->client->course_year_section }}</small>
                         @endif

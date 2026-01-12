@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Paghupay</title>
+    <title>Welcome to Paghupay - Counselor Account</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -14,7 +14,7 @@
             padding: 20px;
         }
         .header {
-            background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+            background: linear-gradient(135deg, #3d9f9b, #235675);
             color: white;
             padding: 30px 20px;
             text-align: center;
@@ -35,25 +35,36 @@
             border-top: none;
             border-radius: 0 0 10px 10px;
         }
+        .welcome-box {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .welcome-box h2 {
+            color: #2e7d32;
+            margin: 0 0 10px;
+        }
         .credentials-box {
             background: white;
-            border: 2px dashed #0d6efd;
+            border: 2px dashed #3d9f9b;
             border-radius: 8px;
             padding: 20px;
             margin: 20px 0;
         }
         .credentials-box h3 {
-            color: #0d6efd;
+            color: #3d9f9b;
             margin-top: 0;
         }
         .credential-item {
             margin: 10px 0;
             padding: 10px;
-            background: #e7f1ff;
+            background: #e0f2f1;
             border-radius: 5px;
         }
         .credential-item strong {
-            color: #0d6efd;
+            color: #3d9f9b;
         }
         .credential-item .value {
             font-family: 'Courier New', monospace;
@@ -63,7 +74,7 @@
         }
         .btn {
             display: inline-block;
-            background: #0d6efd;
+            background: #3d9f9b;
             color: white;
             padding: 12px 30px;
             text-decoration: none;
@@ -72,7 +83,7 @@
             margin: 20px 0;
         }
         .btn:hover {
-            background: #0b5ed7;
+            background: #358a87;
         }
         .important {
             background: #fff3cd;
@@ -82,6 +93,15 @@
         }
         .important strong {
             color: #856404;
+        }
+        .security-notice {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .security-notice strong {
+            color: #1565c0;
         }
         .footer {
             text-align: center;
@@ -98,15 +118,20 @@
     </div>
     
     <div class="content">
-        <p>Dear Student,</p>
+        <div class="welcome-box">
+            <h2>Welcome, {{ $name }}!</h2>
+            @if($position)
+                <p style="margin: 0; color: #388e3c;">{{ $position }}</p>
+            @endif
+        </div>
         
-        <p>You have been registered in the <strong>Paghupay Guidance & Counseling System</strong> by the TUP-V Guidance Office.</p>
+        <p>You have been added as a <strong>Counselor</strong> in the Paghupay Guidance & Counseling System by the TUP-V Administrator.</p>
         
         <div class="credentials-box">
-            <h3>📧 Your Login Credentials</h3>
+            <h3>🔑 Your Login Credentials</h3>
             <div class="credential-item">
-                <strong>TUPV ID:</strong><br>
-                <span class="value">{{ $tupvId }}</span>
+                <strong>Email:</strong><br>
+                <span class="value">{{ $email }}</span>
             </div>
             <div class="credential-item">
                 <strong>Temporary Password:</strong><br>
@@ -115,20 +140,30 @@
         </div>
         
         <p style="text-align: center;">
-            <a href="{{ $loginUrl }}" class="btn">Login to Complete Registration</a>
+            <a href="{{ $loginUrl }}" class="btn">Login to Your Account</a>
         </p>
+        
+        <div class="security-notice">
+            <strong>🔒 DEVICE BINDING NOTICE:</strong>
+            <p style="margin-bottom: 0;">For security purposes, your account will be <strong>bound to the first device</strong> you use to log in. This means:</p>
+            <ul style="margin-bottom: 0;">
+                <li>Please log in from your <strong>primary work computer</strong></li>
+                <li>You will only be able to access your account from this device</li>
+                <li>If you need to change devices, contact the Administrator</li>
+            </ul>
+        </div>
         
         <div class="important">
             <strong>⚠️ IMPORTANT:</strong>
             <ul style="margin-bottom: 0;">
-                <li>Log in using your <strong>TUPV ID</strong> and temporary password above</li>
-                <li>You will be asked to create a <strong>new password</strong></li>
-                <li>You must complete your <strong>profile information</strong></li>
+                <li>Log in using your <strong>email address</strong> and temporary password</li>
+                <li>You will be prompted to change your password on first login</li>
+                <li>Keep your credentials secure and do not share them</li>
                 <li>This temporary password is only for your first login</li>
             </ul>
         </div>
         
-        <p>If you did not expect this email or have any questions, please contact the TUP-V Guidance Office.</p>
+        <p>If you did not expect this email or have any questions, please contact the TUP-V Administrator immediately.</p>
         
         <p>Best regards,<br>
         <strong>TUP-V Guidance Office</strong></p>

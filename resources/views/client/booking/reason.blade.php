@@ -2,148 +2,276 @@
 
 @section('title', 'Reason for Counseling')
 
+@push('styles')
+<style>
+    /* Color Variables */
+    :root {
+        --color-primary-bg: #69d297;
+        --color-primary-light: #a7f0ba;
+        --color-secondary: #3d9f9b;
+        --color-secondary-dark: #235675;
+    }
+
+    .reason-page {
+        min-height: 100vh;
+        background: linear-gradient(to bottom, var(--color-primary-bg) 40%, #ffffff 40%);
+    }
+
+    /* Top Navigation - Overlay */
+    .nav-custom {
+        background-color: transparent;
+        padding: 15px 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+    }
+
+    .nav-custom .nav-link-custom {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--color-secondary);
+        color: white;
+        margin: 0 5px;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .nav-custom .nav-link-custom:hover {
+        background-color: #358a87;
+        transform: scale(1.1);
+        color: white;
+    }
+
+    .nav-custom .nav-link-about {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 20px;
+        border-radius: 20px;
+        border: 2px solid #333;
+        background-color: transparent;
+        color: #333;
+        font-weight: 500;
+        margin: 0 5px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .nav-custom .nav-link-about:hover {
+        background-color: #333;
+        color: white;
+    }
+
+    /* Step indicators */
+    .step-indicators {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding-top: 80px;
+    }
+
+    .step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+
+    .step-circle.active {
+        background-color: var(--color-secondary);
+        color: white;
+    }
+
+    .step-circle.inactive {
+        background-color: white;
+        color: #333;
+        border: 2px solid #ccc;
+    }
+
+    /* Page Title */
+    .page-title {
+        text-align: center;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .page-subtitle {
+        text-align: center;
+        font-size: 1rem;
+        color: #333;
+        margin-bottom: 30px;
+    }
+
+    /* Reason Card */
+    .reason-card {
+        background-color: white;
+        border-radius: 20px;
+        border: 1px solid #e0e0e0;
+        overflow: hidden;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Textarea styling */
+    .reason-textarea {
+        width: 100%;
+        min-height: 350px;
+        border: none;
+        border-left: 3px solid var(--color-secondary);
+        padding: 15px 20px;
+        font-size: 1rem;
+        color: #333;
+        resize: vertical;
+        outline: none;
+        background-color: transparent;
+    }
+
+    .reason-textarea::placeholder {
+        color: #999;
+    }
+
+    .reason-textarea:focus {
+        outline: none;
+        border-left-color: var(--color-primary-bg);
+    }
+
+    /* Submit Button */
+    .btn-submit {
+        background-color: var(--color-primary-light);
+        border: none;
+        color: #333;
+        font-weight: 600;
+        padding: 15px 60px;
+        border-radius: 30px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        display: block;
+        margin: 20px auto 0;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+        background-color: #8fe0a8;
+        color: #333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(167, 240, 186, 0.5);
+    }
+
+    .btn-submit:disabled {
+        background-color: #cce8d4;
+        color: #888;
+        cursor: not-allowed;
+    }
+
+    /* Error styling */
+    .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 10px;
+        text-align: center;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 767.98px) {
+        .reason-card {
+            border-radius: 15px;
+            margin: 0 15px;
+            padding: 20px;
+        }
+
+        .reason-textarea {
+            min-height: 250px;
+        }
+
+        .btn-submit {
+            padding: 12px 40px;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="container py-4">
-    <!-- Progress Steps -->
-    <div class="row justify-content-center mb-4">
-        <div class="col-md-10 col-lg-8">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-center flex-fill">
-                    <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <i class="bi bi-check"></i>
-                    </div>
-                    <div class="small mt-1 text-success">Counselor</div>
-                </div>
-                <div class="flex-fill border-top border-2 border-success" style="margin-top: -15px;"></div>
-                <div class="text-center flex-fill">
-                    <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <i class="bi bi-check"></i>
-                    </div>
-                    <div class="small mt-1 text-success">Schedule</div>
-                </div>
-                <div class="flex-fill border-top border-2 border-success" style="margin-top: -15px;"></div>
-                <div class="text-center flex-fill">
-                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <span class="fw-bold">3</span>
-                    </div>
-                    <div class="small mt-1 fw-semibold text-primary">Reason</div>
-                </div>
-                <div class="flex-fill border-top border-2" style="margin-top: -15px;"></div>
-                <div class="text-center flex-fill">
-                    <div class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <span class="fw-bold">4</span>
-                    </div>
-                    <div class="small mt-1 text-muted">Confirm</div>
-                </div>
+<div class="reason-page">
+    <!-- Top Navigation -->
+    <nav class="nav-custom">
+        <div class="container">
+            <div class="d-flex justify-content-end align-items-center">
+                <a href="{{ route('client.welcome') }}" class="nav-link-custom" title="Home">
+                    <i class="bi bi-house-door-fill"></i>
+                </a>
+                <a href="#" class="nav-link-about">About us</a>
+                <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="nav-link-custom" title="Logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </form>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="row justify-content-center">
-        <div class="col-md-10 col-lg-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="bi bi-chat-left-text me-2"></i>Reason for Counseling
-                    </h4>
-                </div>
-                <div class="card-body">
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            {{ session('error') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-
-                    <!-- Booking Summary -->
-                    <div class="card bg-light border-0 mb-4">
-                        <div class="card-body">
-                            <h6 class="card-title">
-                                <i class="bi bi-clipboard-check me-2"></i>Booking Summary
-                            </h6>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-person-circle text-primary me-2" style="font-size: 1.5rem;"></i>
-                                        <div>
-                                            <small class="text-muted d-block">Counselor</small>
-                                            <strong>{{ $counselor->name }}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-calendar-date text-primary me-2" style="font-size: 1.5rem;"></i>
-                                        <div>
-                                            <small class="text-muted d-block">Date</small>
-                                            <strong>{{ \Carbon\Carbon::parse($scheduledDate)->format('F d, Y') }}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-clock text-primary me-2" style="font-size: 1.5rem;"></i>
-                                        <div>
-                                            <small class="text-muted d-block">Time</small>
-                                            <strong>{{ $timeSlot->formatted_time }}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <form action="{{ route('booking.store') }}" method="POST" id="reasonForm">
-                        @csrf
-
-                        <div class="mb-4">
-                            <label for="reason" class="form-label fw-semibold">
-                                <i class="bi bi-pencil me-1"></i>Please tell us your reason for seeking counseling
-                            </label>
-                            <textarea name="reason" 
-                                      id="reason" 
-                                      class="form-control @error('reason') is-invalid @enderror" 
-                                      rows="6" 
-                                      placeholder="Please describe briefly why you would like to schedule a counseling session. This helps our counselors prepare for your appointment."
-                                      minlength="10"
-                                      maxlength="1000"
-                                      required>{{ old('reason') }}</textarea>
-                            @error('reason')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <div class="form-text d-flex justify-content-between">
-                                <span>
-                                    <i class="bi bi-info-circle me-1"></i>
-                                    Minimum 10 characters
-                                </span>
-                                <span id="charCount">0/1000</span>
-                            </div>
-                        </div>
-
-                        <div class="alert alert-secondary">
-                            <h6 class="alert-heading">
-                                <i class="bi bi-shield-lock me-2"></i>Privacy Notice
-                            </h6>
-                            <p class="mb-0 small">
-                                Your information is confidential and will only be shared with your assigned counselor. 
-                                We follow the Data Privacy Act (RA 10173) in handling your personal data.
-                            </p>
-                        </div>
-
-                        <hr class="my-4">
-
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ route('booking.schedule', $counselor) }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left me-2"></i>Back
-                            </a>
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-check-circle me-2"></i>Submit Booking
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    <div class="container py-4">
+        <!-- Step Indicators -->
+        <div class="step-indicators">
+            <div class="step-circle inactive">1</div>
+            <div class="step-circle inactive">2</div>
+            <div class="step-circle active">3</div>
         </div>
+
+        <!-- Page Title -->
+        <h1 class="page-title">Reason for Counseling</h1>
+        <p class="page-subtitle">What would you like to discuss in this session?</p>
+
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show mx-auto" style="max-width: 900px;" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        <!-- Reason Card -->
+        <form action="{{ route('booking.store') }}" method="POST" id="reasonForm">
+            @csrf
+
+            <div class="reason-card">
+                <textarea name="reason" 
+                          id="reason" 
+                          class="reason-textarea" 
+                          placeholder="Enter text here"
+                          minlength="10"
+                          maxlength="1000"
+                          required>{{ old('reason') }}</textarea>
+                
+                @error('reason')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    Submit Response
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 @endsection
@@ -152,23 +280,15 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const textarea = document.getElementById('reason');
-    const charCount = document.getElementById('charCount');
+    const submitBtn = document.getElementById('submitBtn');
 
-    function updateCharCount() {
-        const count = textarea.value.length;
-        charCount.textContent = `${count}/1000`;
-        
-        if (count < 10) {
-            charCount.classList.add('text-danger');
-            charCount.classList.remove('text-success');
-        } else {
-            charCount.classList.remove('text-danger');
-            charCount.classList.add('text-success');
-        }
+    function validateForm() {
+        const count = textarea.value.trim().length;
+        submitBtn.disabled = count < 10;
     }
 
-    textarea.addEventListener('input', updateCharCount);
-    updateCharCount(); // Initial count
+    textarea.addEventListener('input', validateForm);
+    validateForm(); // Initial validation
 });
 </script>
 @endpush

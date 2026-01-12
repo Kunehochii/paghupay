@@ -2,151 +2,185 @@
 
 @section('title', 'Case Logs')
 
+@push('styles')
+<style>
+    .search-box {
+        background-color: #f5f5f5;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 16px;
+        padding-left: 40px;
+        width: 100%;
+        font-size: 14px;
+    }
+    .search-box:focus {
+        outline: none;
+        background-color: #eeeeee;
+    }
+    .search-wrapper {
+        position: relative;
+    }
+    .search-wrapper .search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #888;
+    }
+    .all-cases-box {
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        padding: 12px 20px;
+        background-color: #fff;
+    }
+    .case-logs-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .case-logs-table thead th {
+        color: #666;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 16px 12px;
+        border-bottom: 2px solid #ddd;
+        border-right: 2px solid #ddd;
+    }
+    .case-logs-table thead th:first-child {
+        border-left: none;
+    }
+    .case-logs-table thead th:last-child {
+        border-right: none;
+    }
+    .case-logs-table tbody td {
+        padding: 16px 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f0f0f0;
+        border-right: 2px solid #ddd;
+        font-size: 14px;
+    }
+    .case-logs-table tbody td:first-child {
+        border-left: none;
+    }
+    .case-logs-table tbody td:last-child {
+        border-right: none;
+    }
+    .case-logs-table tbody tr:nth-child(odd) {
+        background-color: #f5f5f5;
+    }
+    .case-logs-table tbody tr:nth-child(even) {
+        background-color: #fff;
+    }
+    .case-logs-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        background: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .action-btn:hover {
+        background-color: #f5f5f5;
+        color: #333;
+    }
+    .btn-add-new {
+        background-color: #3d9f9b;
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-add-new:hover {
+        background-color: #358f8b;
+        color: #fff;
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h4 class="mb-1">Case Logs</h4>
-                <p class="text-muted mb-0">Manage your counseling session records</p>
+<div class="container-fluid px-4">
+    {{-- Search Bar --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="search-wrapper">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" class="search-box" placeholder="Search" id="searchInput">
             </div>
-            <a href="{{ route('counselor.case-logs.create') }}" class="btn btn-success">
-                <i class="bi bi-plus-circle me-1"></i> New Case Log
-            </a>
         </div>
     </div>
-</div>
 
-{{-- Stats Row --}}
-<div class="row mb-4">
-    <div class="col-md-4 mb-3">
-        <div class="card border-0 shadow-sm bg-success bg-opacity-10">
-            <div class="card-body text-center py-4">
-                <i class="bi bi-journal-text text-success" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-0 text-success">{{ $caseLogs->total() }}</h3>
-                <small class="text-muted">Total Case Logs</small>
+    {{-- All Cases Box --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="all-cases-box">
+                <span style="font-size: 15px;">All Cases</span>
             </div>
         </div>
     </div>
-    <div class="col-md-4 mb-3">
-        <div class="card border-0 shadow-sm bg-info bg-opacity-10">
-            <div class="card-body text-center py-4">
-                <i class="bi bi-calendar-check text-info" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-0 text-info">{{ $thisMonthCount }}</h3>
-                <small class="text-muted">This Month</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="card border-0 shadow-sm bg-primary bg-opacity-10">
-            <div class="card-body text-center py-4">
-                <i class="bi bi-clock-history text-primary" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-0 text-primary">{{ $avgDuration }}</h3>
-                <small class="text-muted">Avg. Session Duration</small>
-            </div>
-        </div>
-    </div>
-</div>
 
-{{-- Case Logs Table --}}
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="bi bi-archive text-success me-2"></i>
-                Session Records
-            </h5>
-            <div class="d-flex gap-2">
-                <div class="input-group input-group-sm" style="width: 250px;">
-                    <input type="text" class="form-control" placeholder="Search case logs..." id="searchInput">
-                    <button class="btn btn-outline-secondary" type="button">
-                        <i class="bi bi-search"></i>
-                    </button>
+    {{-- Case Logs Table --}}
+    <div class="row">
+        <div class="col-12">
+            @if($caseLogs->isEmpty())
+                <div class="text-center py-5">
+                    <i class="bi bi-journal-x text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="text-muted mt-3">No Case Logs Yet</h4>
+                    <p class="text-muted">Case logs will appear here after you complete counseling sessions.</p>
                 </div>
-            </div>
-        </div>
-    </div>
-    <div class="card-body p-0">
-        @if($caseLogs->isEmpty())
-            <div class="text-center py-5">
-                <i class="bi bi-journal-x text-muted" style="font-size: 4rem;"></i>
-                <h4 class="text-muted mt-3">No Case Logs Yet</h4>
-                <p class="text-muted">Case logs will appear here after you complete counseling sessions.</p>
-                <a href="{{ route('counselor.case-logs.create') }}" class="btn btn-success">
-                    <i class="bi bi-plus-circle"></i> Create New Case Log
-                </a>
-            </div>
-        @else
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+            @else
+                <table class="case-logs-table">
+                    <thead>
                         <tr>
-                            <th>Created Date</th>
-                            <th>Case Log ID</th>
+                            <th>Created</th>
+                            <th>TUPV ID</th>
                             <th>Log #</th>
-                            <th>Student</th>
-                            <th>Duration</th>
-                            <th class="text-end">Actions</th>
+                            <th>Time Elapsed</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($caseLogs as $index => $caseLog)
                         <tr>
-                            <td>
-                                <div>
-                                    <strong>{{ $caseLog->created_at->format('M j, Y') }}</strong>
-                                    <br>
-                                    <small class="text-muted">{{ $caseLog->created_at->format('g:i A') }}</small>
-                                </div>
-                            </td>
-                            <td>
-                                <code class="text-primary">{{ $caseLog->case_log_id }}</code>
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">
-                                    #{{ $caseLogs->total() - (($caseLogs->currentPage() - 1) * $caseLogs->perPage()) - $index }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
-                                         style="width: 36px; height: 36px; font-size: 14px;">
-                                        {{ strtoupper(substr($caseLog->client->name, 0, 1)) }}
-                                    </div>
-                                    <div>
-                                        <strong>{{ $caseLog->client->name }}</strong>
-                                        @if($caseLog->client->course_year_section)
-                                        <br><small class="text-muted">{{ $caseLog->client->course_year_section }}</small>
-                                        @endif
-                                    </div>
-                                </div>
-                            </td>
+                            <td>{{ $caseLog->created_at->format('m/d/Y') }}</td>
+                            <td>{{ $caseLog->client->tupv_id ?? 'N/A' }}</td>
+                            <td>{{ str_pad($caseLogs->total() - (($caseLogs->currentPage() - 1) * $caseLogs->perPage()) - $index, 3, '0', STR_PAD_LEFT) }}</td>
                             <td>
                                 @if($caseLog->session_duration)
-                                    <span class="badge bg-info">{{ $caseLog->formatted_duration }}</span>
+                                    {{ $caseLog->formatted_duration }}
                                 @else
-                                    <span class="text-muted">-</span>
+                                    -
                                 @endif
                             </td>
                             <td>
-                                <div class="d-flex gap-1 justify-content-end">
+                                <div class="d-flex gap-2">
                                     <a href="{{ route('counselor.case-logs.show', $caseLog->id) }}" 
-                                       class="btn btn-sm btn-outline-primary" 
+                                       class="action-btn" 
                                        title="View Details">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                     <a href="{{ route('counselor.case-logs.edit', $caseLog->id) }}" 
-                                       class="btn btn-sm btn-outline-success" 
+                                       class="action-btn" 
                                        title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <a href="{{ route('counselor.case-logs.export-pdf', $caseLog->id) }}" 
-                                       class="btn btn-sm btn-outline-secondary" 
+                                       class="action-btn" 
                                        title="Export PDF"
                                        target="_blank">
-                                        <i class="bi bi-file-pdf"></i>
+                                        <i class="bi bi-file-earmark-text"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                    <button type="button" class="action-btn" 
                                             title="Delete"
                                             data-bs-toggle="modal"
                                             data-bs-target="#deleteModal"
@@ -160,13 +194,24 @@
                         @endforeach
                     </tbody>
                 </table>
-            </div>
 
-            {{-- Pagination --}}
-            <div class="d-flex justify-content-center py-3">
-                {{ $caseLogs->links() }}
-            </div>
-        @endif
+                {{-- Pagination --}}
+                @if($caseLogs->hasPages())
+                <div class="d-flex justify-content-center py-3">
+                    {{ $caseLogs->links() }}
+                </div>
+                @endif
+            @endif
+        </div>
+    </div>
+
+    {{-- Add New Button --}}
+    <div class="row mt-4">
+        <div class="col-12 text-end">
+            <a href="{{ route('counselor.case-logs.create') }}" class="btn-add-new">
+                Add New
+            </a>
+        </div>
     </div>
 </div>
 

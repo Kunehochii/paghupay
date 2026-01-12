@@ -14,14 +14,9 @@
     
     @stack('styles')
 </head>
-<body class="bg-light">
-    <!-- Navigation -->
-    @auth
-        @include('layouts.partials.navbar')
-    @endauth
-
+<body class="@yield('bodyClass', 'bg-light')">
     <!-- Main Content -->
-    <main class="@auth py-4 @endauth">
+    <main>
         @yield('content')
     </main>
 

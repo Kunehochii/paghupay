@@ -212,12 +212,18 @@ Extension for counselor-specific data.
 
 ### CaseLog Table
 
-| Column             | Type    | Notes                 |
-| ------------------ | ------- | --------------------- |
-| `case_log_id`      | VARCHAR | Format: `TUPV-{UUID}` |
-| `progress_report`  | TEXT    | **🔐 ENCRYPTED**      |
-| `additional_notes` | TEXT    | **🔐 ENCRYPTED**      |
-| `session_duration` | INTEGER | Minutes               |
+| Column             | Type    | Notes                                           |
+| ------------------ | ------- | ----------------------------------------------- |
+| `case_log_id`      | VARCHAR | Format: `TUPV-{UUID}` (system-generated)        |
+| `appointment_id`   | BIGINT  | **NULLABLE** - FK to appointments (can be NULL) |
+| `progress_report`  | TEXT    | **🔐 ENCRYPTED**                                |
+| `additional_notes` | TEXT    | **🔐 ENCRYPTED**                                |
+| `session_duration` | INTEGER | Seconds                                         |
+
+> **Note:** `appointment_id` is nullable because case logs can be created:
+>
+> 1. From an appointment (has `appointment_id`)
+> 2. Manually by counselor without an appointment (no `appointment_id`)
 
 ### TreatmentGoal / TreatmentActivity
 

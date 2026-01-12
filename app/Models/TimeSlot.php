@@ -17,10 +17,40 @@ class TimeSlot extends Model
     ];
 
     protected $casts = [
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
         'is_active' => 'boolean',
+        // Note: start_time and end_time are stored as TIME in DB
+        // Do NOT cast them to datetime as it adds today's date
     ];
+
+    /**
+     * Get start time as a simple time string (H:i:s).
+     */
+    public function getStartTimeAttribute($value): string
+    {
+        // Return just the time portion, stripping any date that might be added
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('H:i:s');
+        }
+        // If it's a string with a date prefix, extract just the time
+        if (preg_match('/(\d{2}:\d{2}:\d{2})/', $value, $matches)) {
+            return $matches[1];
+        }
+        return $value;
+    }
+
+    /**
+     * Get end time as a simple time string (H:i:s).
+     */
+    public function getEndTimeAttribute($value): string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('H:i:s');
+        }
+        if (preg_match('/(\d{2}:\d{2}:\d{2})/', $value, $matches)) {
+            return $matches[1];
+        }
+        return $value;
+    }
 
     /**
      * Scope to get only active time slots.

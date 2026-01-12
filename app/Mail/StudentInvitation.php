@@ -5,8 +5,10 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 
 class StudentInvitation extends Mailable
@@ -14,9 +16,30 @@ class StudentInvitation extends Mailable
     use Queueable, SerializesModels;
 
     /**
+     * Get the message headers.
+     */
+    public function headers(): Headers
+    {
+        return new Headers(
+            messageId: uniqid('paghupay-', true) . '@' . parse_url(config('app.url'), PHP_URL_HOST),
+            references: [],
+            text: [
+                'X-Mailer' => 'Paghupay/1.0',
+                'X-Priority' => '3',
+                'List-Unsubscribe' => '<mailto:' . config('mail.from.address') . '?subject=Unsubscribe>',
+            ],
+        );
+    }
+
+    /**
+     * The student's TUPV ID.
+     */
+    public string $tupvId;
+
+    /**
      * The student's email address.
      */
-    public string $email;
+    public ?string $email;
 
     /**
      * The temporary password.
@@ -26,8 +49,9 @@ class StudentInvitation extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(string $email, string $tempPassword)
+    public function __construct(string $tupvId, ?string $email, string $tempPassword)
     {
+        $this->tupvId = $tupvId;
         $this->email = $email;
         $this->tempPassword = $tempPassword;
     }
@@ -39,6 +63,9 @@ class StudentInvitation extends Mailable
     {
         return new Envelope(
             subject: 'Welcome to Paghupay - TUP-V Guidance & Counseling System',
+            replyTo: [
+                new Address(config('mail.from.address'), 'TUP-V Guidance Office'),
+            ],
         );
     }
 
@@ -50,6 +77,7 @@ class StudentInvitation extends Mailable
         return new Content(
             view: 'emails.student-invitation',
             with: [
+                'tupvId' => $this->tupvId,
                 'email' => $this->email,
                 'tempPassword' => $this->tempPassword,
                 'loginUrl' => route('login'),

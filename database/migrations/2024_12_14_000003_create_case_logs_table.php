@@ -17,7 +17,7 @@ return new class extends Migration
         Schema::create('case_logs', function (Blueprint $table) {
             $table->id();
             $table->string('case_log_id')->unique(); // Format: TUPV-{UUID}
-            $table->foreignId('appointment_id')->constrained()->onDelete('cascade');
+            $table->foreignId('appointment_id')->nullable()->constrained()->onDelete('set null'); // Nullable: can be created without appointment
             $table->foreignId('counselor_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('client_id')->constrained('users')->onDelete('cascade');
             $table->timestamp('start_time')->nullable(); // When session started

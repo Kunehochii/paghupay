@@ -17,6 +17,65 @@ Version: 2.0 (Admin Management Implemented)
 | Admin Management    | ✅ Implemented | Dashboard, counselor CRUD with photo upload, client management        |
 | Data Encryption     | ✅ Implemented | AES-256-CBC via Laravel encrypted casts on sensitive fields           |
 | Email Notifications | ✅ Implemented | Appointment confirmation email via SendGrid                           |
+| Design System       | ✅ Implemented | Canva-based design with global color system                           |
+
+---
+
+## **0\. Design System & Color Palette** ✅ NEW
+
+### **0.1 Brand Colors**
+
+| Color Name                | Hex Code  | CSS Variable             | Usage                                    |
+| :------------------------ | :-------- | :----------------------- | :--------------------------------------- |
+| Primary Background        | `#69d297` | `--color-primary-bg`     | Main green background (navbar, sections) |
+| Primary Light Background  | `#a7f0ba` | `--color-primary-light`  | Light green accents                      |
+| Secondary Background      | `#3d9f9b` | `--color-secondary`      | Buttons, logo borders, titles            |
+| Secondary Dark Background | `#235675` | `--color-secondary-dark` | Admin login background, dark accents     |
+| Button Primary            | `#3d9f9b` | `--color-btn-primary`    | All primary action buttons               |
+
+### **0.2 Global CSS Classes**
+
+Located in: `resources/css/app.css`
+
+**Background Classes:**
+
+-   `.bg-primary-green` - Primary green background (#69d297)
+-   `.bg-primary-light` - Light green background (#a7f0ba)
+-   `.bg-secondary-teal` - Teal background (#3d9f9b)
+-   `.bg-secondary-dark` - Dark blue background (#235675)
+
+**Text Classes:**
+
+-   `.text-primary-green` - Green text color
+-   `.text-secondary-teal` - Teal text color
+-   `.text-secondary-dark` - Dark blue text color
+
+**Button Classes:**
+
+-   `.btn-paghupay` - Primary button style (teal)
+
+**Border Classes:**
+
+-   `.border-secondary-teal` - Teal border
+-   `.border-primary-green` - Green border
+
+### **0.3 Login Page Layouts**
+
+| Page            | Layout                                   | Background              |
+| :-------------- | :--------------------------------------- | :---------------------- |
+| Student Login   | Horizontal split (70% green / 30% white) | Green (#69d297) + White |
+| Counselor Login | Horizontal split (70% green / 30% white) | Green (#69d297) + White |
+| Admin Login     | Centered modal only                      | Dark blue (#235675)     |
+
+### **0.4 Image Assets**
+
+Location: `public/images/`
+
+| File Name                | Description                                   |
+| :----------------------- | :-------------------------------------------- |
+| `logo-landscape.png`     | Navbar logo (landscape scene)                 |
+| `logo-guidance.png`      | Circular GSO logo (maroon with head icon)     |
+| `illustration-login.png` | Counseling illustration (two people on couch) |
 
 ---
 
@@ -95,19 +154,24 @@ Extension table for users with role: counselor.
 
 **Security Note:** Fields marked **\[Encrypted\]** must use application-level encryption (AES-256).
 
-| Column           | Type      | Nullable | Description                       |
-| :--------------- | :-------- | :------- | :-------------------------------- |
-| id               | BIGSERIAL | NO       | Primary Key                       |
-| case_log_id      | VARCHAR   | NO       | Format: TUPV-{UUID}               |
-| appointment_id   | BIGINT    | NO       | FK \-\> appointments.id           |
-| counselor_id     | BIGINT    | NO       | FK \-\> users.id                  |
-| client_id        | BIGINT    | NO       | FK \-\> users.id                  |
-| start_time       | TIMESTAMP | YES      | When session started              |
-| end_time         | TIMESTAMP | YES      | When session ended                |
-| session_duration | INTEGER   | YES      | Minutes                           |
-| progress_report  | TEXT      | YES      | **\[Encrypted\]** Session notes   |
-| additional_notes | TEXT      | YES      | **\[Encrypted\]** Recommendations |
-| created_at       | TIMESTAMP | NO       |                                   |
+| Column           | Type      | Nullable | Description                                                      |
+| :--------------- | :-------- | :------- | :--------------------------------------------------------------- |
+| id               | BIGSERIAL | NO       | Primary Key                                                      |
+| case_log_id      | VARCHAR   | NO       | Format: TUPV-{UUID}                                              |
+| appointment_id   | BIGINT    | YES      | FK \-\> appointments.id (nullable - can be created without appt) |
+| counselor_id     | BIGINT    | NO       | FK \-\> users.id                                                 |
+| client_id        | BIGINT    | NO       | FK \-\> users.id                                                 |
+| start_time       | TIMESTAMP | YES      | When session started                                             |
+| end_time         | TIMESTAMP | YES      | When session ended                                               |
+| session_duration | INTEGER   | YES      | Seconds                                                          |
+| progress_report  | TEXT      | YES      | **\[Encrypted\]** Session notes                                  |
+| additional_notes | TEXT      | YES      | **\[Encrypted\]** Recommendations                                |
+| created_at       | TIMESTAMP | NO       |                                                                  |
+
+> **Note:** `appointment_id` is nullable because case logs can be created:
+>
+> 1. **From an appointment**: When a counselor ends a session from an appointment, the case log is linked to that appointment.
+> 2. **Manually**: Counselors can create case logs for walk-in students or sessions without a prior appointment.
 
 ### **1.5 Treatment Goals Table (treatment_goals)**
 

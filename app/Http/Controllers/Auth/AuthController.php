@@ -35,14 +35,22 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle student login.
+     * Handle student login using TUPV ID.
      */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
+        $request->validate([
+            'tupv_id' => ['required', 'string', 'regex:/^TUPV-\d{2}-\d{4}$/'],
             'password' => 'required',
+        ], [
+            'tupv_id.required' => 'Please enter your TUPV ID.',
+            'tupv_id.regex' => 'TUPV ID must be in format TUPV-XX-XXXX (e.g., TUPV-24-0001)',
         ]);
+
+        $credentials = [
+            'tupv_id' => strtoupper($request->tupv_id),
+            'password' => $request->password,
+        ];
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
@@ -51,7 +59,7 @@ class AuthController extends Controller
             if ($user->role !== 'client') {
                 Auth::logout();
                 return back()->withErrors([
-                    'email' => 'Please use the appropriate login page for your role.',
+                    'tupv_id' => 'Please use the appropriate login page for your role.',
                 ]);
             }
 
@@ -67,7 +75,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
+            'tupv_id' => 'The provided credentials do not match our records.',
         ]);
     }
 
@@ -102,14 +110,21 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle admin login.
+     * Handle admin login using Admin ID.
      */
     public function adminLogin(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
+        $request->validate([
+            'admin_id' => 'required|string|min:3|max:20',
             'password' => 'required',
+        ], [
+            'admin_id.required' => 'Please enter your Admin ID.',
         ]);
+
+        $credentials = [
+            'admin_id' => strtoupper($request->admin_id),
+            'password' => $request->password,
+        ];
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
@@ -118,7 +133,7 @@ class AuthController extends Controller
             if ($user->role !== 'admin') {
                 Auth::logout();
                 return back()->withErrors([
-                    'email' => 'Please use the appropriate login page for your role.',
+                    'admin_id' => 'Please use the appropriate login page for your role.',
                 ]);
             }
 
@@ -127,7 +142,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
+            'admin_id' => 'The provided credentials do not match our records.',
         ]);
     }
 

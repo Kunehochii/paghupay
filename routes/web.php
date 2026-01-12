@@ -68,10 +68,8 @@ Route::middleware(['auth', 'role:client'])->group(function () {
 
     // Booking Flow
     Route::prefix('booking')->name('booking.')->group(function () {
-        // Booking Start Page
-        Route::get('/', [BookingController::class, 'index'])->name('index');
-
-        // Step 1: Choose Counselor
+        // Step 1: Choose Counselor (Start button from home goes here)
+        Route::get('/', [BookingController::class, 'chooseCounselor'])->name('index');
         Route::get('/counselors', [BookingController::class, 'chooseCounselor'])->name('choose-counselor');
         Route::post('/counselors', [BookingController::class, 'selectCounselor'])->name('select-counselor');
 
@@ -112,7 +110,9 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
 
         // Appointments Management
         Route::prefix('appointments')->name('appointments.')->group(function () {
-            Route::get('/', [AppointmentController::class, 'index'])->name('index');
+            Route::get('/', [AppointmentController::class, 'pending'])->name('index');
+            Route::get('/day', [AppointmentController::class, 'dayView'])->name('day');
+            Route::get('/calendar', [AppointmentController::class, 'calendar'])->name('calendar');
             Route::post('/{appointment}/accept', [AppointmentController::class, 'accept'])->name('accept');
             Route::post('/{appointment}/reject', [AppointmentController::class, 'reject'])->name('reject');
             Route::post('/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('cancel');
@@ -125,6 +125,7 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
         Route::prefix('case-logs')->name('case-logs.')->group(function () {
             Route::get('/', [CaseLogController::class, 'index'])->name('index');
             Route::get('/create', [CaseLogController::class, 'create'])->name('create');
+            Route::post('/validate-tupv-id', [CaseLogController::class, 'validateTupvId'])->name('validate-tupv-id');
             Route::post('/store', [CaseLogController::class, 'store'])->name('store');
             Route::get('/{caseLog}', [CaseLogController::class, 'show'])->name('show');
             Route::get('/{caseLog}/edit', [CaseLogController::class, 'edit'])->name('edit');
@@ -170,6 +171,7 @@ Route::middleware(['auth', 'role:admin'])
         // Client/User Management
         Route::prefix('clients')->name('clients.')->group(function () {
             Route::get('/', [AdminClientController::class, 'index'])->name('index');
+            Route::get('/search', [AdminClientController::class, 'search'])->name('search');
             Route::get('/create', [AdminClientController::class, 'create'])->name('create');
             Route::post('/', [AdminClientController::class, 'store'])->name('store');
             Route::get('/{client}', [AdminClientController::class, 'show'])->name('show');

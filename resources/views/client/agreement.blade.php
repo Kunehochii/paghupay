@@ -1,11 +1,13 @@
 @extends('layouts.app')
 
 @section('title', 'Statement of Confidentiality')
+@section('hideNavbar', true)
+@section('bodyClass', '')
 
 @push('styles')
 <style>
     body {
-        background-color: #4db6ac !important;
+        background-color: #3d9f9b !important;
     }
     
     .agreement-container {
@@ -30,7 +32,7 @@
     }
     
     .agreement-title {
-        color: #2c7a7b;
+        color: #235675;
         font-size: 1.5rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -61,7 +63,7 @@
     }
     
     .agreement-body::-webkit-scrollbar-thumb {
-        background: #4db6ac;
+        background: #3d9f9b;
         border-radius: 3px;
     }
     
@@ -69,6 +71,7 @@
         color: #1a202c;
         line-height: 1.7;
         margin-bottom: 20px;
+        text-align: justify;
     }
     
     .agreement-list {
@@ -83,6 +86,7 @@
         margin-bottom: 20px;
         line-height: 1.7;
         color: #1a202c;
+        text-align: justify;
     }
     
     .agreement-list li::before {
@@ -98,6 +102,7 @@
         display: flex;
         justify-content: flex-end;
         gap: 15px;
+        align-items: center;
     }
     
     .btn-cancel {
@@ -115,7 +120,7 @@
     }
     
     .btn-agree {
-        background-color: #4db6ac;
+        background-color: #3d9f9b;
         border: none;
         color: white;
         font-weight: 600;
@@ -124,11 +129,12 @@
         cursor: pointer;
         transition: all 0.3s ease;
     }
-    
+
     .btn-agree:hover {
-        background-color: #3d9d94;
+        background-color: #358a87;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(77, 182, 172, 0.4);
+        box-shadow: 0 4px 12px rgba(61, 159, 155, 0.4);
+        color: white;
     }
 </style>
 @endpush

@@ -53,13 +53,38 @@ class CaseLogController extends Controller
      */
     public function create()
     {
-        // Get all clients for selection
-        $clients = User::where('role', 'client')
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
+        return view('counselor.case-logs.create');
+    }
 
-        return view('counselor.case-logs.create', compact('clients'));
+    /**
+     * Validate TUPV ID and return student info (AJAX endpoint).
+     */
+    public function validateTupvId(Request $request)
+    {
+        $request->validate([
+            'tupv_id' => ['required', 'string', 'regex:/^TUPV-\d{2}-\d{4}$/'],
+        ]);
+
+        $client = User::where('tupv_id', strtoupper($request->tupv_id))
+            ->where('role', 'client')
+            ->where('is_active', true)
+            ->first();
+
+        if ($client) {
+            return response()->json([
+                'success' => true,
+                'client' => [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'tupv_id' => $client->tupv_id,
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Student not found or not active.',
+        ], 404);
     }
 
     /**
@@ -68,7 +93,7 @@ class CaseLogController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id' => 'required|exists:users,id',
+            'tupv_id' => ['required', 'string', 'regex:/^TUPV-\d{2}-\d{4}$/'],
             'progress_report' => 'nullable|string',
             'additional_notes' => 'nullable|string',
             'start_time' => 'required|date',
@@ -78,7 +103,23 @@ class CaseLogController extends Controller
             'goals.*.activities' => 'nullable|array',
             'goals.*.activities.*.description' => 'required_with:goals.*.activities|string',
             'goals.*.activities.*.activity_date' => 'required_with:goals.*.activities|date',
+        ], [
+            'tupv_id.required' => 'Please enter the student\'s TUPV ID.',
+            'tupv_id.regex' => 'TUPV ID must be in format TUPV-XX-XXXX (e.g., TUPV-24-0001)',
         ]);
+
+        // Find client by TUPV ID
+        $client = User::where('tupv_id', strtoupper($validated['tupv_id']))
+            ->where('role', 'client')
+            ->where('is_active', true)
+            ->first();
+
+        if (!$client) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['tupv_id' => 'Student not found or not active.']);
+        }
 
         DB::beginTransaction();
 
@@ -86,7 +127,7 @@ class CaseLogController extends Controller
             // Create case log (progress_report and additional_notes auto-encrypted)
             $caseLog = CaseLog::create([
                 'counselor_id' => Auth::id(),
-                'client_id' => $validated['client_id'],
+                'client_id' => $client->id,
                 'start_time' => $validated['start_time'],
                 'end_time' => $validated['end_time'],
                 'progress_report' => $validated['progress_report'],
@@ -232,7 +273,8 @@ class CaseLogController extends Controller
             ]);
 
             // Check if this is the first save (appointment not yet completed)
-            $isFirstSave = $caseLog->appointment->status !== Appointment::STATUS_COMPLETED;
+            // Only applicable if case log has an associated appointment
+            $isFirstSave = $caseLog->appointment && $caseLog->appointment->status !== Appointment::STATUS_COMPLETED;
 
             // Delete old goals and activities (we'll recreate them)
             $caseLog->treatmentGoals()->each(function ($goal) {
@@ -260,13 +302,15 @@ class CaseLogController extends Controller
                 }
             }
 
-            // If first save, mark appointment as completed and send email
-            if ($isFirstSave) {
+            // If first save and has appointment, mark appointment as completed and send email
+            if ($isFirstSave && $caseLog->appointment) {
                 $caseLog->appointment->update(['status' => Appointment::STATUS_COMPLETED]);
 
                 try {
-                    Mail::to($caseLog->appointment->client->email)
-                        ->send(new AppointmentCompleted($caseLog->appointment, $caseLog));
+                    if ($caseLog->appointment->client && $caseLog->appointment->client->email) {
+                        Mail::to($caseLog->appointment->client->email)
+                            ->send(new AppointmentCompleted($caseLog->appointment, $caseLog));
+                    }
                 } catch (\Exception $e) {
                     \Log::error('Failed to send completion email: ' . $e->getMessage());
                 }
