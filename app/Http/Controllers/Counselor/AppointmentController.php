@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Counselor;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AppointmentAccepted;
 use App\Mail\AppointmentCancelled;
+use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
 use App\Models\CancelReason;
 use App\Models\CaseLog;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -14,12 +17,21 @@ use Illuminate\Support\Facades\Mail;
 class AppointmentController extends Controller
 {
     /**
-     * Display the appointments page (with today's appointments expanded).
+     * Display the appointments page with calendar.
      */
     public function index(Request $request)
     {
         $counselor = Auth::user();
-        $showToday = $request->query('today', false);
+        $selectedDate = $request->query('date');
+        $selectedMonth = $request->query('month');
+
+        // Parse current month for calendar
+        $currentMonth = $selectedMonth 
+            ? Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth()
+            : now()->startOfMonth();
+        
+        $prevMonth = $currentMonth->copy()->subMonth();
+        $nextMonth = $currentMonth->copy()->addMonth();
 
         // Today's appointments
         $todayAppointments = Appointment::with(['client', 'caseLog'])
@@ -32,6 +44,16 @@ class AppointmentController extends Controller
             ->orderBy('scheduled_at')
             ->get();
 
+        // Selected date appointments
+        $selectedDateAppointments = collect();
+        if ($selectedDate) {
+            $selectedDateAppointments = Appointment::with(['client', 'caseLog'])
+                ->where('counselor_id', $counselor->id)
+                ->whereDate('scheduled_at', $selectedDate)
+                ->orderBy('scheduled_at')
+                ->get();
+        }
+
         // Pending appointments (upcoming)
         $pendingAppointments = Appointment::with('client')
             ->where('counselor_id', $counselor->id)
@@ -40,18 +62,152 @@ class AppointmentController extends Controller
             ->orderBy('scheduled_at')
             ->get();
 
-        // All appointments (for calendar/history)
-        $allAppointments = Appointment::with('client')
-            ->where('counselor_id', $counselor->id)
-            ->orderBy('scheduled_at', 'desc')
-            ->paginate(15);
+        // Stats
+        $pendingCount = Appointment::where('counselor_id', $counselor->id)
+            ->pending()
+            ->whereMonth('scheduled_at', now()->month)
+            ->whereYear('scheduled_at', now()->year)
+            ->count();
+
+        $monthlyCount = Appointment::where('counselor_id', $counselor->id)
+            ->whereMonth('scheduled_at', $currentMonth->month)
+            ->whereYear('scheduled_at', $currentMonth->year)
+            ->count();
+
+        // Build calendar days
+        $calendarDays = $this->buildCalendarDays($currentMonth, $counselor->id);
 
         return view('counselor.appointments.index', compact(
             'todayAppointments',
+            'selectedDateAppointments',
             'pendingAppointments',
-            'allAppointments',
-            'showToday'
+            'selectedDate',
+            'currentMonth',
+            'prevMonth',
+            'nextMonth',
+            'calendarDays',
+            'pendingCount',
+            'monthlyCount'
         ));
+    }
+
+    /**
+     * Build calendar days array for the month view.
+     */
+    private function buildCalendarDays(Carbon $month, int $counselorId): array
+    {
+        $startOfMonth = $month->copy()->startOfMonth();
+        $endOfMonth = $month->copy()->endOfMonth();
+        
+        // Start from the beginning of the week containing the first day
+        $startDate = $startOfMonth->copy()->startOfWeek(Carbon::SUNDAY);
+        // End at the end of the week containing the last day
+        $endDate = $endOfMonth->copy()->endOfWeek(Carbon::SATURDAY);
+
+        // Get all appointments for the visible range
+        $appointments = Appointment::with('client')
+            ->where('counselor_id', $counselorId)
+            ->whereBetween('scheduled_at', [$startDate, $endDate->endOfDay()])
+            ->orderBy('scheduled_at')
+            ->get()
+            ->groupBy(function ($apt) {
+                return $apt->scheduled_at->format('Y-m-d');
+            });
+
+        $days = [];
+        $currentDate = $startDate->copy();
+
+        while ($currentDate <= $endDate) {
+            $dateKey = $currentDate->format('Y-m-d');
+            $days[] = [
+                'date' => $dateKey,
+                'dayNumber' => $currentDate->day,
+                'isToday' => $currentDate->isToday(),
+                'isCurrentMonth' => $currentDate->month === $month->month,
+                'isWeekend' => $currentDate->isWeekend(),
+                'appointments' => $appointments->get($dateKey, collect()),
+            ];
+            $currentDate->addDay();
+        }
+
+        return $days;
+    }
+
+    /**
+     * Accept a pending appointment.
+     */
+    public function accept(Appointment $appointment)
+    {
+        if ($appointment->counselor_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($appointment->status !== Appointment::STATUS_PENDING) {
+            return redirect()
+                ->back()
+                ->with('error', 'This appointment is not pending.');
+        }
+
+        $appointment->update(['status' => Appointment::STATUS_ACCEPTED]);
+
+        // Send acceptance email to client
+        try {
+            Mail::to($appointment->client->email)
+                ->send(new AppointmentAccepted($appointment));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send appointment acceptance email: ' . $e->getMessage());
+        }
+
+        return redirect()
+            ->back()
+            ->with('success', 'Appointment accepted successfully. The student has been notified via email.');
+    }
+
+    /**
+     * Reject a pending appointment.
+     */
+    public function reject(Request $request, Appointment $appointment)
+    {
+        if ($appointment->counselor_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($appointment->status !== Appointment::STATUS_PENDING) {
+            return redirect()
+                ->back()
+                ->with('error', 'This appointment is not pending.');
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        // Update appointment status to cancelled (rejected is effectively cancelled before acceptance)
+        $appointment->update(['status' => Appointment::STATUS_CANCELLED]);
+
+        // Create cancel reason record for tracking
+        CancelReason::create([
+            'appointment_id' => $appointment->id,
+            'cancelled_by' => Auth::id(),
+            'reason' => $validated['reason'],
+            'email_sent' => false,
+        ]);
+
+        // Send rejection email to client
+        try {
+            Mail::to($appointment->client->email)
+                ->send(new AppointmentRejected($appointment, $validated['reason']));
+            
+            // Update email sent flag
+            CancelReason::where('appointment_id', $appointment->id)
+                ->update(['email_sent' => true]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send appointment rejection email: ' . $e->getMessage());
+        }
+
+        return redirect()
+            ->route('counselor.appointments.index')
+            ->with('success', 'Appointment request declined. The student has been notified via email.');
     }
 
     /**
@@ -105,11 +261,11 @@ class AppointmentController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        // Check if appointment is valid for starting a session
-        if (!in_array($appointment->status, [Appointment::STATUS_PENDING, Appointment::STATUS_ACCEPTED])) {
+        // Check if appointment is accepted (must accept before starting session)
+        if ($appointment->status !== Appointment::STATUS_ACCEPTED) {
             return redirect()
                 ->back()
-                ->with('error', 'Cannot start session for this appointment.');
+                ->with('error', 'You must accept the appointment before starting a session.');
         }
 
         // Check if case log already exists
@@ -127,9 +283,6 @@ class AppointmentController extends Controller
             // Update existing case log with start time
             $caseLog->update(['start_time' => now()]);
         }
-
-        // Update appointment status to accepted (in progress)
-        $appointment->update(['status' => Appointment::STATUS_ACCEPTED]);
 
         return redirect()
             ->route('counselor.appointments.index', ['today' => true])

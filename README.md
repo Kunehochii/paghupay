@@ -80,11 +80,11 @@ php artisan serve
 
 ## 🔑 Default Credentials (After Seeding)
 
-| Role      | Email                    | Password     |
-| --------- | ------------------------ | ------------ |
-| Admin     | admin@tup.edu.ph         | admin123     |
-| Counselor | maria.santos@tup.edu.ph  | counselor123 |
-| Student   | juan.delacruz@tup.edu.ph | student123   |
+| Role      | Email                     | Password     |
+| --------- | ------------------------- | ------------ |
+| Admin     | admin@tupv.edu.ph         | admin123     |
+| Counselor | maria.santos@tupv.edu.ph  | counselor123 |
+| Student   | juan.delacruz@tupv.edu.ph | student123   |
 
 ## 📁 Project Structure
 

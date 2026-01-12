@@ -76,15 +76,30 @@ paghupay/
 │   │       ├── reason.blade.php       # Step 3: Reason input
 │   │       └── thankyou.blade.php     # Confirmation page
 │   ├── counselor/               # Counselor portal views
-│   │   └── case-logs/           # Case log views
+│   │   ├── dashboard.blade.php  # Dashboard with stats
+│   │   ├── appointments/        # Appointments management
+│   │   │   └── index.blade.php  # 3-tab view (Pending, Calendar, Day)
+│   │   ├── case-logs/           # Case log views
+│   │   │   ├── index.blade.php  # List with search
+│   │   │   ├── create.blade.php # Create form
+│   │   │   ├── show.blade.php   # Detail view
+│   │   │   ├── edit.blade.php   # Edit form
+│   │   │   └── pdf.blade.php    # PDF export template
+│   │   └── about.blade.php      # About page
 │   ├── admin/                   # Admin portal views
+│   │   ├── dashboard.blade.php  # Admin dashboard with stats
 │   │   ├── counselors/          # Counselor management
+│   │   │   ├── index.blade.php  # List all counselors
+│   │   │   ├── create.blade.php # Add new counselor form
+│   │   │   └── edit.blade.php   # Edit counselor form
 │   │   └── clients/             # Client management
+│   │       └── index.blade.php  # Client stats + add modal
 │   ├── emails/                  # Email templates
 │   │   ├── student-invitation.blade.php
 │   │   └── appointment-confirmation.blade.php
 │   ├── layouts/                 # Base layouts
 │   │   ├── app.blade.php        # Main layout
+│   │   ├── counselor.blade.php  # Counselor sidebar layout
 │   │   └── partials/
 │   │       └── navbar.blade.php # Navigation
 │   └── components/              # Reusable components
@@ -137,13 +152,23 @@ GET  /booking/thankyou              # Thank you / confirmation page
 GET  /appointments                  # View appointments
 
 // Counselor Routes (/counselor)
-GET  /counselor/dashboard           # Dashboard
-GET  /counselor/pending             # Pending appointments
-GET  /counselor/today               # Today's appointments
-POST /counselor/session/{id}/start  # Start session timer
-POST /counselor/session/{id}/end    # End session timer
-GET  /counselor/case-logs           # Case log list
-POST /counselor/case-logs/{id}      # Create case log
+GET  /counselor/dashboard                      # Dashboard with stats
+GET  /counselor/appointments                   # Appointments management (3-tab view)
+POST /counselor/appointments/{id}/accept       # Accept pending appointment
+POST /counselor/appointments/{id}/cancel       # Cancel appointment
+POST /counselor/appointments/{id}/start-session # Start session timer
+POST /counselor/appointments/{id}/end-session  # End session, create case log
+GET  /counselor/appointments/active-session    # Get current active session
+GET  /counselor/case-logs                      # Case log list with search/stats
+GET  /counselor/case-logs/create               # Create new case log
+POST /counselor/case-logs/store                # Save new case log
+GET  /counselor/case-logs/{id}                 # View case log details
+GET  /counselor/case-logs/{id}/edit            # Edit case log
+PUT  /counselor/case-logs/{id}                 # Update case log
+DELETE /counselor/case-logs/{id}               # Delete case log
+GET  /counselor/case-logs/{id}/export-pdf      # Export case log to PDF
+GET  /counselor/about                          # About page
+GET  /counselor/clients/{id}/history           # Client appointment history
 
 // Admin Routes (/admin)
 GET  /admin/dashboard               # Dashboard
@@ -431,7 +456,7 @@ use App\Models\CounselorProfile;
 // Admin
 User::create([
     'name' => 'Admin User',
-    'email' => 'admin@tup.edu.ph',
+    'email' => 'admin@tupv.edu.ph',
     'password' => bcrypt('password'),
     'role' => 'admin',
     'is_active' => true,
@@ -440,7 +465,7 @@ User::create([
 // Client (Student)
 User::create([
     'name' => 'Student User',
-    'email' => 'student@tup.edu.ph',
+    'email' => 'student@tupv.edu.ph',
     'password' => bcrypt('password'),
     'role' => 'client',
     'is_active' => true,
@@ -449,7 +474,7 @@ User::create([
 // Counselor (requires profile)
 $counselor = User::create([
     'name' => 'Dr. Maria Santos',
-    'email' => 'counselor@tup.edu.ph',
+    'email' => 'counselor@tupv.edu.ph',
     'password' => bcrypt('password'),
     'role' => 'counselor',
     'is_active' => true,
@@ -550,7 +575,224 @@ Sent automatically after booking via SendGrid:
 
 ---
 
-## 📧 Email Configuration (SendGrid)
+## 🧑‍⚕️ Counselor Dashboard (IMPLEMENTED)
+
+The complete counselor portal with sidebar navigation, dashboard, appointments management, and case logs.
+
+### Dashboard Overview
+
+| Section      | Route                     | View                           | Purpose                         |
+| ------------ | ------------------------- | ------------------------------ | ------------------------------- |
+| Dashboard    | `/counselor/dashboard`    | `counselor/dashboard`          | Stats overview                  |
+| Appointments | `/counselor/appointments` | `counselor/appointments/index` | Calendar view, pending requests |
+| Case Logs    | `/counselor/case-logs`    | `counselor/case-logs/index`    | List all case logs              |
+| About        | `/counselor/about`        | `counselor/about`              | About the application           |
+
+### Key Files
+
+```
+app/Http/Controllers/Counselor/
+├── DashboardController.php          # Dashboard with stats
+├── AppointmentController.php        # Appointments + calendar logic
+└── CaseLogController.php            # Case logs CRUD + PDF export
+resources/views/layouts/
+└── counselor.blade.php              # Sidebar layout (profile, nav menu)
+resources/views/counselor/
+├── dashboard.blade.php              # Stats cards
+├── appointments/
+│   └── index.blade.php              # 3 tabs: Pending, Calendar, Day View
+├── case-logs/
+│   ├── index.blade.php              # List with search, stats
+│   ├── create.blade.php             # Create form with student selection
+│   ├── show.blade.php               # Detail view
+│   ├── edit.blade.php               # Edit form with treatment plan
+│   └── pdf.blade.php                # PDF export template
+└── about.blade.php                  # About page
+```
+
+### Layout: Sidebar Navigation
+
+**File**: `resources/views/layouts/counselor.blade.php`
+
+Features:
+
+-   Profile dropdown with logout
+-   Navigation menu: Dashboard, Appointments (with pending badge), Case Logs, About Us
+-   Active state highlighting
+-   Responsive mobile support
+
+### DashboardController Methods
+
+| Method    | Route                      | Purpose                                             |
+| --------- | -------------------------- | --------------------------------------------------- |
+| `index()` | GET `/counselor/dashboard` | Show stats: pending requests, today's, this month's |
+
+**Stats Displayed**:
+
+-   Pending Appointment Requests count
+-   Today's Appointments count
+-   This Month's Appointments count
+
+### AppointmentController Methods (Enhanced)
+
+| Method            | Route                                             | Purpose                           |
+| ----------------- | ------------------------------------------------- | --------------------------------- |
+| `index()`         | GET `/counselor/appointments`                     | Show appointments with 3-tab view |
+| `accept()`        | POST `/counselor/appointments/{id}/accept`        | Accept pending appointment        |
+| `cancel()`        | POST `/counselor/appointments/{id}/cancel`        | Cancel appointment                |
+| `startSession()`  | POST `/counselor/appointments/{id}/start-session` | Start session timer               |
+| `endSession()`    | POST `/counselor/appointments/{id}/end-session`   | End session, create case log      |
+| `activeSession()` | GET `/counselor/appointments/active-session`      | Get current active session        |
+
+**Appointments View Features**:
+
+-   **Pending Requests Tab**: List of pending appointments with Accept/Decline buttons
+-   **Calendar View Tab**: Full month calendar with dots showing appointments per day
+-   **Day View Tab**: List of appointments for selected day with Start Session/Cancel buttons
+
+**Calendar Building Logic**:
+
+```php
+// Builds 7-column calendar grid (Sun-Sat)
+// Shows dots for days with appointments
+// Color coding: Today (blue), Selected (green), Has appointments (dots)
+```
+
+### CaseLogController Methods (Enhanced)
+
+| Method        | Route                                      | Purpose                               |
+| ------------- | ------------------------------------------ | ------------------------------------- |
+| `index()`     | GET `/counselor/case-logs`                 | List with stats, search functionality |
+| `create()`    | GET `/counselor/case-logs/create`          | Create form with student selection    |
+| `store()`     | POST `/counselor/case-logs/store`          | Save new case log                     |
+| `show()`      | GET `/counselor/case-logs/{id}`            | View case log details                 |
+| `edit()`      | GET `/counselor/case-logs/{id}/edit`       | Edit case log                         |
+| `update()`    | PUT `/counselor/case-logs/{id}`            | Update case log                       |
+| `destroy()`   | DELETE `/counselor/case-logs/{id}`         | Delete case log                       |
+| `exportPdf()` | GET `/counselor/case-logs/{id}/export-pdf` | Export case log to PDF                |
+
+**Case Logs Index Features**:
+
+-   Stats cards: Total logs, This month logs, Average duration
+-   Search functionality by student name/TUPV ID
+-   Table with columns: Created Date, TUPV ID, Log #, Duration, Actions
+-   Actions: View, Edit, Export PDF, Delete
+
+**Case Log Create/Edit Features**:
+
+-   Student selection dropdown (for create)
+-   Date and duration fields
+-   Progress report textarea
+-   Additional notes textarea
+-   Dynamic Treatment Plan section:
+    -   Add/remove goals
+    -   Add/remove activities per goal
+    -   Activity date picker
+
+**PDF Export**:
+
+-   Clean printable layout
+-   Includes all case log details
+-   Treatment goals and activities formatted
+-   Auto-prints on page load
+
+---
+
+## � Admin Portal (IMPLEMENTED)
+
+The complete admin portal with sidebar navigation, dashboard, counselor management, and client management.
+
+### Admin Overview
+
+| Section    | Route               | View                     | Purpose                      |
+| ---------- | ------------------- | ------------------------ | ---------------------------- |
+| Dashboard  | `/admin/dashboard`  | `admin/dashboard`        | Stats overview, quick links  |
+| Counselors | `/admin/counselors` | `admin/counselors/index` | Counselor list, CRUD, device |
+| Clients    | `/admin/clients`    | `admin/clients/index`    | Client stats, add via modal  |
+
+### Key Files
+
+```
+app/Http/Controllers/Admin/
+├── DashboardController.php          # Dashboard with stats
+├── CounselorController.php          # Counselor CRUD + device reset
+└── ClientController.php             # Client management + email invite
+resources/views/admin/
+├── dashboard.blade.php              # Stats cards with sidebar
+├── counselors/
+│   ├── index.blade.php              # List with device status, actions
+│   ├── create.blade.php             # Add form with photo upload
+│   └── edit.blade.php               # Edit form with device reset
+└── clients/
+    └── index.blade.php              # Stats cards + add modal
+```
+
+### DashboardController Methods
+
+| Method    | Route                  | Purpose                                               |
+| --------- | ---------------------- | ----------------------------------------------------- |
+| `index()` | GET `/admin/dashboard` | Show stats: counselors, clients, today's appointments |
+
+**Stats Displayed**:
+
+-   Total Counselors count (clickable card)
+-   Total Students count with active count (clickable card)
+-   Today's Appointments count
+-   Recent Appointments table
+
+### CounselorController Methods
+
+| Method          | Route                                      | Purpose                       |
+| --------------- | ------------------------------------------ | ----------------------------- |
+| `index()`       | GET `/admin/counselors`                    | List all counselors           |
+| `create()`      | GET `/admin/counselors/create`             | Show add form                 |
+| `store()`       | POST `/admin/counselors`                   | Create counselor with profile |
+| `edit()`        | GET `/admin/counselors/{id}/edit`          | Show edit form                |
+| `update()`      | PUT `/admin/counselors/{id}`               | Update counselor              |
+| `destroy()`     | DELETE `/admin/counselors/{id}`            | Delete counselor              |
+| `resetDevice()` | POST `/admin/counselors/{id}/reset-device` | Reset device lock             |
+
+**Counselor Index Features**:
+
+-   Stats card: Total counselors count
+-   Table with columns: Photo, Name, Email, Position, Device Status, Actions
+-   Device Status: Shows "Device Bound" with date or "No Device Bound"
+-   Actions: Reset Device (if bound), Edit, Delete (with confirmation modals)
+
+**Counselor Create/Edit Features**:
+
+-   Photo upload with live preview
+-   Name, Email, Position fields
+-   Auto-generates temporary password on create
+-   Device status display with reset button on edit
+
+### ClientController Methods
+
+| Method     | Route                       | Purpose                          |
+| ---------- | --------------------------- | -------------------------------- |
+| `index()`  | GET `/admin/clients`        | Show stats + add modal           |
+| `create()` | GET `/admin/clients/create` | Redirect to modal (not used)     |
+| `store()`  | POST `/admin/clients`       | Create client, send invite email |
+
+**Client Index Features**:
+
+-   Stats cards: Total Students, Active Students, Pending Registration
+-   Privacy note (no user list displayed)
+-   Add Student modal with email validation (@tupv.edu.ph)
+-   AJAX form submission with success feedback
+
+**Add Student Flow**:
+
+1. Admin clicks "Add New Student" button
+2. Modal opens with email input field
+3. Validates email ends with @tupv.edu.ph
+4. Generates 8-character temp password (hashed in DB)
+5. Sends invitation email via SendGrid
+6. Shows success confirmation
+
+---
+
+## �📧 Email Configuration (SendGrid)
 
 ```env
 MAIL_MAILER=smtp
@@ -559,7 +801,7 @@ MAIL_PORT=587
 MAIL_USERNAME=apikey
 MAIL_PASSWORD=your-sendgrid-api-key
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS="guidance@tup.edu.ph"
+MAIL_FROM_ADDRESS="guidance@tupv.edu.ph"
 ```
 
 ---
@@ -657,4 +899,4 @@ php artisan serve
 
 ---
 
-_Last Updated: December 14, 2025_
+_Last Updated: January 9, 2026 (Admin Management Implemented)_

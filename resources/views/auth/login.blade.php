@@ -46,7 +46,7 @@
                                        id="email" 
                                        name="email" 
                                        value="{{ old('email') }}" 
-                                       placeholder="student@tup.edu.ph"
+                                       placeholder="student@tupv.edu.ph"
                                        required 
                                        autofocus>
                             </div>

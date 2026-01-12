@@ -1,22 +1,22 @@
 # **Spec-Driven Development: TUP-V Guidance & Counseling System**
 
-Version: 1.8 (Client Booking Flow Implemented)
+Version: 2.0 (Admin Management Implemented)
 
 ## **Implementation Status**
 
-| Feature             | Status         | Notes                                                        |
-| :------------------ | :------------- | :----------------------------------------------------------- |
-| Database Schema     | ✅ Implemented | All migrations created (including time_slots, blocked_dates) |
-| Authentication      | ✅ Implemented | All login pages, registration, middleware                    |
-| Device Lock (TOFU)  | ✅ Implemented | VerifyDevice middleware complete                             |
-| Role-Based Access   | ✅ Implemented | RoleCheck middleware complete                                |
-| Client Booking Flow | ✅ Implemented | Full 4-step booking with email confirmation                  |
-| Time Slots System   | ✅ Implemented | Morning/Afternoon slots with availability check              |
-| Blocked Dates       | ✅ Implemented | Admin can block dates, weekends auto-disabled                |
-| Counselor Dashboard | ⏳ Pending     |                                                              |
-| Admin Management    | ⏳ Pending     |                                                              |
-| Data Encryption     | ⏳ Pending     | Model casts defined, needs testing                           |
-| Email Notifications | ✅ Implemented | Appointment confirmation email via SendGrid                  |
+| Feature             | Status         | Notes                                                                 |
+| :------------------ | :------------- | :-------------------------------------------------------------------- |
+| Database Schema     | ✅ Implemented | All migrations created (including time_slots, blocked_dates)          |
+| Authentication      | ✅ Implemented | All login pages, registration, middleware                             |
+| Device Lock (TOFU)  | ✅ Implemented | VerifyDevice middleware complete                                      |
+| Role-Based Access   | ✅ Implemented | RoleCheck middleware complete                                         |
+| Client Booking Flow | ✅ Implemented | Full 4-step booking with email confirmation                           |
+| Time Slots System   | ✅ Implemented | Morning/Afternoon slots with availability check                       |
+| Blocked Dates       | ✅ Implemented | Admin can block dates, weekends auto-disabled                         |
+| Counselor Dashboard | ✅ Implemented | Dashboard, appointments (calendar view), case logs (CRUD, PDF export) |
+| Admin Management    | ✅ Implemented | Dashboard, counselor CRUD with photo upload, client management        |
+| Data Encryption     | ✅ Implemented | AES-256-CBC via Laravel encrypted casts on sensitive fields           |
+| Email Notifications | ✅ Implemented | Appointment confirmation email via SendGrid                           |
 
 ---
 
@@ -670,7 +670,7 @@ $$CounselorController::\*\*class\*\*, 'resetDevice'$$
 
 \<**td**\>Dr. Maria Santos\</**td**\>
 
-\<**td**\>maria.santos@tup.edu.ph\</**td**\>
+\<**td**\>maria.santos@tupv.edu.ph\</**td**\>
 
 \<**td**\>Head Psychologist\</**td**\>
 
@@ -819,4 +819,43 @@ Cancel
 -   ☐ Role-based access control works (no cross-role access)
 -   ☐ Logout clears authentication but preserves device cookie
 -   ☐ Token tampering results in access denial
--   ☐ **\[New\]** Direct Database Access Check: Run SQL SELECT on case_logs. Ensure progress_report is unreadable ciphertext.
+-   ☑ **\[Verified\]** Direct Database Access Check: Run SQL SELECT on case_logs. Ensure progress_report is unreadable ciphertext.
+
+### **8.5 Data Encryption Testing** ✅ VERIFIED
+
+The following encryption tests have been verified (January 9, 2026):
+
+**Encrypted Fields Verified:**
+| Model | Field | Status |
+| :----------------- | :---------------- | :------- |
+| CaseLog | progress_report | ✅ Encrypted |
+| CaseLog | additional_notes | ✅ Encrypted |
+| TreatmentGoal | description | ✅ Encrypted |
+| TreatmentActivity | description | ✅ Encrypted |
+
+**Manual Verification Steps:**
+
+1. **Via psql or pgAdmin:**
+
+    ```sql
+    SELECT id, case_log_id, progress_report, additional_notes
+    FROM case_logs LIMIT 1;
+    ```
+
+    - Expected: `progress_report` shows `eyJpdiI6...` (base64 ciphertext)
+    - NOT readable plain text
+
+2. **Via Laravel Tinker:**
+    ```php
+    php artisan tinker
+    > $log = \App\Models\CaseLog::first();
+    > $log->progress_report  // Should show decrypted text
+    > \DB::table('case_logs')->first()->progress_report  // Should show ciphertext
+    ```
+
+**Important Security Notes:**
+
+-   Encryption uses Laravel's AES-256-CBC with APP_KEY
+-   If APP_KEY changes, all encrypted data becomes unreadable
+-   Encrypted fields CANNOT be searched with SQL LIKE queries
+-   Always back up APP_KEY securely

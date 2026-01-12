@@ -97,13 +97,45 @@ class CaseLog extends Model
 
     /**
      * Calculate and set session duration from start and end times.
+     * Duration is stored in seconds for precision.
      */
     public function calculateDuration(): void
     {
         if ($this->start_time && $this->end_time) {
-            $this->session_duration = $this->start_time->diffInMinutes($this->end_time);
+            $this->session_duration = (int) $this->start_time->diffInSeconds($this->end_time);
             $this->save();
         }
+    }
+
+    /**
+     * Get formatted duration string (e.g., "1h 30m 45s" or "5m 30s" or "45s").
+     */
+    public function getFormattedDurationAttribute(): string
+    {
+        if (!$this->session_duration) {
+            return 'N/A';
+        }
+
+        $seconds = $this->session_duration;
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        $secs = $seconds % 60;
+
+        if ($hours > 0) {
+            return "{$hours}h {$minutes}m {$secs}s";
+        } elseif ($minutes > 0) {
+            return "{$minutes}m {$secs}s";
+        } else {
+            return "{$secs}s";
+        }
+    }
+
+    /**
+     * Get duration in minutes (for backward compatibility and statistics).
+     */
+    public function getDurationInMinutesAttribute(): float
+    {
+        return $this->session_duration ? round($this->session_duration / 60, 1) : 0;
     }
 
     /**

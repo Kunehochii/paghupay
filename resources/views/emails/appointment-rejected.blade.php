@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appointment Completed</title>
+    <title>Appointment Request Declined</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,7 +14,7 @@
             padding: 20px;
         }
         .header {
-            background-color: #198754;
+            background-color: #6c757d;
             color: white;
             padding: 20px;
             text-align: center;
@@ -56,22 +56,33 @@
         .status-badge {
             display: inline-block;
             padding: 5px 15px;
-            background-color: #198754;
+            background-color: #6c757d;
             color: white;
             border-radius: 20px;
             font-size: 14px;
             font-weight: bold;
         }
-        .session-info {
-            background-color: #d1e7dd;
-            border: 1px solid #198754;
+        .reason-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
             border-radius: 8px;
             padding: 15px;
             margin: 20px 0;
         }
-        .session-info h3 {
+        .reason-box h3 {
             margin-top: 0;
-            color: #0f5132;
+            color: #856404;
+        }
+        .action-box {
+            background-color: #e7f3ff;
+            border: 1px solid #0d6efd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .action-box h3 {
+            margin-top: 0;
+            color: #0d6efd;
         }
         .footer {
             text-align: center;
@@ -83,28 +94,17 @@
             border-radius: 0 0 8px 8px;
             background-color: #f8f9fa;
         }
-        .next-steps {
-            background-color: #e7f3ff;
-            border: 1px solid #0d6efd;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .next-steps h3 {
-            margin-top: 0;
-            color: #0d6efd;
-        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>✅ Session Completed</h1>
+        <h1>📋 Appointment Request Declined</h1>
     </div>
     
     <div class="content">
         <p>Dear {{ $appointment->client->name }},</p>
         
-        <p>Thank you for attending your counseling session. Your appointment has been <strong>completed</strong>.</p>
+        <p>We regret to inform you that your appointment request has been <strong>declined</strong>.</p>
         
         <div class="appointment-details">
             <div class="detail-row">
@@ -112,38 +112,26 @@
                 <span class="detail-value">{{ $appointment->counselor->name }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Date</span>
-                <span class="detail-value">{{ $appointment->scheduled_at->format('l, F j, Y') }}</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Case Log ID</span>
-                <span class="detail-value">{{ $caseLog->case_log_id }}</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Session Duration</span>
-                <span class="detail-value">{{ $caseLog->formatted_duration }}</span>
+                <span class="detail-label">Requested Date & Time</span>
+                <span class="detail-value">{{ $appointment->scheduled_at->format('l, F j, Y \a\t g:i A') }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">Status</span>
-                <span class="status-badge">Completed</span>
+                <span class="status-badge">Declined</span>
             </div>
         </div>
 
-        <div class="session-info">
-            <h3>📝 Session Summary</h3>
-            <p>A case log has been created for your session. Your counselor has documented the session details which are kept confidential in accordance with the Data Privacy Act (RA 10173).</p>
+        <div class="reason-box">
+            <h3>📝 Reason</h3>
+            <p>{{ $reason }}</p>
         </div>
 
-        <div class="next-steps">
+        <div class="action-box">
             <h3>📅 What's Next?</h3>
-            <ul>
-                <li>If follow-up sessions are needed, you can book another appointment through the Paghupay system.</li>
-                <li>Remember to follow any recommendations discussed during your session.</li>
-                <li>Feel free to reach out to the Guidance Office if you have any concerns.</li>
-            </ul>
+            <p>You are welcome to submit a new appointment request for a different date or time through the Paghupay system. If you have any questions or concerns, please don't hesitate to contact the Guidance Office directly.</p>
         </div>
         
-        <p>We hope your session was helpful. Remember, seeking guidance is a sign of strength, and we're here to support you.</p>
+        <p>We apologize for any inconvenience this may have caused.</p>
         
         <p>Best regards,<br>
         <strong>TUP-V Guidance & Counseling Office</strong></p>

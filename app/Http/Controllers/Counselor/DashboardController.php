@@ -29,6 +29,10 @@ class DashboardController extends Controller
                 ->where('status', Appointment::STATUS_COMPLETED)
                 ->count(),
             'total_case_logs' => CaseLog::where('counselor_id', $counselor->id)->count(),
+            'this_month_appointments' => Appointment::where('counselor_id', $counselor->id)
+                ->whereMonth('scheduled_at', now()->month)
+                ->whereYear('scheduled_at', now()->year)
+                ->count(),
         ];
 
         // Check for active session

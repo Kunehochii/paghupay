@@ -58,6 +58,10 @@ Route::middleware(['auth', 'role:client'])->group(function () {
     // Student Welcome Page (Landing after login)
     Route::get('/', [BookingController::class, 'welcome'])->name('client.welcome');
 
+    // Confidentiality Agreement
+    Route::get('/agreement', [BookingController::class, 'showAgreement'])->name('client.agreement');
+    Route::post('/agreement', [BookingController::class, 'acceptAgreement'])->name('client.agreement.accept');
+
     // Profile completion/onboarding
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('client.onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'complete'])->name('client.onboarding.complete');
@@ -109,6 +113,8 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
         // Appointments Management
         Route::prefix('appointments')->name('appointments.')->group(function () {
             Route::get('/', [AppointmentController::class, 'index'])->name('index');
+            Route::post('/{appointment}/accept', [AppointmentController::class, 'accept'])->name('accept');
+            Route::post('/{appointment}/reject', [AppointmentController::class, 'reject'])->name('reject');
             Route::post('/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('cancel');
             Route::post('/{appointment}/start-session', [AppointmentController::class, 'startSession'])->name('start-session');
             Route::post('/{appointment}/end-session', [AppointmentController::class, 'endSession'])->name('end-session');
@@ -118,12 +124,19 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
         // Case Logs
         Route::prefix('case-logs')->name('case-logs.')->group(function () {
             Route::get('/', [CaseLogController::class, 'index'])->name('index');
-            Route::get('/create/{appointment}', [CaseLogController::class, 'create'])->name('create');
-            Route::post('/store/{appointment}', [CaseLogController::class, 'store'])->name('store');
+            Route::get('/create', [CaseLogController::class, 'create'])->name('create');
+            Route::post('/store', [CaseLogController::class, 'store'])->name('store');
             Route::get('/{caseLog}', [CaseLogController::class, 'show'])->name('show');
             Route::get('/{caseLog}/edit', [CaseLogController::class, 'edit'])->name('edit');
             Route::put('/{caseLog}', [CaseLogController::class, 'update'])->name('update');
+            Route::delete('/{caseLog}', [CaseLogController::class, 'destroy'])->name('destroy');
+            Route::get('/{caseLog}/export-pdf', [CaseLogController::class, 'exportPdf'])->name('export-pdf');
         });
+
+        // About Page
+        Route::get('/about', function () {
+            return view('counselor.about');
+        })->name('about');
 
         // Client History
         Route::get('/clients/{client}/history', function ($client) {

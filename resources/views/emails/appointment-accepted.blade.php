@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appointment Completed</title>
+    <title>Appointment Accepted</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -62,16 +62,27 @@
             font-size: 14px;
             font-weight: bold;
         }
-        .session-info {
+        .notice-box {
             background-color: #d1e7dd;
             border: 1px solid #198754;
             border-radius: 8px;
             padding: 15px;
             margin: 20px 0;
         }
-        .session-info h3 {
+        .notice-box h3 {
             margin-top: 0;
             color: #0f5132;
+        }
+        .reminder-box {
+            background-color: #e7f3ff;
+            border: 1px solid #0d6efd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .reminder-box h3 {
+            margin-top: 0;
+            color: #0d6efd;
         }
         .footer {
             text-align: center;
@@ -83,28 +94,22 @@
             border-radius: 0 0 8px 8px;
             background-color: #f8f9fa;
         }
-        .next-steps {
-            background-color: #e7f3ff;
-            border: 1px solid #0d6efd;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .next-steps h3 {
-            margin-top: 0;
-            color: #0d6efd;
-        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>✅ Session Completed</h1>
+        <h1>✅ Appointment Accepted</h1>
     </div>
     
     <div class="content">
         <p>Dear {{ $appointment->client->name }},</p>
         
-        <p>Thank you for attending your counseling session. Your appointment has been <strong>completed</strong>.</p>
+        <p>Great news! Your appointment request has been <strong>accepted</strong> by your counselor.</p>
+        
+        <div class="notice-box">
+            <h3>🎉 Your Appointment is Confirmed!</h3>
+            <p>Please make sure to be available at the scheduled date and time.</p>
+        </div>
         
         <div class="appointment-details">
             <div class="detail-row">
@@ -112,38 +117,26 @@
                 <span class="detail-value">{{ $appointment->counselor->name }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Date</span>
-                <span class="detail-value">{{ $appointment->scheduled_at->format('l, F j, Y') }}</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Case Log ID</span>
-                <span class="detail-value">{{ $caseLog->case_log_id }}</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Session Duration</span>
-                <span class="detail-value">{{ $caseLog->formatted_duration }}</span>
+                <span class="detail-label">Date & Time</span>
+                <span class="detail-value">{{ $appointment->scheduled_at->format('l, F j, Y \a\t g:i A') }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">Status</span>
-                <span class="status-badge">Completed</span>
+                <span class="status-badge">Accepted</span>
             </div>
         </div>
 
-        <div class="session-info">
-            <h3>📝 Session Summary</h3>
-            <p>A case log has been created for your session. Your counselor has documented the session details which are kept confidential in accordance with the Data Privacy Act (RA 10173).</p>
-        </div>
-
-        <div class="next-steps">
-            <h3>📅 What's Next?</h3>
-            <ul>
-                <li>If follow-up sessions are needed, you can book another appointment through the Paghupay system.</li>
-                <li>Remember to follow any recommendations discussed during your session.</li>
-                <li>Feel free to reach out to the Guidance Office if you have any concerns.</li>
+        <div class="reminder-box">
+            <h3>📋 Reminders</h3>
+            <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                <li>Please arrive 10 minutes before your scheduled time</li>
+                <li>Bring any relevant documents or information for your session</li>
+                <li>The session will take place at the Guidance Office</li>
+                <li>If you need to cancel, please do so at least 24 hours in advance</li>
             </ul>
         </div>
         
-        <p>We hope your session was helpful. Remember, seeking guidance is a sign of strength, and we're here to support you.</p>
+        <p>We look forward to seeing you!</p>
         
         <p>Best regards,<br>
         <strong>TUP-V Guidance & Counseling Office</strong></p>

@@ -138,7 +138,6 @@
                                    name="email" 
                                    placeholder="student@tupv.edu.ph"
                                    required>
-                                   required>
                         </div>
                         <div class="form-text">
                             <i class="bi bi-info-circle me-1"></i>Only @tupv.edu.ph email addresses are accepted.
