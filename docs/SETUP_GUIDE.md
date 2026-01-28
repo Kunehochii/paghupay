@@ -10,6 +10,8 @@ Before running Paghupay, you need to install:
 
 | Software | Version | Purpose                |
 | -------- | ------- | ---------------------- |
+| VS Code  | Latest  | Code editor & terminal |
+| Git      | Latest  | Version control        |
 | PHP      | 8.2+    | Backend runtime        |
 | Composer | Latest  | PHP dependency manager |
 | Node.js  | 18+ LTS | Frontend build tools   |
@@ -18,9 +20,101 @@ Before running Paghupay, you need to install:
 
 ---
 
-## 1️⃣ Install PHP (Windows)
+## 1️⃣ Install Visual Studio Code
 
-### Option A: Using XAMPP (Recommended for Beginners)
+VS Code is the recommended code editor for this project.
+
+### Download & Install
+
+1. Go to: https://code.visualstudio.com/
+2. Click **Download for Windows** (or Mac)
+3. Run the installer
+4. **Important**: During installation, check these options:
+    - ✅ Add "Open with Code" action to Windows Explorer file context menu
+    - ✅ Add "Open with Code" action to Windows Explorer directory context menu
+    - ✅ Add to PATH
+
+### Required Extensions
+
+After installing VS Code, install these extensions for the best development experience:
+
+1. Open VS Code
+2. Click the **Extensions** icon in the sidebar (or press `Ctrl+Shift+X`)
+3. Search and install each of these:
+
+| Extension                   | Publisher          | Purpose                        |
+| --------------------------- | ------------------ | ------------------------------ |
+| **PHP Intelephense**        | Ben Mewburn        | PHP code intelligence          |
+| **Laravel Blade Snippets**  | Winnie Lin         | Blade template support         |
+| **Laravel Blade formatter** | Shuhei Hayashibara | Format Blade files             |
+| **DotENV**                  | mikestead          | .env file syntax highlight     |
+| **GitLens**                 | GitKraken          | Enhanced Git integration       |
+| **MySQL**                   | Weijan Chen        | Database management (optional) |
+
+**Quick Install via Command Palette:**
+
+Press `Ctrl+Shift+P` (Windows) or `Cmd+Shift+P` (Mac), type "Install Extensions", then search for each extension name.
+
+---
+
+## 2️⃣ Install Git
+
+Git is required for version control and cloning the project from GitHub.
+
+### Windows Installation
+
+1. Download Git from: https://git-scm.com/download/windows
+2. Run the installer
+3. **Important settings during installation:**
+    - Choose **"Use Visual Studio Code as Git's default editor"**
+    - Choose **"Git from the command line and also from 3rd-party software"**
+    - Keep other defaults
+4. Complete the installation
+
+### Mac Installation
+
+**Option A: Using Homebrew (Recommended)**
+
+```bash
+# Install Homebrew first if you don't have it
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Then install Git
+brew install git
+```
+
+**Option B: Using Xcode Command Line Tools**
+
+```bash
+xcode-select --install
+```
+
+### Verify Git Installation
+
+Open a **new** terminal and run:
+
+```bash
+git --version
+```
+
+You should see something like `git version 2.x.x`.
+
+### Configure Git (First Time Only)
+
+Set your name and email (use your real info):
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+```
+
+---
+
+## 3️⃣ Install PHP
+
+### Windows
+
+#### Option A: Using XAMPP (Recommended for Beginners)
 
 1. Download XAMPP from: https://www.apachefriends.org/download.html
 2. Choose the **PHP 8.2+** version
@@ -39,16 +133,30 @@ Before running Paghupay, you need to install:
     ```
     You should see PHP version 8.2 or higher.
 
-### Option B: Standalone PHP Installation
+#### Option B: Standalone PHP Installation
 
 1. Download PHP from: https://windows.php.net/download/
 2. Choose **VS16 x64 Thread Safe** zip
 3. Extract to `C:\php`
 4. Add `C:\php` to your system PATH (same steps as above)
 
+### Mac
+
+**Using Homebrew (Recommended):**
+
+```bash
+brew install php
+```
+
+Verify installation:
+
+```bash
+php -v
+```
+
 ---
 
-## ⚠️ IMPORTANT: Enable PHP Extensions
+## ⚠️ IMPORTANT: Enable PHP Extensions (Windows Only)
 
 This step is **critical** for Composer to work efficiently.
 
@@ -101,41 +209,63 @@ The `zip` extension dramatically speeds up Composer package downloads. Without i
 
 ---
 
-## 2️⃣ Install Composer
+## 4️⃣ Install Composer
 
 Composer is the PHP dependency manager (like npm for JavaScript).
+
+### Windows
 
 1. Download the Composer installer from: https://getcomposer.org/download/
 2. Run `Composer-Setup.exe`
 3. The installer will automatically detect your PHP installation
 4. Complete the installation with default settings
 
-5. Verify installation:
-    ```powershell
-    composer -V
-    ```
+### Mac
+
+```bash
+brew install composer
+```
+
+### Verify Installation
+
+```bash
+composer -V
+```
 
 ---
 
-## 3️⃣ Install Node.js
+## 5️⃣ Install Node.js
 
 Node.js is required for building frontend assets (CSS/JavaScript).
+
+### Windows & Mac
 
 1. Download Node.js **LTS version** from: https://nodejs.org/
 2. Run the installer with default settings
 3. **Important**: Check the box for "Automatically install necessary tools" if prompted
 
-4. Verify installation (open a **new** terminal):
-    ```powershell
-    node -v
-    npm -v
-    ```
+### Mac (Alternative via Homebrew)
+
+```bash
+brew install node
+```
+
+### Verify Installation
+
+Open a **new** terminal:
+
+```bash
+node -v
+npm -v
+```
 
 ---
 
-## 4️⃣ Install MySQL
+## 6️⃣ Install MySQL
 
-### Option A: Using XAMPP (If you installed XAMPP for PHP)
+### Windows
+
+#### Option A: Using XAMPP (If you installed XAMPP for PHP)
 
 MySQL is already included! Just:
 
@@ -143,7 +273,7 @@ MySQL is already included! Just:
 2. Click **Start** next to **MySQL**
 3. MySQL will run on `localhost:3306`
 
-### Option B: Standalone MySQL Installation
+#### Option B: Standalone MySQL Installation
 
 1. Download MySQL Installer from: https://dev.mysql.com/downloads/installer/
 2. Choose **MySQL Installer (Web)** - smaller download
@@ -153,15 +283,28 @@ MySQL is already included! Just:
 4. Set a root password (remember this!)
 5. Complete the installation
 
+### Mac
+
+**Using Homebrew:**
+
+```bash
+brew install mysql
+brew services start mysql
+```
+
 ### Create the Database
 
 1. Open a terminal and connect to MySQL:
 
-    ```powershell
-    # If using XAMPP
-    C:\xampp\mysql\bin\mysql -u root
+    **Windows (XAMPP):**
 
-    # If standalone MySQL
+    ```powershell
+    C:\xampp\mysql\bin\mysql -u root
+    ```
+
+    **Windows (Standalone) or Mac:**
+
+    ```bash
     mysql -u root -p
     ```
 
@@ -173,7 +316,7 @@ MySQL is already included! Just:
 
 ---
 
-## 5️⃣ Set Up SendGrid (Email Service)
+## 7️⃣ Set Up SendGrid (Email Service)
 
 Paghupay uses SendGrid to send email notifications (appointment confirmations, student invitations, etc.).
 
@@ -211,53 +354,143 @@ Paghupay uses SendGrid to send email notifications (appointment confirmations, s
 
 ---
 
-## 6️⃣ Project Setup
+## 8️⃣ Get the Project Code
 
-### Step 1: Clone or Extract the Project
+You have two options to get the project: **Clone from GitHub** (recommended) or extract from a ZIP file.
+
+### Option A: Clone from GitHub (Recommended)
+
+#### Step 1: Open VS Code
+
+1. Open VS Code
+2. Open the integrated terminal: **Terminal** → **New Terminal** (or press `` Ctrl+` ``)
+
+#### Step 2: Navigate to Your Projects Folder
+
+First, navigate to where you want to store the project.
+
+**Windows:**
+
+```powershell
+# Create a projects folder (if it doesn't exist)
+mkdir D:\projects
+
+# Navigate to it
+cd D:\projects
+```
+
+**Mac:**
+
+```bash
+# Create a projects folder (if it doesn't exist)
+mkdir ~/projects
+
+# Navigate to it
+cd ~/projects
+```
+
+#### Step 3: Clone the Repository
+
+```bash
+git clone https://github.com/Kunehochii/paghupay.git
+```
+
+This will create a `paghupay` folder with all the project files.
+
+#### Step 4: Open the Project in VS Code
+
+**Windows:**
+
+```powershell
+cd paghupay
+code .
+```
+
+**Mac:**
+
+```bash
+cd paghupay
+code .
+```
+
+This opens the project folder in a new VS Code window.
+
+### Option B: Extract from ZIP File
 
 If you received the project as a ZIP file:
 
+1. Extract the ZIP to your desired location (e.g., `D:\projects\paghupay`)
+2. Open VS Code
+3. Go to **File** → **Open Folder**
+4. Select the extracted `paghupay` folder
+
+---
+
+## 9️⃣ Project Setup (Inside VS Code)
+
+Now that you have the project open in VS Code, let's set it up.
+
+### Opening the Terminal in VS Code
+
+1. In VS Code, go to **Terminal** → **New Terminal** (or press `` Ctrl+` ``)
+2. The terminal opens at the bottom of VS Code, already in the project folder
+
+### Navigating to the Project (If Needed)
+
+If your terminal is not in the project folder:
+
+**Windows:**
+
 ```powershell
-# Extract to your desired location, e.g.:
-cd D:\projects
-# Extract paghupay.zip here
+# Check your current location
+pwd
+
+# Navigate to the project
+cd D:\projects\paghupay
 ```
 
-If cloning from Git:
+**Mac:**
 
-```powershell
-git clone <repository-url> paghupay
-cd paghupay
+```bash
+# Check your current location
+pwd
+
+# Navigate to the project
+cd ~/projects/paghupay
 ```
 
-### Step 2: Install PHP Dependencies
+### Step 1: Install PHP Dependencies
 
-Navigate to the project folder and run:
-
-```powershell
-cd D:\tupv\paghupay
+```bash
 composer install
 ```
 
 This will download all Laravel dependencies. With the `zip` extension enabled, this should take 2-5 minutes instead of 10-15 minutes.
 
-### Step 3: Install Node.js Dependencies
+### Step 2: Install Node.js Dependencies
 
-```powershell
+```bash
 npm install
 ```
 
-### Step 4: Create Environment File
+### Step 3: Create Environment File
 
-Copy the example environment file:
+**Windows (PowerShell):**
 
 ```powershell
 copy .env.example .env
 ```
 
-### Step 5: Configure the `.env` File
+**Mac/Linux:**
 
-Open `.env` in VS Code or any text editor and update these values:
+```bash
+cp .env.example .env
+```
+
+### Step 4: Configure the `.env` File
+
+1. In VS Code's file explorer (left sidebar), find and click on `.env`
+2. Update these values:
 
 ```env
 # Application Settings
@@ -294,63 +527,73 @@ MAIL_FROM_NAME="Paghupay"
 -   `MAIL_PASSWORD` is your SendGrid API key (starts with `SG.`)
 -   `MAIL_FROM_ADDRESS` must match the email you verified in SendGrid's Single Sender
 
-### Step 6: Generate Application Key
+### Step 5: Generate Application Key
 
-```powershell
+```bash
 php artisan key:generate
 ```
 
 This generates a unique encryption key for your application.
 
-### Step 7: Run Database Migrations
+### Step 6: Run Database Migrations
 
 This creates all the database tables:
 
-```powershell
+```bash
 php artisan migrate
 ```
 
-### Step 8: Seed the Database (Optional)
+### Step 7: Seed the Database (Optional)
 
 To add default time slots:
 
-```powershell
+```bash
 php artisan db:seed
 ```
 
-### Step 9: Create Storage Link
+### Step 8: Create Storage Link
 
 This enables file uploads to work correctly:
 
-```powershell
+```bash
 php artisan storage:link
 ```
 
 ---
 
-## 7️⃣ Running the Application
+## 🔟 Running the Application
 
-You need to run **two terminals** simultaneously:
+You need to run **two terminals** simultaneously in VS Code.
+
+### Opening Multiple Terminals in VS Code
+
+1. Open the first terminal: **Terminal** → **New Terminal**
+2. To open a second terminal, click the **+** icon in the terminal panel, or go to **Terminal** → **New Terminal** again
+3. You can switch between terminals using the dropdown in the terminal panel
 
 ### Terminal 1: PHP Development Server
 
-```powershell
-cd D:\tupv\paghupay
+In the first terminal:
+
+```bash
 php artisan serve
 ```
 
 This starts the backend server at `http://localhost:8000`
 
+**Keep this terminal running!**
+
 ### Terminal 2: Vite Development Server (Frontend Assets)
 
-Open a **new** terminal:
+In the second terminal:
 
-```powershell
-cd D:\tupv\paghupay
+```bash
 npm run dev
 ```
 
 This compiles CSS/JavaScript and enables hot-reloading.
+
+**Keep this terminal running too!**
 
 ### Access the Application
 
@@ -362,7 +605,7 @@ Open your browser and go to:
 
 ---
 
-## 8️⃣ Creating Test Users
+## 1️⃣1️⃣ Creating Test Users
 
 To create test users, use Laravel Tinker:
 
@@ -473,8 +716,45 @@ Type `exit` to leave Tinker.
 
 ## 🛑 Stopping the Servers
 
--   Press `Ctrl + C` in each terminal to stop the servers
--   To stop MySQL (XAMPP): Open XAMPP Control Panel and click **Stop** next to MySQL
+-   Press `Ctrl + C` (Windows) or `Cmd + C` (Mac) in each terminal to stop the servers
+-   To stop MySQL:
+    -   **XAMPP**: Open XAMPP Control Panel and click **Stop** next to MySQL
+    -   **Mac (Homebrew)**: Run `brew services stop mysql`
+
+---
+
+## 📂 VS Code Tips
+
+### Useful Keyboard Shortcuts
+
+| Action               | Windows        | Mac           |
+| -------------------- | -------------- | ------------- |
+| Open terminal        | `` Ctrl+` ``   | `` Cmd+` ``   |
+| Open command palette | `Ctrl+Shift+P` | `Cmd+Shift+P` |
+| Open file explorer   | `Ctrl+Shift+E` | `Cmd+Shift+E` |
+| Search in files      | `Ctrl+Shift+F` | `Cmd+Shift+F` |
+| Go to file           | `Ctrl+P`       | `Cmd+P`       |
+| Save file            | `Ctrl+S`       | `Cmd+S`       |
+| Toggle sidebar       | `Ctrl+B`       | `Cmd+B`       |
+
+### Recommended Settings
+
+Add these to your VS Code settings for a better Laravel experience:
+
+1. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
+2. Type "Preferences: Open Settings (JSON)"
+3. Add these settings:
+
+```json
+{
+    "files.associations": {
+        "*.blade.php": "blade"
+    },
+    "emmet.includeLanguages": {
+        "blade": "html"
+    }
+}
+```
 
 ---
 
@@ -487,5 +767,7 @@ If you encounter issues not covered in this guide:
 3. Contact your instructor or project supervisor
 
 ---
+
+**GitHub Repository**: https://github.com/Kunehochii/paghupay
 
 _Last Updated: January 2026_
