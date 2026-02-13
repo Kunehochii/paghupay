@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\AppointmentConfirmation;
 use App\Models\Appointment;
 use App\Models\BlockedDate;
+use App\Models\CounselorUnavailableDate;
 use App\Models\TimeSlot;
 use App\Models\User;
 use Carbon\Carbon;
@@ -22,12 +23,12 @@ class BookingController extends Controller
     public function welcome()
     {
         $client = Auth::user();
-        
+
         // Check if user has agreed to confidentiality
         if (!$client->agreed_to_confidentiality) {
             return redirect()->route('client.agreement');
         }
-        
+
         $upcomingAppointments = Appointment::with('counselor')
             ->where('client_id', $client->id)
             ->upcoming()
@@ -43,12 +44,12 @@ class BookingController extends Controller
     public function showAgreement()
     {
         $client = Auth::user();
-        
+
         // If already agreed, redirect to welcome
         if ($client->agreed_to_confidentiality) {
             return redirect()->route('client.welcome');
         }
-        
+
         return view('client.agreement');
     }
 
@@ -57,13 +58,14 @@ class BookingController extends Controller
      */
     public function acceptAgreement(Request $request)
     {
+        /** @var \App\Models\User $client */
         $client = Auth::user();
-        
+
         $client->update([
             'agreed_to_confidentiality' => true,
             'agreed_at' => now(),
         ]);
-        
+
         return redirect()->route('client.welcome');
     }
 
@@ -98,7 +100,7 @@ class BookingController extends Controller
         ]);
 
         $counselor = User::where('role', 'counselor')->findOrFail($request->counselor_id);
-        
+
         // Store in session
         $request->session()->put('booking.counselor_id', $counselor->id);
 
@@ -121,6 +123,9 @@ class BookingController extends Controller
         // Get blocked dates for the calendar
         $blockedDates = BlockedDate::getBlockedDatesArray();
 
+        // Get counselor's unavailable dates
+        $counselorUnavailableDates = CounselorUnavailableDate::getUnavailableDatesArray($counselor->id);
+
         // Get dates that are fully booked for this counselor
         $bookedDates = $this->getFullyBookedDates($counselor->id);
 
@@ -139,6 +144,7 @@ class BookingController extends Controller
             'morningSlots',
             'afternoonSlots',
             'blockedDates',
+            'counselorUnavailableDates',
             'bookedDates',
             'bookedSlots'
         ));
@@ -164,7 +170,7 @@ class BookingController extends Controller
         ]);
 
         $scheduledDate = Carbon::parse($request->scheduled_date);
-        
+
         // DEBUG: Log parsed date
         Log::info('=== SELECT SCHEDULE - PARSED DATE ===', [
             'input_date_string' => $request->scheduled_date,
@@ -180,6 +186,11 @@ class BookingController extends Controller
         // Check if the date is blocked
         if (BlockedDate::isBlocked($request->scheduled_date)) {
             return back()->with('error', 'This date is not available for booking.');
+        }
+
+        // Check if the counselor is unavailable on this date
+        if (CounselorUnavailableDate::isUnavailable($counselor->id, $request->scheduled_date)) {
+            return back()->with('error', 'The counselor is not available on this date. Please select another date.');
         }
 
         // Check if this slot is already taken for this counselor on this date
@@ -198,7 +209,7 @@ class BookingController extends Controller
         $request->session()->put('booking.counselor_id', $counselor->id);
         $request->session()->put('booking.scheduled_date', $request->scheduled_date);
         $request->session()->put('booking.time_slot_id', $request->time_slot_id);
-        
+
         // DEBUG: Log session storage
         Log::info('=== SELECT SCHEDULE - SESSION STORED ===', [
             'stored_date' => $request->session()->get('booking.scheduled_date'),
@@ -213,9 +224,11 @@ class BookingController extends Controller
     public function reason(Request $request)
     {
         // Validate that we have the required session data
-        if (!$request->session()->has('booking.counselor_id') || 
+        if (
+            !$request->session()->has('booking.counselor_id') ||
             !$request->session()->has('booking.scheduled_date') ||
-            !$request->session()->has('booking.time_slot_id')) {
+            !$request->session()->has('booking.time_slot_id')
+        ) {
             return redirect()->route('booking.choose-counselor')
                 ->with('error', 'Please select a counselor and schedule first.');
         }
@@ -237,9 +250,11 @@ class BookingController extends Controller
         ]);
 
         // Validate session data
-        if (!$request->session()->has('booking.counselor_id') || 
+        if (
+            !$request->session()->has('booking.counselor_id') ||
             !$request->session()->has('booking.scheduled_date') ||
-            !$request->session()->has('booking.time_slot_id')) {
+            !$request->session()->has('booking.time_slot_id')
+        ) {
             return redirect()->route('booking.choose-counselor')
                 ->with('error', 'Session expired. Please start the booking process again.');
         }
@@ -314,7 +329,7 @@ class BookingController extends Controller
     public function thankyou(Request $request)
     {
         $appointmentId = $request->session()->get('last_appointment_id');
-        
+
         if (!$appointmentId) {
             return redirect()->route('booking.index');
         }
@@ -355,7 +370,7 @@ class BookingController extends Controller
     private function getFullyBookedDates(int $counselorId): array
     {
         $totalSlots = TimeSlot::active()->count();
-        
+
         if ($totalSlots === 0) {
             return [];
         }
@@ -393,6 +408,16 @@ class BookingController extends Controller
         ]);
 
         $date = $request->date;
+
+        // Check if the counselor is unavailable on this date
+        if (CounselorUnavailableDate::isUnavailable($counselor->id, $date)) {
+            return response()->json([
+                'morning' => [],
+                'afternoon' => [],
+                'unavailable' => true,
+                'message' => 'The counselor is not available on this date.',
+            ]);
+        }
 
         // Get all active time slots
         $allSlots = TimeSlot::active()->get();

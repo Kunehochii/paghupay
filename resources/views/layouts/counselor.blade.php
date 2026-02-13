@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
+
     <style>
         :root {
             --sidebar-width: 300px;
@@ -40,7 +41,7 @@
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
         }
 
         /* Profile Section at Top */
@@ -169,7 +170,7 @@
         }
 
         .sidebar-footer-content small {
-            color: rgba(255,255,255,0.8);
+            color: rgba(255, 255, 255, 0.8);
         }
 
         /* Main Content */
@@ -189,7 +190,7 @@
             background: white;
             border: 1px solid #e9ecef;
             min-width: 200px;
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
             border-radius: 0.5rem;
         }
 
@@ -271,7 +272,7 @@
         }
 
         .dashboard-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .dashboard-card-title {
@@ -362,7 +363,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
 
@@ -384,9 +385,10 @@
             border-radius: 3px;
         }
     </style>
-    
+
     @stack('styles')
 </head>
+
 <body>
     <!-- Mobile Header -->
     <div class="mobile-header justify-content-between align-items-center">
@@ -407,7 +409,7 @@
             <div class="dropdown">
                 <a href="#" class="profile-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="profile-avatar">
-                        @if(auth()->user()->counselorProfile && auth()->user()->counselorProfile->picture_url)
+                        @if (auth()->user()->counselorProfile && auth()->user()->counselorProfile->picture_url)
                             <img src="{{ Storage::url(auth()->user()->counselorProfile->picture_url) }}" alt="Profile">
                         @else
                             <i class="bi bi-person"></i>
@@ -424,7 +426,9 @@
                             <i class="bi bi-person-circle me-2"></i> My Profile
                         </a>
                     </li>
-                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
                     <li>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -441,32 +445,40 @@
         <div class="sidebar-nav-wrapper">
             <div class="nav-section-label">Primary Menu</div>
             <nav class="sidebar-nav">
-                <a href="{{ route('counselor.dashboard') }}" 
-                   class="nav-link {{ request()->routeIs('counselor.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('counselor.dashboard') }}"
+                    class="nav-link {{ request()->routeIs('counselor.dashboard') ? 'active' : '' }}">
                     <i class="bi bi-bar-chart-line"></i>
                     <span>Dashboard</span>
                 </a>
 
-                <a href="{{ route('counselor.appointments.index') }}" 
-                   class="nav-link {{ request()->routeIs('counselor.appointments.*') ? 'active' : '' }}">
+                <a href="{{ route('counselor.appointments.index') }}"
+                    class="nav-link {{ request()->routeIs('counselor.appointments.*') ? 'active' : '' }}">
                     <i class="bi bi-calendar3"></i>
                     <span>Appointment</span>
                     @php
-                        $pendingCount = \App\Models\Appointment::where('counselor_id', auth()->id())->pending()->count();
+                        $pendingCount = \App\Models\Appointment::where('counselor_id', auth()->id())
+                            ->pending()
+                            ->count();
                     @endphp
-                    @if($pendingCount > 0)
+                    @if ($pendingCount > 0)
                         <span class="nav-badge badge bg-warning text-dark">{{ $pendingCount }}</span>
                     @endif
                 </a>
 
-                <a href="{{ route('counselor.case-logs.index') }}" 
-                   class="nav-link {{ request()->routeIs('counselor.case-logs.*') ? 'active' : '' }}">
+                <a href="{{ route('counselor.case-logs.index') }}"
+                    class="nav-link {{ request()->routeIs('counselor.case-logs.*') ? 'active' : '' }}">
                     <i class="bi bi-journal-text"></i>
                     <span>Case Logs</span>
                 </a>
 
-                <a href="{{ route('counselor.about') }}" 
-                   class="nav-link {{ request()->routeIs('counselor.about') ? 'active' : '' }}">
+                <a href="{{ route('counselor.availability.index') }}"
+                    class="nav-link {{ request()->routeIs('counselor.availability.*') ? 'active' : '' }}">
+                    <i class="bi bi-calendar-check"></i>
+                    <span>My Availability</span>
+                </a>
+
+                <a href="{{ route('counselor.about') }}"
+                    class="nav-link {{ request()->routeIs('counselor.about') ? 'active' : '' }}">
                     <i class="bi bi-people"></i>
                     <span>About us</span>
                 </a>
@@ -492,18 +504,18 @@
         </div>
 
         {{-- Flash Messages --}}
-        @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show mx-4 mt-3 mb-0" role="alert">
-            <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show mx-4 mt-3 mb-0" role="alert">
+                <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         @endif
 
-        @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show mx-4 mt-3 mb-0" role="alert">
-            <i class="bi bi-exclamation-circle me-2"></i>{{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show mx-4 mt-3 mb-0" role="alert">
+                <i class="bi bi-exclamation-circle me-2"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         @endif
 
         <div class="content-body">
@@ -513,7 +525,7 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <script>
         // Mobile sidebar toggle
         const sidebar = document.getElementById('sidebar');
@@ -534,7 +546,8 @@
             });
         }
     </script>
-    
+
     @stack('scripts')
 </body>
+
 </html>

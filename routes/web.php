@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Client\BookingController;
 use App\Http\Controllers\Client\OnboardingController;
 use App\Http\Controllers\Counselor\AppointmentController;
+use App\Http\Controllers\Counselor\AvailabilityController;
 use App\Http\Controllers\Counselor\CaseLogController;
 use App\Http\Controllers\Counselor\DashboardController as CounselorDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -57,6 +58,11 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 Route::middleware(['auth', 'role:client'])->group(function () {
     // Student Welcome Page (Landing after login)
     Route::get('/', [BookingController::class, 'welcome'])->name('client.welcome');
+
+    // About Us Page
+    Route::get('/about', function () {
+        return view('client.about');
+    })->name('client.about');
 
     // Confidentiality Agreement
     Route::get('/agreement', [BookingController::class, 'showAgreement'])->name('client.agreement');
@@ -132,6 +138,12 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
             Route::put('/{caseLog}', [CaseLogController::class, 'update'])->name('update');
             Route::delete('/{caseLog}', [CaseLogController::class, 'destroy'])->name('destroy');
             Route::get('/{caseLog}/export-pdf', [CaseLogController::class, 'exportPdf'])->name('export-pdf');
+        });
+
+        // Availability Management
+        Route::prefix('availability')->name('availability.')->group(function () {
+            Route::get('/', [AvailabilityController::class, 'index'])->name('index');
+            Route::post('/toggle', [AvailabilityController::class, 'toggle'])->name('toggle');
         });
 
         // About Page

@@ -54,7 +54,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-            
+
             // Ensure user is a client
             if ($user->role !== 'client') {
                 Auth::logout();
@@ -91,7 +91,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-            
+
             // Ensure user is a counselor
             if ($user->role !== 'counselor') {
                 Auth::logout();
@@ -128,7 +128,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-            
+
             // Ensure user is an admin
             if ($user->role !== 'admin') {
                 Auth::logout();
@@ -183,15 +183,17 @@ class AuthController extends Controller
                 ->with('error', 'Invalid registration attempt.');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         $validated = $request->validate([
             // Password change
             'current_password' => 'required|string',
             'password' => 'required|string|min:8|confirmed',
-            
+
             // Personal information
             'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'nickname' => 'required|string|max:255',
             'course_year_section' => 'required|string|max:255',
             'birthdate' => 'required|date',
@@ -202,12 +204,12 @@ class AuthController extends Controller
             'fb_account' => 'nullable|string|max:255',
             'address' => 'required|string|max:500',
             'home_address' => 'required|string|max:500',
-            
+
             // Guardian information
             'guardian_name' => 'required|string|max:255',
             'guardian_relationship' => 'required|string|max:100',
             'guardian_contact' => 'required|string|max:20',
-            
+
             // Terms
             'agree_terms' => 'required|accepted',
         ], [
@@ -225,9 +227,10 @@ class AuthController extends Controller
         // Update user with new password and profile data
         $user->update([
             'name' => $validated['name'],
+            'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'is_active' => true,
-            
+
             // Profile fields
             'nickname' => $validated['nickname'],
             'course_year_section' => $validated['course_year_section'],

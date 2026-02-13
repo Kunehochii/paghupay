@@ -6,8 +6,8 @@ use Illuminate\Foundation\Configuration\Middleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        commands: __DIR__.'/../routes/console.php',
+        web: __DIR__ . '/../routes/web.php',
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -16,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleCheck::class,
             'verify.device' => \App\Http\Middleware\VerifyDevice::class,
         ]);
+
+        // Exclude device cookie from encryption to allow raw token comparison
+        $middleware->encryptCookies(except: ['counselor_device_id']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
