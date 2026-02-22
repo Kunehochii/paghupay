@@ -3,8 +3,8 @@
 @section('title', 'Admin Dashboard')
 
 @section('content')
-    <!-- Search Bar -->
-    <div class="search-wrapper mb-4">
+    <!-- Search Bar (half width) -->
+    <div class="search-wrapper mb-4" style="max-width: 50%;">
         <i class="bi bi-search"></i>
         <input type="text" class="admin-search" placeholder="Search">
     </div>

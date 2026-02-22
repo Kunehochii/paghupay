@@ -169,7 +169,7 @@
     <div class="login-card">
         <!-- Logo -->
         <div class="logo-wrapper">
-            <img src="{{ asset('images/logo-guidance.png') }}" alt="Guidance Services Office Logo" onerror="this.src='https://via.placeholder.com/100?text=GSO'">
+            <img src="{{ asset('images/tupv_logo.png') }}" alt="TUP-V Logo" onerror="this.src='https://via.placeholder.com/100?text=TUPV'">
         </div>
 
         <!-- Title -->

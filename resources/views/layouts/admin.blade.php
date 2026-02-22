@@ -303,6 +303,12 @@
 
     <!-- Main Content -->
     <main class="admin-main">
+        <!-- Top Header Bar with University Branding -->
+        <div class="d-flex justify-content-end align-items-center mb-4">
+            <span style="font-weight: 600; color: var(--color-secondary-dark); font-size: 14px; margin-right: 10px;">Technological University of the Philippines Visayas</span>
+            <img src="{{ asset('images/tupv_logo.png') }}" alt="TUP-V Logo" style="height: 40px; width: 40px; border-radius: 50%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/40?text=TUPV'">
+        </div>
+
         @yield('content')
     </main>
 

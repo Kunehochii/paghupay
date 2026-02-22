@@ -9,6 +9,7 @@ use App\Models\Appointment;
 use App\Models\CaseLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -96,7 +97,7 @@ class ClientController extends Controller
                 $emailSent = true;
             } catch (\Exception $e) {
                 // Log the error but don't fail the request
-                \Log::error('Failed to send student invitation email: ' . $e->getMessage());
+                Log::error('Failed to send student invitation email: ' . $e->getMessage());
             }
         }
 
@@ -107,7 +108,7 @@ class ClientController extends Controller
                 'tupv_id' => $user->tupv_id,
                 'email' => $user->email,
                 'email_sent' => $emailSent,
-                'temp_password' => !$user->email ? $tempPassword : null, // Only return if no email (admin must share manually)
+                'temp_password' => !$emailSent ? $tempPassword : null, // Show if no email sent (no email provided or delivery failed)
             ]);
         }
 

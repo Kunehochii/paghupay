@@ -495,11 +495,11 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        {{-- Search Bar --}}
+        {{-- Top Header Bar with University Branding --}}
         <div class="search-bar-wrapper">
-            <div class="search-input-wrapper">
-                <i class="bi bi-search"></i>
-                <input type="text" class="form-control search-input" placeholder="Search">
+            <div class="d-flex justify-content-end align-items-center">
+                <span style="font-weight: 600; color: var(--color-secondary-dark); font-size: 14px; margin-right: 10px;">Technological University of the Philippines Visayas</span>
+                <img src="{{ asset('images/tupv_logo.png') }}" alt="TUP-V Logo" style="height: 40px; width: 40px; border-radius: 50%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/40?text=TUPV'">
             </div>
         </div>
 
