@@ -153,31 +153,29 @@ class CounselorController extends Controller
     }
 
     /**
-     * Remove the specified counselor.
-     * Note: All related records (appointments, case_logs, etc.) will be
-     * automatically deleted due to CASCADE foreign keys.
+     * Deactivate the specified counselor account.
      */
-    public function destroy($id)
+    public function deactivate($id)
     {
-        $counselor = User::with('counselorProfile')
-            ->where('role', 'counselor')
-            ->findOrFail($id);
-
-        // Get counts for logging/confirmation
-        $appointmentsCount = Appointment::where('counselor_id', $counselor->id)->count();
-        $caseLogsCount = CaseLog::where('counselor_id', $counselor->id)->count();
-
-        // Delete picture if exists
-        if ($counselor->counselorProfile?->picture_url) {
-            Storage::disk('public')->delete($counselor->counselorProfile->picture_url);
-        }
-
-        $name = $counselor->name;
-        $counselor->delete(); // Cascades to counselor_profile, appointments, case_logs
+        $counselor = User::where('role', 'counselor')->findOrFail($id);
+        $counselor->deactivate();
 
         return redirect()
             ->route('admin.counselors.index')
-            ->with('success', "Counselor {$name} deleted successfully. {$appointmentsCount} appointment(s) and {$caseLogsCount} case log(s) were also removed.");
+            ->with('success', "Counselor {$counselor->name} has been deactivated.");
+    }
+
+    /**
+     * Reactivate the specified counselor account.
+     */
+    public function reactivate($id)
+    {
+        $counselor = User::where('role', 'counselor')->findOrFail($id);
+        $counselor->reactivate();
+
+        return redirect()
+            ->route('admin.counselors.index')
+            ->with('success', "Counselor {$counselor->name} has been reactivated.");
     }
 
     /**

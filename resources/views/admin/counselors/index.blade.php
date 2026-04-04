@@ -61,6 +61,7 @@
                                 <th>Email</th>
                                 <th>Position</th>
                                 <th>Device Status</th>
+                                <th>Account Status</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -99,26 +100,43 @@
                                                     </span>
                                                 @endif
                                             </td>
+                                            <td>
+                                                @if($counselor->isDeactivated())
+                                                    <span class="badge bg-danger">Deactivated</span>
+                                                    <small class="d-block text-muted">{{ $counselor->deactivated_at->format('M d, Y') }}</small>
+                                                @else
+                                                    <span class="badge bg-success">Active</span>
+                                                @endif
+                                            </td>
                                             <td class="text-end">
                                                 <div class="btn-group" role="group">
                                                     @if($counselor->counselorProfile?->device_token)
-                                                        <button type="button" 
+                                                        <button type="button"
                                                                 class="btn btn-sm btn-warning"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#resetModal{{ $counselor->id }}">
                                                             <i class="bi bi-arrow-counterclockwise"></i>
                                                         </button>
                                                     @endif
-                                                    <a href="{{ route('admin.counselors.edit', $counselor->id) }}" 
+                                                    <a href="{{ route('admin.counselors.edit', $counselor->id) }}"
                                                        class="btn btn-sm btn-outline-secondary">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>
-                                                    <button type="button" 
-                                                            class="btn btn-sm btn-outline-danger"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#deleteModal{{ $counselor->id }}">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
+                                                    @if($counselor->isDeactivated())
+                                                        <form action="{{ route('admin.counselors.reactivate', $counselor->id) }}" method="POST" class="d-inline">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Reactivate">
+                                                                <i class="bi bi-person-check"></i>
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-warning"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#deactivateModal{{ $counselor->id }}">
+                                                            <i class="bi bi-person-slash"></i>
+                                                        </button>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>
@@ -155,42 +173,37 @@
                                         </div>
                                         @endif
 
-                                        <!-- Delete Modal -->
-                                        <div class="modal fade" id="deleteModal{{ $counselor->id }}" tabindex="-1">
+                                        <!-- Deactivate Modal -->
+                                        @unless($counselor->isDeactivated())
+                                        <div class="modal fade" id="deactivateModal{{ $counselor->id }}" tabindex="-1">
                                             <div class="modal-dialog modal-dialog-centered">
                                                 <div class="modal-content">
-                                                    <div class="modal-header bg-danger text-white">
+                                                    <div class="modal-header bg-warning text-dark">
                                                         <h5 class="modal-title">
-                                                            <i class="bi bi-exclamation-triangle me-2"></i>Delete Counselor
+                                                            <i class="bi bi-exclamation-triangle me-2"></i>Deactivate Counselor
                                                         </h5>
-                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                     </div>
                                                     <div class="modal-body">
-                                                        <p>Are you sure you want to delete <strong>{{ $counselor->name }}</strong>?</p>
-                                                        <div class="alert alert-danger mb-0">
-                                                            <i class="bi bi-exclamation-octagon me-2"></i>
-                                                            <strong>This action cannot be undone!</strong>
-                                                            <p class="mb-0 mt-2">The following will be permanently deleted:</p>
-                                                            <ul class="mb-0">
-                                                                <li>Counselor profile and photo</li>
-                                                                <li>All appointment records with this counselor</li>
-                                                                <li>All case logs created by this counselor</li>
-                                                            </ul>
+                                                        <p>Are you sure you want to deactivate <strong>{{ $counselor->name }}</strong>?</p>
+                                                        <div class="alert alert-warning mb-0">
+                                                            <i class="bi bi-info-circle me-2"></i>
+                                                            The counselor will not be able to log in while deactivated. Their records will be preserved and you can reactivate the account at any time.
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                        <form action="{{ route('admin.counselors.destroy', $counselor->id) }}" method="POST" class="d-inline">
+                                                        <form action="{{ route('admin.counselors.deactivate', $counselor->id) }}" method="POST" class="d-inline">
                                                             @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="btn btn-danger">
-                                                                <i class="bi bi-trash me-1"></i>Delete Permanently
+                                                            <button type="submit" class="btn btn-warning">
+                                                                <i class="bi bi-person-slash me-1"></i>Deactivate
                                                             </button>
                                                         </form>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+                                        @endunless
                                     @endforeach
                                 </tbody>
                             </table>

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CounselorController as AdminCounselorController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Client\BookingController;
+use App\Http\Controllers\Client\NotificationController;
 use App\Http\Controllers\Client\OnboardingController;
 use App\Http\Controllers\Counselor\AppointmentController;
 use App\Http\Controllers\Counselor\AvailabilityController;
@@ -101,6 +102,15 @@ Route::middleware(['auth', 'role:client'])->group(function () {
 
     // View appointments
     Route::get('/appointments', [BookingController::class, 'appointments'])->name('client.appointments');
+
+    // Notifications
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::get('/recent', [NotificationController::class, 'recent'])->name('recent');
+        Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('/read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
+    });
 });
 
 // ============================================================================
@@ -175,7 +185,8 @@ Route::middleware(['auth', 'role:admin'])
             Route::post('/', [AdminCounselorController::class, 'store'])->name('store');
             Route::get('/{counselor}/edit', [AdminCounselorController::class, 'edit'])->name('edit');
             Route::put('/{counselor}', [AdminCounselorController::class, 'update'])->name('update');
-            Route::delete('/{counselor}', [AdminCounselorController::class, 'destroy'])->name('destroy');
+            Route::post('/{counselor}/deactivate', [AdminCounselorController::class, 'deactivate'])->name('deactivate');
+            Route::post('/{counselor}/reactivate', [AdminCounselorController::class, 'reactivate'])->name('reactivate');
             // Device Reset
             Route::post('/{counselor}/reset-device', [AdminCounselorController::class, 'resetDevice'])->name('reset-device');
         });
@@ -187,7 +198,8 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/create', [AdminClientController::class, 'create'])->name('create');
             Route::post('/', [AdminClientController::class, 'store'])->name('store');
             Route::get('/{client}', [AdminClientController::class, 'show'])->name('show');
-            Route::delete('/{client}', [AdminClientController::class, 'destroy'])->name('destroy');
+            Route::post('/{client}/deactivate', [AdminClientController::class, 'deactivate'])->name('deactivate');
+            Route::post('/{client}/reactivate', [AdminClientController::class, 'reactivate'])->name('reactivate');
         });
 
         // Reports (optional)

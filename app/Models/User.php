@@ -41,6 +41,7 @@ class User extends Authenticatable
         'guardian_relationship',
         'guardian_contact',
         'is_active',
+        'deactivated_at',
         'agreed_to_confidentiality',
         'agreed_at',
     ];
@@ -67,6 +68,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'birthdate' => 'date',
             'is_active' => 'boolean',
+            'deactivated_at' => 'datetime',
             'agreed_to_confidentiality' => 'boolean',
             'agreed_at' => 'datetime',
         ];
@@ -102,6 +104,21 @@ class User extends Authenticatable
     public function isCounselor(): bool
     {
         return $this->hasRole('counselor');
+    }
+
+    public function isDeactivated(): bool
+    {
+        return $this->deactivated_at !== null;
+    }
+
+    public function deactivate(): void
+    {
+        $this->update(['deactivated_at' => now()]);
+    }
+
+    public function reactivate(): void
+    {
+        $this->update(['deactivated_at' => null]);
     }
 
     /**

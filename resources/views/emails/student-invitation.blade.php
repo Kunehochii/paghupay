@@ -109,7 +109,7 @@
                 <span class="value">{{ $tupvId }}</span>
             </div>
             <div class="credential-item">
-                <strong>Temporary Password:</strong><br>
+                <strong>Default Password (your TUPV ID):</strong><br>
                 <span class="value">{{ $tempPassword }}</span>
             </div>
         </div>
@@ -121,10 +121,10 @@
         <div class="important">
             <strong>⚠️ IMPORTANT:</strong>
             <ul style="margin-bottom: 0;">
-                <li>Log in using your <strong>TUPV ID</strong> and temporary password above</li>
+                <li>Log in using your <strong>TUPV ID</strong> — your default password is also your TUPV ID</li>
                 <li>You will be asked to create a <strong>new password</strong></li>
                 <li>You must complete your <strong>profile information</strong></li>
-                <li>This temporary password is only for your first login</li>
+                <li>This default password is only for your first login</li>
             </ul>
         </div>
         

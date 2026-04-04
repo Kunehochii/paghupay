@@ -3,6 +3,7 @@
 @section('title', 'Select Date & Time')
 
 @push('styles')
+    @include('layouts.partials.notification-styles')
     <style>
         /* Color Variables */
         :root {
@@ -217,12 +218,12 @@
 
         .calendar-day.disabled,
         .calendar-day.weekend {
-            color: #999;
+            color: #dc3545;
             cursor: not-allowed;
         }
 
         .calendar-day.weekend {
-            color: #bbb;
+            color: #dc3545;
         }
 
         .calendar-day.today {
@@ -412,7 +413,8 @@
                     <a href="{{ route('client.welcome') }}" class="nav-link-custom" title="Home">
                         <i class="bi bi-house-door-fill"></i>
                     </a>
-                    <a href="#" class="nav-link-about">About us</a>
+                    <a href="{{ route('client.about') }}" class="nav-link-about">About us</a>
+                    @include('layouts.partials.notification-bell')
                     <form method="POST" action="{{ route('logout') }}" class="d-inline">
                         @csrf
                         <button type="submit" class="nav-link-custom" title="Log Out">
@@ -531,6 +533,7 @@
 @endsection
 
 @push('scripts')
+    @include('layouts.partials.notification-scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const scheduledDateInput = document.getElementById('scheduledDate');

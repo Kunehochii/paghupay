@@ -3,6 +3,7 @@
 @section('title', 'Reason for Counseling')
 
 @push('styles')
+@include('layouts.partials.notification-styles')
 <style>
     /* Color Variables */
     :root {
@@ -216,11 +217,12 @@
     <!-- Top Navigation -->
     <nav class="nav-custom">
         <div class="container">
-            <div class="d-flex justify-content-end align-items-center">
+            <div class="d-flex justify-content-center align-items-center">
                 <a href="{{ route('client.welcome') }}" class="nav-link-custom" title="Home">
                     <i class="bi bi-house-door-fill"></i>
                 </a>
-                <a href="#" class="nav-link-about">About us</a>
+                <a href="{{ route('client.about') }}" class="nav-link-about">About us</a>
+                @include('layouts.partials.notification-bell')
                 <form action="{{ route('logout') }}" method="POST" class="d-inline">
                     @csrf
                     <button type="submit" class="nav-link-custom" title="Logout">
@@ -277,6 +279,7 @@
 @endsection
 
 @push('scripts')
+@include('layouts.partials.notification-scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const textarea = document.getElementById('reason');

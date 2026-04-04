@@ -9,8 +9,8 @@
             <i class="bi bi-people me-2"></i>Student Management
         </h1>
         <div>
-            <button type="button" class="btn btn-outline-danger me-2" data-bs-toggle="modal" data-bs-target="#deleteStudentModal">
-                <i class="bi bi-trash me-1"></i>Delete Student
+            <button type="button" class="btn btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#deactivateStudentModal">
+                <i class="bi bi-person-slash me-1"></i>Manage Status
             </button>
             <button type="button" class="btn btn-paghupay" data-bs-toggle="modal" data-bs-target="#addStudentModal">
                 <i class="bi bi-plus-lg me-1"></i>Add New Student
@@ -148,10 +148,10 @@
                         <i class="bi bi-info-circle me-2"></i>
                         <strong>What happens next:</strong>
                         <ul class="mb-0 mt-2">
-                            <li>A temporary password will be generated</li>
+                            <li>The student's default password will be their TUPV ID</li>
                             <li>If email provided: invitation email will be sent</li>
-                            <li>If no email: you'll receive the temp password to share manually</li>
-                            <li>The student can login using their TUPV ID and password</li>
+                            <li>The student can login using their TUPV ID as both username and password</li>
+                            <li>They will be required to change their password on first login</li>
                         </ul>
                     </div>
                 </div>
@@ -179,9 +179,9 @@
                     Student account has been created successfully.
                 </p>
                 <div id="tempPasswordDisplay" class="d-none alert alert-warning text-start mb-4">
-                    <strong><i class="bi bi-key me-1"></i>Temporary Password:</strong>
+                    <strong><i class="bi bi-key me-1"></i>Default Password (TUPV ID):</strong>
                     <code id="tempPasswordValue" class="fs-5 d-block mt-2"></code>
-                    <small class="text-muted d-block mt-2">Please share this password securely with the student.</small>
+                    <small class="text-muted d-block mt-2">The student's default password is their TUPV ID.</small>
                 </div>
                 <button type="button" class="btn btn-paghupay" data-bs-dismiss="modal" onclick="location.reload()">
                     Done
@@ -191,15 +191,15 @@
     </div>
 </div>
 
-<!-- Delete Student Modal (Search & Delete) -->
-<div class="modal fade" id="deleteStudentModal" tabindex="-1" aria-labelledby="deleteStudentModalLabel" aria-hidden="true">
+<!-- Deactivate/Reactivate Student Modal (Search) -->
+<div class="modal fade" id="deactivateStudentModal" tabindex="-1" aria-labelledby="deactivateStudentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteStudentModalLabel">
-                    <i class="bi bi-trash me-2"></i>Delete Student (Graduated/Inactive)
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="deactivateStudentModalLabel">
+                    <i class="bi bi-person-slash me-2"></i>Manage Student Status
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Search Section -->
@@ -207,9 +207,9 @@
                     <label for="studentSearch" class="form-label">Search by TUPV ID</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" 
-                               class="form-control" 
-                               id="studentSearch" 
+                        <input type="text"
+                               class="form-control"
+                               id="studentSearch"
                                placeholder="Enter TUPV ID (e.g., TUPV-24-0001)"
                                autocomplete="off">
                         <button type="button" class="btn btn-outline-secondary" id="searchBtn">
@@ -243,61 +243,49 @@
                     <p class="text-muted mt-2 mb-0">Searching...</p>
                 </div>
 
-                <!-- Warning -->
-                <div class="alert alert-warning mt-4 mb-0">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    <strong>Warning:</strong> Deleting a student will permanently remove:
-                    <ul class="mb-0 mt-2">
-                        <li>All appointment records</li>
-                        <li>All case logs and treatment plans</li>
-                        <li>This action cannot be undone</li>
-                    </ul>
+                <!-- Info -->
+                <div class="alert alert-info mt-4 mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Note:</strong> Deactivating a student will prevent them from logging in. Their records (appointments, case logs) will be preserved. You can reactivate the account at any time.
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Confirm Delete Modal -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+<!-- Confirm Deactivate Modal -->
+<div class="modal fade" id="confirmDeactivateModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title">
-                    <i class="bi bi-exclamation-triangle me-2"></i>Confirm Delete
+                    <i class="bi bi-exclamation-triangle me-2"></i>Confirm Deactivation
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete this student?</p>
+                <p>Are you sure you want to deactivate this student?</p>
                 <div class="card bg-light mb-3">
                     <div class="card-body">
                         <p class="mb-1"><strong>TUPV ID:</strong> <span id="confirmTupvId"></span></p>
                         <p class="mb-1"><strong>Name:</strong> <span id="confirmName"></span></p>
                         <p class="mb-1"><strong>Email:</strong> <span id="confirmEmail"></span></p>
-                        <hr>
-                        <p class="mb-1 text-danger"><strong>Records to be deleted:</strong></p>
-                        <ul class="mb-0">
-                            <li><span id="confirmAppointments"></span> appointment(s)</li>
-                            <li><span id="confirmCaseLogs"></span> case log(s)</li>
-                        </ul>
                     </div>
                 </div>
-                <div class="alert alert-danger mb-0">
-                    <i class="bi bi-exclamation-octagon me-2"></i>
-                    <strong>This action is permanent and cannot be undone!</strong>
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    The student will not be able to log in while deactivated. You can reactivate the account later.
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
+                <form id="deactivateForm" method="POST" style="display: inline;">
                     @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger" id="confirmDeleteBtn">
-                        <i class="bi bi-trash me-1"></i>Delete Permanently
+                    <button type="submit" class="btn btn-warning" id="confirmDeactivateBtn">
+                        <i class="bi bi-person-slash me-1"></i>Deactivate
                     </button>
                 </form>
             </div>
@@ -305,17 +293,17 @@
     </div>
 </div>
 
-<!-- Delete Success Modal -->
-<div class="modal fade" id="deleteSuccessModal" tabindex="-1" aria-hidden="true">
+<!-- Status Change Success Modal -->
+<div class="modal fade" id="statusSuccessModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-body text-center py-5">
                 <div class="mb-4">
                     <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
                 </div>
-                <h4 class="mb-3">Student Deleted</h4>
-                <p class="text-muted mb-2" id="deleteSuccessMessage">
-                    Student has been deleted successfully.
+                <h4 class="mb-3" id="statusSuccessTitle">Status Updated</h4>
+                <p class="text-muted mb-2" id="statusSuccessMessage">
+                    Student status has been updated successfully.
                 </p>
                 <button type="button" class="btn btn-paghupay" data-bs-dismiss="modal" onclick="location.reload()">
                     Done
@@ -434,7 +422,7 @@ document.getElementById('email').addEventListener('input', function() {
 });
 
 // =====================================================
-// DELETE STUDENT FUNCTIONALITY
+// DEACTIVATE/REACTIVATE STUDENT FUNCTIONALITY
 // =====================================================
 
 const studentSearch = document.getElementById('studentSearch');
@@ -447,18 +435,18 @@ const searchLoading = document.getElementById('searchLoading');
 // Search function
 function searchStudents() {
     const query = studentSearch.value.trim().toUpperCase();
-    
+
     if (query.length < 4) {
         searchResults.classList.add('d-none');
         noResults.classList.add('d-none');
         return;
     }
-    
+
     // Show loading
     searchResults.classList.add('d-none');
     noResults.classList.add('d-none');
     searchLoading.classList.remove('d-none');
-    
+
     fetch(`{{ route('admin.clients.search') }}?q=${encodeURIComponent(query)}`, {
         headers: {
             'Accept': 'application/json',
@@ -468,7 +456,7 @@ function searchStudents() {
     .then(response => response.json())
     .then(data => {
         searchLoading.classList.add('d-none');
-        
+
         if (data.success && data.results.length > 0) {
             displayResults(data.results);
             searchResults.classList.remove('d-none');
@@ -487,18 +475,31 @@ function searchStudents() {
 
 // Display search results
 function displayResults(results) {
-    resultsContainer.innerHTML = results.map(student => `
+    resultsContainer.innerHTML = results.map(student => {
+        const isDeactivated = student.deactivated_at !== null;
+        const statusBadge = isDeactivated
+            ? '<span class="badge bg-danger ms-2">Deactivated</span>'
+            : (student.is_active ? '<span class="badge bg-success ms-2">Active</span>' : '<span class="badge bg-secondary ms-2">Pending</span>');
+        const actionBtn = isDeactivated
+            ? `<button type="button" class="btn btn-outline-success btn-sm"
+                    onclick="toggleStatus(${student.id}, '${student.tupv_id}', '${student.name.replace(/'/g, "\\'")}', '${student.email || 'N/A'}', 'reactivate')">
+                    <i class="bi bi-person-check"></i> Reactivate
+                </button>`
+            : `<button type="button" class="btn btn-outline-warning btn-sm"
+                    onclick="toggleStatus(${student.id}, '${student.tupv_id}', '${student.name.replace(/'/g, "\\'")}', '${student.email || 'N/A'}', 'deactivate')">
+                    <i class="bi bi-person-slash"></i> Deactivate
+                </button>`;
+
+        return `
         <div class="card mb-2">
             <div class="card-body d-flex justify-content-between align-items-center py-2">
                 <div>
                     <strong>${student.tupv_id}</strong>
-                    <span class="badge ${student.is_active ? 'bg-success' : 'bg-secondary'} ms-2">
-                        ${student.is_active ? 'Active' : 'Pending'}
-                    </span>
+                    ${statusBadge}
                     <br>
                     <small class="text-muted">
                         ${student.name !== 'Pending Registration' ? student.name : '(No name yet)'}
-                        ${student.email ? ' • ' + student.email : ''}
+                        ${student.email ? ' &bull; ' + student.email : ''}
                     </small>
                     <br>
                     <small class="text-muted">
@@ -506,13 +507,10 @@ function displayResults(results) {
                         <i class="bi bi-journal-text me-1"></i>${student.case_logs_count} case logs
                     </small>
                 </div>
-                <button type="button" class="btn btn-outline-danger btn-sm" 
-                        onclick="confirmDelete(${student.id}, '${student.tupv_id}', '${student.name.replace(/'/g, "\\'")}', '${student.email || 'N/A'}', ${student.appointments_count}, ${student.case_logs_count})">
-                    <i class="bi bi-trash"></i> Delete
-                </button>
+                ${actionBtn}
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 // Search on button click
@@ -526,44 +524,49 @@ studentSearch.addEventListener('keypress', function(e) {
 });
 
 // Clear results when modal closes
-document.getElementById('deleteStudentModal').addEventListener('hidden.bs.modal', function() {
+document.getElementById('deactivateStudentModal').addEventListener('hidden.bs.modal', function() {
     studentSearch.value = '';
     searchResults.classList.add('d-none');
     noResults.classList.add('d-none');
     searchLoading.classList.add('d-none');
 });
 
-// Confirm delete
-function confirmDelete(id, tupvId, name, email, appointmentsCount, caseLogsCount) {
-    // Hide search modal
-    bootstrap.Modal.getInstance(document.getElementById('deleteStudentModal')).hide();
-    
-    // Populate confirm modal
+let currentAction = 'deactivate';
+
+// Toggle status (deactivate or reactivate)
+function toggleStatus(id, tupvId, name, email, action) {
+    currentAction = action;
+
+    if (action === 'reactivate') {
+        // Reactivate directly via AJAX (no confirmation needed)
+        performStatusChange(id, action);
+        return;
+    }
+
+    // Show confirm modal for deactivation
+    bootstrap.Modal.getInstance(document.getElementById('deactivateStudentModal')).hide();
+
     document.getElementById('confirmTupvId').textContent = tupvId;
     document.getElementById('confirmName').textContent = name !== 'Pending Registration' ? name : '(No name yet)';
     document.getElementById('confirmEmail').textContent = email;
-    document.getElementById('confirmAppointments').textContent = appointmentsCount;
-    document.getElementById('confirmCaseLogs').textContent = caseLogsCount;
-    
-    // Set form action
-    document.getElementById('deleteForm').action = `/admin/clients/${id}`;
-    
-    // Show confirm modal
-    new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show();
+
+    document.getElementById('deactivateForm').action = `/admin/clients/${id}/deactivate`;
+
+    new bootstrap.Modal(document.getElementById('confirmDeactivateModal')).show();
 }
 
-// Handle delete form submission via AJAX
-document.getElementById('deleteForm').addEventListener('submit', function(e) {
+// Handle deactivate form submission via AJAX
+document.getElementById('deactivateForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     const form = this;
-    const deleteBtn = document.getElementById('confirmDeleteBtn');
-    
-    deleteBtn.disabled = true;
-    deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
-    
+    const btn = document.getElementById('confirmDeactivateBtn');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deactivating...';
+
     fetch(form.action, {
-        method: 'DELETE',
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -572,27 +575,56 @@ document.getElementById('deleteForm').addEventListener('submit', function(e) {
     })
     .then(response => response.json())
     .then(data => {
-        // Hide confirm modal
-        bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal')).hide();
-        
+        bootstrap.Modal.getInstance(document.getElementById('confirmDeactivateModal')).hide();
+
         if (data.success) {
-            document.getElementById('deleteSuccessMessage').textContent = data.message;
-            new bootstrap.Modal(document.getElementById('deleteSuccessModal')).show();
+            document.getElementById('statusSuccessTitle').textContent = 'Student Deactivated';
+            document.getElementById('statusSuccessMessage').textContent = data.message;
+            new bootstrap.Modal(document.getElementById('statusSuccessModal')).show();
         } else {
             alert(data.message || 'An error occurred. Please try again.');
             location.reload();
         }
     })
     .catch(error => {
-        console.error('Delete error:', error);
+        console.error('Error:', error);
         alert('An error occurred. Please try again.');
         location.reload();
     })
     .finally(() => {
-        deleteBtn.disabled = false;
-        deleteBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete Permanently';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-person-slash me-1"></i>Deactivate';
     });
 });
+
+// Perform status change (used for reactivation)
+function performStatusChange(id, action) {
+    fetch(`/admin/clients/${id}/${action}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('statusSuccessTitle').textContent = 'Student Reactivated';
+            document.getElementById('statusSuccessMessage').textContent = data.message;
+            bootstrap.Modal.getInstance(document.getElementById('deactivateStudentModal'))?.hide();
+            new bootstrap.Modal(document.getElementById('statusSuccessModal')).show();
+        } else {
+            alert(data.message || 'An error occurred.');
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        location.reload();
+    });
+}
 </script>
 @endpush
 @endsection

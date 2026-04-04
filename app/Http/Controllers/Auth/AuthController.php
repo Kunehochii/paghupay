@@ -63,6 +63,14 @@ class AuthController extends Controller
                 ]);
             }
 
+            // Check if account has been deactivated by admin
+            if ($user->isDeactivated()) {
+                Auth::logout();
+                return back()->withErrors([
+                    'tupv_id' => 'Your account has been deactivated. Please contact the Guidance Office.',
+                ]);
+            }
+
             $request->session()->regenerate();
 
             // Check if profile needs completion (inactive = needs to change password & complete profile)
@@ -97,6 +105,14 @@ class AuthController extends Controller
                 Auth::logout();
                 return back()->withErrors([
                     'email' => 'Please use the appropriate login page for your role.',
+                ]);
+            }
+
+            // Check if account has been deactivated by admin
+            if ($user->isDeactivated()) {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Your account has been deactivated. Please contact the administrator.',
                 ]);
             }
 

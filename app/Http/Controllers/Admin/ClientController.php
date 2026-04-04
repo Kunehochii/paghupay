@@ -74,8 +74,8 @@ class ClientController extends Controller
             'email.unique' => 'This email is already registered.',
         ]);
 
-        // Generate 8-character temporary password
-        $tempPassword = Str::random(8);
+        // Use TUPV ID as default password (student changes it on first login)
+        $tempPassword = strtoupper($validated['tupv_id']);
 
         // Create inactive client - temp password is ONLY stored as hash (secure)
         // The plain text temp password only exists in the email sent to student
@@ -116,7 +116,7 @@ class ClientController extends Controller
             ? "Invitation sent to {$user->email}. TUPV ID: {$user->tupv_id}" 
             : ($user->email 
                 ? "Account created for TUPV ID: {$user->tupv_id}, but email delivery failed." 
-                : "Account created for TUPV ID: {$user->tupv_id}. Temporary password: {$tempPassword} (please share this securely)");
+                : "Account created for TUPV ID: {$user->tupv_id}. Default password is their TUPV ID.");
 
         return redirect()
             ->route('admin.clients.index')
@@ -169,6 +169,7 @@ class ClientController extends Controller
                 'name' => $student->name,
                 'email' => $student->email,
                 'is_active' => $student->is_active,
+                'deactivated_at' => $student->deactivated_at?->format('M d, Y'),
                 'created_at' => $student->created_at->format('M d, Y'),
                 'appointments_count' => Appointment::where('client_id', $student->id)->count(),
                 'case_logs_count' => CaseLog::where('client_id', $student->id)->count(),
@@ -183,37 +184,42 @@ class ClientController extends Controller
     }
 
     /**
-     * Remove the specified client (graduated student).
-     * Note: All related records (appointments, case_logs, etc.) will be
-     * automatically deleted due to CASCADE foreign keys.
+     * Deactivate the specified client account.
      */
-    public function destroy($id)
+    public function deactivate($id)
     {
         $client = User::where('role', 'client')->findOrFail($id);
-        
-        // Get counts for logging/confirmation
-        $appointmentsCount = Appointment::where('client_id', $client->id)->count();
-        $caseLogsCount = CaseLog::where('client_id', $client->id)->count();
-        
-        $tupvId = $client->tupv_id;
-        $name = $client->name;
-        
-        // Delete will cascade to all related records
-        $client->delete();
+        $client->deactivate();
 
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Student {$tupvId} ({$name}) deleted successfully.",
-                'deleted_records' => [
-                    'appointments' => $appointmentsCount,
-                    'case_logs' => $caseLogsCount,
-                ]
+                'message' => "Student {$client->tupv_id} ({$client->name}) has been deactivated.",
             ]);
         }
 
         return redirect()
             ->route('admin.clients.index')
-            ->with('success', "Student {$tupvId} ({$name}) deleted successfully. {$appointmentsCount} appointment(s) and {$caseLogsCount} case log(s) were also removed.");
+            ->with('success', "Student {$client->tupv_id} ({$client->name}) has been deactivated.");
+    }
+
+    /**
+     * Reactivate the specified client account.
+     */
+    public function reactivate($id)
+    {
+        $client = User::where('role', 'client')->findOrFail($id);
+        $client->reactivate();
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Student {$client->tupv_id} ({$client->name}) has been reactivated.",
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.clients.index')
+            ->with('success', "Student {$client->tupv_id} ({$client->name}) has been reactivated.");
     }
 }

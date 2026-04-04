@@ -9,6 +9,7 @@ use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
 use App\Models\CancelReason;
 use App\Models\CaseLog;
+use App\Notifications\AppointmentStatusChanged;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -279,6 +280,8 @@ class AppointmentController extends Controller
 
         $appointment->update(['status' => Appointment::STATUS_ACCEPTED]);
 
+        $appointment->client->notify(new AppointmentStatusChanged($appointment, 'accepted'));
+
         // Send acceptance email to client
         try {
             Mail::to($appointment->client->email)
@@ -322,6 +325,8 @@ class AppointmentController extends Controller
             'email_sent' => false,
         ]);
 
+        $appointment->client->notify(new AppointmentStatusChanged($appointment, 'cancelled', $validated['reason']));
+
         // Send rejection email to client
         try {
             Mail::to($appointment->client->email)
@@ -364,11 +369,13 @@ class AppointmentController extends Controller
         // Update appointment status
         $appointment->update(['status' => Appointment::STATUS_CANCELLED]);
 
+        $appointment->client->notify(new AppointmentStatusChanged($appointment, 'cancelled', $validated['reason']));
+
         // Send email notification to client
         try {
             Mail::to($appointment->client->email)
                 ->send(new AppointmentCancelled($appointment, $validated['reason']));
-            
+
             $cancelReason->update(['email_sent' => true]);
         } catch (\Exception $e) {
             // Log error but don't fail the cancellation
@@ -439,6 +446,8 @@ class AppointmentController extends Controller
         // Set end time
         $caseLog->update(['end_time' => now()]);
         $caseLog->calculateDuration();
+
+        $appointment->client->notify(new AppointmentStatusChanged($appointment, 'completed'));
 
         // Redirect to case log form
         return redirect()

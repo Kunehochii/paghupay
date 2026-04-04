@@ -3,6 +3,7 @@
 @section('title', 'Welcome')
 
 @push('styles')
+    @include('layouts.partials.notification-styles')
     <style>
         .welcome-hero {
             position: relative;
@@ -103,6 +104,7 @@
                         <i class="bi bi-house-door-fill"></i>
                     </a>
                     <a href="{{ route('client.about') }}" class="nav-link-about">About us</a>
+                    @include('layouts.partials.notification-bell')
                     <form method="POST" action="{{ route('logout') }}" class="d-inline">
                         @csrf
                         <button type="submit" class="nav-link-custom" title="Log Out"
@@ -131,4 +133,8 @@
             </a>
         </div>
     </div>
+
+@push('scripts')
+    @include('layouts.partials.notification-scripts')
+@endpush
 @endsection
