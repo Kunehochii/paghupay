@@ -19,14 +19,22 @@ class CaseLogController extends Controller
     /**
      * Display a listing of case logs.
      */
-    public function index()
+    public function index(Request $request)
     {
         $counselorId = Auth::id();
+        $search = trim((string) $request->query('search', ''));
 
         $caseLogs = CaseLog::with(['client', 'appointment'])
             ->where('counselor_id', $counselorId)
+            ->when($search !== '', function ($q) use ($search): void {
+                $q->whereHas('client', fn ($sub) => $sub->whereRaw(
+                    "name ILIKE ?",
+                    ['%' . $search . '%']
+                ));
+            })
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         // Stats
         $thisMonthCount = CaseLog::where('counselor_id', $counselorId)
@@ -45,6 +53,7 @@ class CaseLogController extends Controller
             'caseLogs' => $caseLogs,
             'thisMonthCount' => $thisMonthCount,
             'avgDuration' => $avgDuration,
+            'search' => $search,
         ]);
     }
 

@@ -113,10 +113,12 @@
     {{-- Search Bar --}}
     <div class="row mb-4">
         <div class="col-12">
-            <div class="search-wrapper">
-                <i class="bi bi-search search-icon"></i>
-                <input type="text" class="search-box" placeholder="Search" id="searchInput">
-            </div>
+            <form method="GET" action="{{ route('counselor.case-logs.index') }}">
+                <div class="search-wrapper">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" name="search" class="search-box" placeholder="Search by last name" value="{{ $search }}">
+                </div>
+            </form>
         </div>
     </div>
 
@@ -144,6 +146,7 @@
                         <tr>
                             <th>Created</th>
                             <th>TUPV ID</th>
+                            <th>Last Name</th>
                             <th>Log #</th>
                             <th>Time Elapsed</th>
                             <th>Actions</th>
@@ -154,6 +157,7 @@
                         <tr>
                             <td>{{ $caseLog->created_at->format('m/d/Y') }}</td>
                             <td>{{ $caseLog->client->tupv_id ?? 'N/A' }}</td>
+                            <td>{{ $caseLog->client->last_name ?? 'N/A' }}</td>
                             <td>{{ str_pad($caseLogs->total() - (($caseLogs->currentPage() - 1) * $caseLogs->perPage()) - $index, 3, '0', STR_PAD_LEFT) }}</td>
                             <td>
                                 @if($caseLog->session_duration)
@@ -258,15 +262,5 @@
         });
     }
 
-    // Simple search filter
-    document.getElementById('searchInput').addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        const rows = document.querySelectorAll('tbody tr');
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchTerm) ? '' : 'none';
-        });
-    });
 </script>
 @endpush
