@@ -111,6 +111,12 @@ class User extends Authenticatable
         return $this->deactivated_at !== null;
     }
 
+    public function getLastNameAttribute(): string
+    {
+        $parts = explode(' ', trim($this->name));
+        return end($parts) ?: '';
+    }
+
     public function deactivate(): void
     {
         $this->update(['deactivated_at' => now()]);
