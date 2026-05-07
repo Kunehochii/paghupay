@@ -253,7 +253,7 @@
         @endif
 
         <!-- Reason Card -->
-        <form action="{{ route('booking.store', [], false) }}" method="POST" id="reasonForm">
+        <form action="/booking/store" method="POST" id="reasonForm">
             @csrf
 
             <div class="reason-card">
