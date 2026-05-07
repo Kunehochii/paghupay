@@ -377,7 +377,7 @@
                 </a>
                 <a href="{{ route('client.about') }}" class="nav-link-about">About us</a>
                 @include('layouts.partials.notification-bell')
-                <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                <form method="POST" action="{{ route('logout', [], false) }}" class="d-inline">
                     @csrf
                     <button type="submit" class="nav-link-custom" title="Log Out">
                         <i class="bi bi-box-arrow-right"></i>
@@ -407,7 +407,7 @@
                 </p>
 
                 <!-- Next Button -->
-                <form action="{{ route('booking.select-counselor') }}" method="POST" id="counselorForm">
+                <form action="{{ route('booking.select-counselor', [], false) }}" method="POST" id="counselorForm">
                     @csrf
                     <input type="hidden" name="counselor_id" id="selectedCounselorId" value="">
                     <button type="submit" class="btn btn-next" id="nextBtn" disabled>

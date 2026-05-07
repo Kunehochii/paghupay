@@ -444,7 +444,7 @@
             @endif
 
             <!-- Schedule Card -->
-            <form action="{{ route('booking.select-schedule', $counselor) }}" method="POST" id="scheduleForm">
+            <form action="{{ route('booking.select-schedule', $counselor, false) }}" method="POST" id="scheduleForm">
                 @csrf
                 <input type="hidden" name="scheduled_date" id="scheduledDate" value="">
                 <input type="hidden" name="time_slot_id" id="selectedTimeSlotId" value="">

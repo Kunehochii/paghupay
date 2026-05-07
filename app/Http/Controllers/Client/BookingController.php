@@ -26,7 +26,7 @@ class BookingController extends Controller
 
         // Check if user has agreed to confidentiality
         if (!$client->agreed_to_confidentiality) {
-            return redirect()->route('client.agreement');
+            return redirect()->to(route('client.agreement', [], false));
         }
 
         $upcomingAppointments = Appointment::with('counselor')
@@ -47,7 +47,7 @@ class BookingController extends Controller
 
         // If already agreed, redirect to welcome
         if ($client->agreed_to_confidentiality) {
-            return redirect()->route('client.welcome');
+            return redirect()->to(route('client.welcome', [], false));
         }
 
         return view('client.agreement');
@@ -66,7 +66,7 @@ class BookingController extends Controller
             'agreed_at' => now(),
         ]);
 
-        return redirect()->route('client.welcome');
+        return redirect()->to(route('client.welcome', [], false));
     }
 
     /**
@@ -104,7 +104,7 @@ class BookingController extends Controller
         // Store in session
         $request->session()->put('booking.counselor_id', $counselor->id);
 
-        return redirect()->route('booking.schedule', $counselor);
+        return redirect()->to(route('booking.schedule', $counselor, false));
     }
 
     /**
@@ -215,7 +215,7 @@ class BookingController extends Controller
             'stored_date' => $request->session()->get('booking.scheduled_date'),
         ]);
 
-        return redirect()->route('booking.reason');
+        return redirect()->to(route('booking.reason', [], false));
     }
 
     /**
@@ -229,7 +229,7 @@ class BookingController extends Controller
             !$request->session()->has('booking.scheduled_date') ||
             !$request->session()->has('booking.time_slot_id')
         ) {
-            return redirect()->route('booking.choose-counselor')
+            return redirect()->to(route('booking.choose-counselor', [], false))
                 ->with('error', 'Please select a counselor and schedule first.');
         }
 
@@ -255,7 +255,7 @@ class BookingController extends Controller
             !$request->session()->has('booking.scheduled_date') ||
             !$request->session()->has('booking.time_slot_id')
         ) {
-            return redirect()->route('booking.choose-counselor')
+            return redirect()->to(route('booking.choose-counselor', [], false))
                 ->with('error', 'Session expired. Please start the booking process again.');
         }
 
@@ -320,7 +320,7 @@ class BookingController extends Controller
         // Store appointment ID for thank you page
         $request->session()->put('last_appointment_id', $appointment->id);
 
-        return redirect()->route('booking.thankyou');
+        return redirect()->to(route('booking.thankyou', [], false));
     }
 
     /**
@@ -331,13 +331,13 @@ class BookingController extends Controller
         $appointmentId = $request->session()->get('last_appointment_id');
 
         if (!$appointmentId) {
-            return redirect()->route('booking.index');
+            return redirect()->to(route('booking.index', [], false));
         }
 
         $appointment = Appointment::with(['counselor', 'client'])->find($appointmentId);
 
         if (!$appointment || $appointment->client_id !== Auth::id()) {
-            return redirect()->route('booking.index');
+            return redirect()->to(route('booking.index', [], false));
         }
 
         return view('client.booking.thankyou', compact('appointment'));
