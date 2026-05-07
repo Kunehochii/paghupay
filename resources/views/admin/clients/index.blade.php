@@ -447,7 +447,7 @@ function searchStudents() {
     noResults.classList.add('d-none');
     searchLoading.classList.remove('d-none');
 
-    fetch(`{{ route('admin.clients.search') }}?q=${encodeURIComponent(query)}`, {
+    fetch(`{{ route('admin.clients.search', [], false) }}?q=${encodeURIComponent(query)}`, {
         headers: {
             'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content

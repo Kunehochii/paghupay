@@ -515,7 +515,7 @@
         validateBtn.disabled = true;
         validateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
-        fetch('{{ route("counselor.case-logs.validate-tupv-id") }}', {
+        fetch('{{ route("counselor.case-logs.validate-tupv-id", [], false) }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

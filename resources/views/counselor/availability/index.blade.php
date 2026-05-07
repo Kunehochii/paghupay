@@ -334,7 +334,7 @@
         function toggleDate(date) {
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-            fetch('{{ route('counselor.availability.toggle') }}', {
+            fetch('{{ route('counselor.availability.toggle', [], false) }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
