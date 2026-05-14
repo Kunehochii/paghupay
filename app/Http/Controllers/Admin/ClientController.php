@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Appointment;
 use App\Models\CaseLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -221,5 +222,76 @@ class ClientController extends Controller
         return redirect()
             ->route('admin.clients.index')
             ->with('success', "Student {$client->tupv_id} ({$client->name}) has been reactivated.");
+    }
+
+    /**
+     * Bulk-create client accounts from an ID range.
+     */
+    public function bulkStore(Request $request)
+    {
+        $validated = $request->validate([
+            'year_prefix' => 'required|digits:2',
+            'start_number' => 'required|integer|min:1|max:9999',
+            'count' => 'required|integer|min:1|max:200',
+        ]);
+
+        $year = $validated['year_prefix'];
+        $start = (int) $validated['start_number'];
+        $count = (int) $validated['count'];
+        $end = $start + $count - 1;
+
+        if ($end > 9999) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Range exceeds 9999. Reduce count or start number.',
+            ], 422);
+        }
+
+        $ids = [];
+        for ($i = $start; $i <= $end; $i++) {
+            $ids[] = sprintf('TUPV-%s-%04d', $year, $i);
+        }
+
+        // Pre-check for collisions
+        $collisions = User::whereIn('tupv_id', $ids)->pluck('tupv_id')->all();
+        if (!empty($collisions)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some TUPV IDs already exist.',
+                'collisions' => $collisions,
+            ], 422);
+        }
+
+        $now = now();
+        $rows = array_map(fn (string $id) => [
+            'name' => 'Pending Registration',
+            'tupv_id' => $id,
+            'email' => null,
+            'password' => Hash::make($id),
+            'role' => 'client',
+            'is_active' => false,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ], $ids);
+
+        try {
+            DB::transaction(fn () => User::insert($rows));
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getCode(), '23505')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Duplicate TUPV ID conflict during insert.',
+                ], 409);
+            }
+            throw $e;
+        }
+
+        return response()->json([
+            'success' => true,
+            'count' => $count,
+            'first_id' => $ids[0],
+            'last_id' => end($ids),
+            'ids' => $ids,
+        ]);
     }
 }

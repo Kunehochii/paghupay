@@ -415,9 +415,20 @@
                             <div class="appointment-name">{{ $appointment->client->name }}</div>
                             <div class="appointment-id">{{ $appointment->client->course_year_section ?? 'N/A' }}</div>
                             <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y') }}</div>
-                            <div class="session-timer-badge session-timer" data-start="{{ $appointment->caseLog->start_time->toISOString() }}">00:00:00</div>
+                            <div class="session-timer-badge session-timer"
+                                 data-start="{{ $appointment->caseLog->start_time->toISOString() }}"
+                                 data-paused-at="{{ $appointment->caseLog->paused_at?->toISOString() }}"
+                                 data-paused-total="{{ $appointment->caseLog->total_paused_seconds }}">00:00:00</div>
                         </div>
                         <div class="appointment-actions">
+                            <button type="button" class="btn-pause-session {{ $appointment->caseLog->isPaused() ? 'btn-start-session' : 'btn-cancel-appointment' }}"
+                                    data-case-log-id="{{ $appointment->caseLog->id }}"
+                                    data-pause-url="{{ route('counselor.case-logs.pause', $appointment->caseLog->id) }}"
+                                    data-resume-url="{{ route('counselor.case-logs.resume', $appointment->caseLog->id) }}"
+                                    style="text-align:center;">
+                                <i class="bi {{ $appointment->caseLog->isPaused() ? 'bi-play-circle' : 'bi-pause-circle' }}"></i>
+                                {{ $appointment->caseLog->isPaused() ? 'Resume' : 'Pause' }}
+                            </button>
                             <form action="{{ route('counselor.appointments.end-session', $appointment->id) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn-end-session">End Session</button>
@@ -431,6 +442,9 @@
                             <div class="appointment-name">{{ $appointment->client->name }}</div>
                             <div class="appointment-id">{{ $appointment->client->course_year_section ?? 'N/A' }}</div>
                             <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y \a\t g:i A') }}</div>
+                            <p class="appointment-reason text-muted small mt-1 mb-2">
+                                <i class="bi bi-chat-quote me-1"></i>{{ Str::limit($appointment->reason, 200) }}
+                            </p>
                             <span class="pending-badge">PENDING</span>
                         </div>
                         <div class="appointment-actions">
@@ -454,6 +468,9 @@
                             <div class="appointment-name">{{ $appointment->client->name }}</div>
                             <div class="appointment-id">{{ $appointment->client->course_year_section ?? 'N/A' }}</div>
                             <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y \a\t g:i A') }}</div>
+                            <p class="appointment-reason text-muted small mt-1 mb-2">
+                                <i class="bi bi-chat-quote me-1"></i>{{ Str::limit($appointment->reason, 200) }}
+                            </p>
                         </div>
                         <div class="appointment-actions">
                             <form action="{{ route('counselor.appointments.start-session', $appointment->id) }}" method="POST">
@@ -485,9 +502,20 @@
                             <div class="appointment-name">{{ $appointment->client->name }}</div>
                             <div class="appointment-id">{{ $appointment->client->course_year_section ?? 'N/A' }}</div>
                             <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y') }}</div>
-                            <div class="session-timer-badge session-timer" data-start="{{ $appointment->caseLog->start_time->toISOString() }}">00:00:00</div>
+                            <div class="session-timer-badge session-timer"
+                                 data-start="{{ $appointment->caseLog->start_time->toISOString() }}"
+                                 data-paused-at="{{ $appointment->caseLog->paused_at?->toISOString() }}"
+                                 data-paused-total="{{ $appointment->caseLog->total_paused_seconds }}">00:00:00</div>
                         </div>
                         <div class="appointment-actions">
+                            <button type="button" class="btn-pause-session {{ $appointment->caseLog->isPaused() ? 'btn-start-session' : 'btn-cancel-appointment' }}"
+                                    data-case-log-id="{{ $appointment->caseLog->id }}"
+                                    data-pause-url="{{ route('counselor.case-logs.pause', $appointment->caseLog->id) }}"
+                                    data-resume-url="{{ route('counselor.case-logs.resume', $appointment->caseLog->id) }}"
+                                    style="text-align:center;">
+                                <i class="bi {{ $appointment->caseLog->isPaused() ? 'bi-play-circle' : 'bi-pause-circle' }}"></i>
+                                {{ $appointment->caseLog->isPaused() ? 'Resume' : 'Pause' }}
+                            </button>
                             <form action="{{ route('counselor.appointments.end-session', $appointment->id) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn-end-session">End Session</button>
@@ -501,6 +529,9 @@
                             <div class="appointment-name">{{ $appointment->client->name }}</div>
                             <div class="appointment-id">{{ $appointment->client->course_year_section ?? 'N/A' }}</div>
                             <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y \a\t g:i A') }}</div>
+                            <p class="appointment-reason text-muted small mt-1 mb-2">
+                                <i class="bi bi-chat-quote me-1"></i>{{ Str::limit($appointment->reason, 200) }}
+                            </p>
                             <span class="pending-badge">PENDING</span>
                         </div>
                         <div class="appointment-actions">
@@ -524,6 +555,9 @@
                             <div class="appointment-name">{{ $appointment->client->name }}</div>
                             <div class="appointment-id">{{ $appointment->client->course_year_section ?? 'N/A' }}</div>
                             <div class="appointment-date">{{ $appointment->scheduled_at->format('j M Y \a\t g:i A') }}</div>
+                            <p class="appointment-reason text-muted small mt-1 mb-2">
+                                <i class="bi bi-chat-quote me-1"></i>{{ Str::limit($appointment->reason, 200) }}
+                            </p>
                         </div>
                         <div class="appointment-actions">
                             <form action="{{ route('counselor.appointments.start-session', $appointment->id) }}" method="POST">
@@ -630,23 +664,95 @@
         });
     });
 
-    // Session timers
+    // Session timers with pause/resume support
     document.querySelectorAll('.session-timer').forEach(function(timer) {
         const startTime = new Date(timer.dataset.start);
-        
-        function updateTimer() {
-            const now = new Date();
-            const diff = Math.floor((now - startTime) / 1000);
-            
-            const hours = Math.floor(diff / 3600).toString().padStart(2, '0');
-            const minutes = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
-            const seconds = (diff % 60).toString().padStart(2, '0');
-            
-            timer.textContent = `${hours}:${minutes}:${seconds}`;
+        let pausedAt = timer.dataset.pausedAt ? new Date(timer.dataset.pausedAt) : null;
+        let pausedTotal = parseInt(timer.dataset.pausedTotal) || 0;
+        let interval = null;
+
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+            const minutes = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
         }
-        
+
+        function updateTimer() {
+            let elapsed;
+            if (pausedAt) {
+                elapsed = Math.floor((pausedAt - startTime) / 1000) - pausedTotal;
+            } else {
+                elapsed = Math.floor((Date.now() - startTime) / 1000) - pausedTotal;
+            }
+            timer.textContent = formatTime(Math.max(0, elapsed));
+        }
+
+        function startTicking() {
+            if (interval) clearInterval(interval);
+            if (!pausedAt) {
+                interval = setInterval(updateTimer, 1000);
+            }
+        }
+
         updateTimer();
-        setInterval(updateTimer, 1000);
+        startTicking();
+
+        // Store refs on element for pause/resume handler
+        timer._pauseState = { startTime, get pausedAt() { return pausedAt; }, set pausedAt(v) { pausedAt = v; }, get pausedTotal() { return pausedTotal; }, set pausedTotal(v) { pausedTotal = v; }, updateTimer, startTicking };
+    });
+
+    // Pause/Resume button handlers
+    document.querySelectorAll('.btn-pause-session').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const caseLogId = btn.dataset.caseLogId;
+            // Find the timer element in the same card
+            const card = btn.closest('.session-active-card');
+            const timer = card ? card.querySelector('.session-timer') : null;
+            if (!timer || !timer._pauseState) return;
+
+            const state = timer._pauseState;
+            const isPaused = state.pausedAt !== null;
+            const url = isPaused ? btn.dataset.resumeUrl : btn.dataset.pauseUrl;
+            const token = document.querySelector('meta[name="csrf-token"]').content;
+
+            btn.disabled = true;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    if (isPaused) {
+                        state.pausedAt = null;
+                        state.pausedTotal = data.total_paused_seconds;
+                        timer.dataset.pausedAt = '';
+                        timer.dataset.pausedTotal = data.total_paused_seconds;
+                        btn.innerHTML = '<i class="bi bi-pause-circle"></i> Pause';
+                        btn.classList.remove('btn-start-session');
+                        btn.classList.add('btn-cancel-appointment');
+                    } else {
+                        state.pausedAt = new Date(data.paused_at);
+                        state.pausedTotal = data.total_paused_seconds;
+                        timer.dataset.pausedAt = data.paused_at;
+                        timer.dataset.pausedTotal = data.total_paused_seconds;
+                        btn.innerHTML = '<i class="bi bi-play-circle"></i> Resume';
+                        btn.classList.remove('btn-cancel-appointment');
+                        btn.classList.add('btn-start-session');
+                    }
+                    state.updateTimer();
+                    state.startTicking();
+                }
+            })
+            .catch(console.error)
+            .finally(() => { btn.disabled = false; });
+        });
     });
 
     // Cancel modal

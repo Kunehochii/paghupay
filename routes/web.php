@@ -139,6 +139,8 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
 
         // Case Logs
         Route::prefix('case-logs')->name('case-logs.')->group(function () {
+            Route::post('/{caseLog}/pause', [AppointmentController::class, 'pauseSession'])->name('pause');
+            Route::post('/{caseLog}/resume', [AppointmentController::class, 'resumeSession'])->name('resume');
             Route::get('/', [CaseLogController::class, 'index'])->name('index');
             Route::get('/create', [CaseLogController::class, 'create'])->name('create');
             Route::post('/validate-tupv-id', [CaseLogController::class, 'validateTupvId'])->name('validate-tupv-id');
@@ -197,6 +199,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/search', [AdminClientController::class, 'search'])->name('search');
             Route::get('/create', [AdminClientController::class, 'create'])->name('create');
             Route::post('/', [AdminClientController::class, 'store'])->name('store');
+            Route::post('/bulk', [AdminClientController::class, 'bulkStore'])->name('bulk');
             Route::get('/{client}', [AdminClientController::class, 'show'])->name('show');
             Route::post('/{client}/deactivate', [AdminClientController::class, 'deactivate'])->name('deactivate');
             Route::post('/{client}/reactivate', [AdminClientController::class, 'reactivate'])->name('reactivate');

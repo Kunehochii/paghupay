@@ -12,6 +12,9 @@
             <button type="button" class="btn btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#deactivateStudentModal">
                 <i class="bi bi-person-slash me-1"></i>Manage Status
             </button>
+            <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#bulkCreateModal">
+                <i class="bi bi-people me-1"></i>Bulk Create
+            </button>
             <button type="button" class="btn btn-paghupay" data-bs-toggle="modal" data-bs-target="#addStudentModal">
                 <i class="bi bi-plus-lg me-1"></i>Add New Student
             </button>
@@ -308,6 +311,83 @@
                 <button type="button" class="btn btn-paghupay" data-bs-dismiss="modal" onclick="location.reload()">
                     Done
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Create Modal -->
+<div class="modal fade" id="bulkCreateModal" tabindex="-1" aria-labelledby="bulkCreateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary-teal text-white">
+                <h5 class="modal-title" id="bulkCreateModalLabel">
+                    <i class="bi bi-people me-2"></i>Bulk Create Students
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="bulkCreateForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <label for="bulk_year_prefix" class="form-label">Year <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="bulk_year_prefix" name="year_prefix"
+                                   placeholder="25" min="0" max="99" required>
+                            <div class="form-text">2-digit year</div>
+                        </div>
+                        <div class="col-4">
+                            <label for="bulk_start_number" class="form-label">Start # <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="bulk_start_number" name="start_number"
+                                   placeholder="1" min="1" max="9999" required>
+                        </div>
+                        <div class="col-4">
+                            <label for="bulk_count" class="form-label">Count <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="bulk_count" name="count"
+                                   placeholder="50" min="1" max="200" required>
+                            <div class="form-text">Max 200</div>
+                        </div>
+                    </div>
+
+                    <div id="bulkPreview" class="alert alert-light mt-3 d-none">
+                        <i class="bi bi-eye me-1"></i><span id="bulkPreviewText"></span>
+                    </div>
+
+                    <div id="bulkError" class="alert alert-danger mt-3 d-none"></div>
+
+                    <div class="alert alert-info mt-3 mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Note:</strong> Emails are NOT sent in bulk mode. Default password = TUPV ID (e.g. TUPV-25-0001). Distribute IDs to students manually.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-paghupay" id="bulkSubmitBtn">
+                        <i class="bi bi-people me-1"></i>Create Accounts
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Success Modal -->
+<div class="modal fade" id="bulkSuccessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-check-circle me-2"></i>Bulk Creation Successful</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="bulkSuccessMessage" class="mb-3"></p>
+                <label class="form-label"><strong>Generated TUPV IDs (copy for distribution):</strong></label>
+                <textarea id="bulkIdsTextarea" class="form-control" rows="8" readonly></textarea>
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="copyBulkIds">
+                    <i class="bi bi-clipboard me-1"></i>Copy to Clipboard
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-paghupay" data-bs-dismiss="modal" onclick="location.reload()">Done</button>
             </div>
         </div>
     </div>
@@ -625,6 +705,119 @@ function performStatusChange(id, action) {
         location.reload();
     });
 }
+</script>
+
+<script>
+// =====================================================
+// BULK CREATE FUNCTIONALITY
+// =====================================================
+
+const bulkYear = document.getElementById('bulk_year_prefix');
+const bulkStart = document.getElementById('bulk_start_number');
+const bulkCount = document.getElementById('bulk_count');
+const bulkPreview = document.getElementById('bulkPreview');
+const bulkPreviewText = document.getElementById('bulkPreviewText');
+const bulkError = document.getElementById('bulkError');
+
+function updateBulkPreview() {
+    const year = bulkYear.value.padStart(2, '0');
+    const start = parseInt(bulkStart.value);
+    const count = parseInt(bulkCount.value);
+
+    if (!year || year.length !== 2 || isNaN(start) || isNaN(count) || start < 1 || count < 1) {
+        bulkPreview.classList.add('d-none');
+        return;
+    }
+
+    const end = start + count - 1;
+    if (end > 9999) {
+        bulkPreview.classList.add('d-none');
+        bulkError.classList.remove('d-none');
+        bulkError.textContent = 'Range exceeds 9999. Reduce count or start number.';
+        return;
+    }
+
+    bulkError.classList.add('d-none');
+    const first = `TUPV-${year}-${start.toString().padStart(4, '0')}`;
+    const last = `TUPV-${year}-${end.toString().padStart(4, '0')}`;
+    bulkPreviewText.innerHTML = `Will create <strong>${first}</strong> through <strong>${last}</strong> (${count} accounts)`;
+    bulkPreview.classList.remove('d-none');
+}
+
+bulkYear.addEventListener('input', updateBulkPreview);
+bulkStart.addEventListener('input', updateBulkPreview);
+bulkCount.addEventListener('input', updateBulkPreview);
+
+document.getElementById('bulkCreateForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('bulkSubmitBtn');
+    bulkError.classList.add('d-none');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+
+    fetch('{{ route("admin.clients.bulk") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            year_prefix: bulkYear.value.padStart(2, '0'),
+            start_number: parseInt(bulkStart.value),
+            count: parseInt(bulkCount.value)
+        })
+    })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+        if (ok && data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('bulkCreateModal')).hide();
+
+            document.getElementById('bulkSuccessMessage').textContent =
+                `Successfully created ${data.count} student accounts (${data.first_id} through ${data.last_id}).`;
+            document.getElementById('bulkIdsTextarea').value = data.ids.join('\n');
+
+            new bootstrap.Modal(document.getElementById('bulkSuccessModal')).show();
+        } else {
+            let msg = data.message || 'An error occurred.';
+            if (data.collisions && data.collisions.length) {
+                msg += '\nConflicting IDs: ' + data.collisions.join(', ');
+            }
+            bulkError.classList.remove('d-none');
+            bulkError.textContent = msg;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        bulkError.classList.remove('d-none');
+        bulkError.textContent = 'An error occurred. Please try again.';
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-people me-1"></i>Create Accounts';
+    });
+});
+
+// Copy to clipboard
+document.getElementById('copyBulkIds').addEventListener('click', function() {
+    const textarea = document.getElementById('bulkIdsTextarea');
+    textarea.select();
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        this.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+        setTimeout(() => {
+            this.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy to Clipboard';
+        }, 2000);
+    });
+});
+
+// Reset bulk form on modal close
+document.getElementById('bulkCreateModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('bulkCreateForm').reset();
+    bulkPreview.classList.add('d-none');
+    bulkError.classList.add('d-none');
+});
 </script>
 @endpush
 @endsection
