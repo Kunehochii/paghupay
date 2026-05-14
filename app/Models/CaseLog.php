@@ -27,6 +27,8 @@ class CaseLog extends Model
         'session_duration',
         'progress_report',
         'additional_notes',
+        'paused_at',
+        'total_paused_seconds',
     ];
 
     /**
@@ -42,7 +44,9 @@ class CaseLog extends Model
         return [
             'start_time' => 'datetime',
             'end_time' => 'datetime',
+            'paused_at' => 'datetime',
             'session_duration' => 'integer',
+            'total_paused_seconds' => 'integer',
             'progress_report' => 'encrypted',
             'additional_notes' => 'encrypted',
         ];
@@ -97,12 +101,13 @@ class CaseLog extends Model
 
     /**
      * Calculate and set session duration from start and end times.
-     * Duration is stored in seconds for precision.
+     * Duration is stored in seconds for precision, minus any paused time.
      */
     public function calculateDuration(): void
     {
         if ($this->start_time && $this->end_time) {
-            $this->session_duration = (int) $this->start_time->diffInSeconds($this->end_time);
+            $base = (int) $this->start_time->diffInSeconds($this->end_time);
+            $this->session_duration = max(0, $base - $this->total_paused_seconds);
             $this->save();
         }
     }
@@ -151,7 +156,53 @@ class CaseLog extends Model
      */
     public function endSession(): void
     {
+        // Flush any in-flight pause window before ending
+        if ($this->isPaused()) {
+            $this->resumeSession();
+        }
+
         $this->update(['end_time' => now()]);
         $this->calculateDuration();
+    }
+
+    /**
+     * Check if the session is currently paused.
+     */
+    public function isPaused(): bool
+    {
+        return $this->paused_at !== null;
+    }
+
+    /**
+     * Pause the session timer.
+     */
+    public function pauseSession(): bool
+    {
+        if ($this->isPaused()) {
+            return false;
+        }
+
+        $this->update(['paused_at' => now()]);
+
+        return true;
+    }
+
+    /**
+     * Resume the session timer, accumulating paused seconds.
+     */
+    public function resumeSession(): bool
+    {
+        if (!$this->isPaused()) {
+            return false;
+        }
+
+        $delta = (int) $this->paused_at->diffInSeconds(now());
+
+        $this->update([
+            'total_paused_seconds' => $this->total_paused_seconds + $delta,
+            'paused_at' => null,
+        ]);
+
+        return true;
     }
 }

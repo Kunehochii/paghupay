@@ -13,6 +13,7 @@ use App\Notifications\AppointmentStatusChanged;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class AppointmentController extends Controller
@@ -287,7 +288,7 @@ class AppointmentController extends Controller
             Mail::to($appointment->client->email)
                 ->send(new AppointmentAccepted($appointment));
         } catch (\Exception $e) {
-            \Log::error('Failed to send appointment acceptance email: ' . $e->getMessage());
+            Log::error('Failed to send appointment acceptance email: ' . $e->getMessage());
         }
 
         return redirect()
@@ -336,7 +337,7 @@ class AppointmentController extends Controller
             CancelReason::where('appointment_id', $appointment->id)
                 ->update(['email_sent' => true]);
         } catch (\Exception $e) {
-            \Log::error('Failed to send appointment rejection email: ' . $e->getMessage());
+            Log::error('Failed to send appointment rejection email: ' . $e->getMessage());
         }
 
         return redirect()
@@ -379,7 +380,7 @@ class AppointmentController extends Controller
             $cancelReason->update(['email_sent' => true]);
         } catch (\Exception $e) {
             // Log error but don't fail the cancellation
-            \Log::error('Failed to send cancellation email: ' . $e->getMessage());
+            Log::error('Failed to send cancellation email: ' . $e->getMessage());
         }
 
         return redirect()
@@ -480,6 +481,62 @@ class AppointmentController extends Controller
             'appointment_id' => $activeAppointment->id,
             'client_name' => $activeAppointment->client->name,
             'start_time' => $activeAppointment->caseLog->start_time->toISOString(),
+        ]);
+    }
+
+    /**
+     * Pause the session timer for a case log.
+     */
+    public function pauseSession(CaseLog $caseLog)
+    {
+        if ($caseLog->counselor_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if (!$caseLog->start_time || $caseLog->end_time) {
+            return response()->json(['success' => false, 'message' => 'Session is not active.'], 422);
+        }
+
+        $result = $caseLog->pauseSession();
+
+        if (!$result) {
+            return response()->json(['success' => false, 'message' => 'Session is already paused.'], 422);
+        }
+
+        $fresh = $caseLog->fresh();
+
+        return response()->json([
+            'success' => true,
+            'paused_at' => $fresh->paused_at->toISOString(),
+            'total_paused_seconds' => $fresh->total_paused_seconds,
+        ]);
+    }
+
+    /**
+     * Resume the session timer for a case log.
+     */
+    public function resumeSession(CaseLog $caseLog)
+    {
+        if ($caseLog->counselor_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if (!$caseLog->start_time || $caseLog->end_time) {
+            return response()->json(['success' => false, 'message' => 'Session is not active.'], 422);
+        }
+
+        $result = $caseLog->resumeSession();
+
+        if (!$result) {
+            return response()->json(['success' => false, 'message' => 'Session is not paused.'], 422);
+        }
+
+        $fresh = $caseLog->fresh();
+
+        return response()->json([
+            'success' => true,
+            'total_paused_seconds' => $fresh->total_paused_seconds,
+            'server_now' => now()->toISOString(),
         ]);
     }
 }
