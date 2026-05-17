@@ -2,50 +2,44 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class CounselorUnavailableDate extends Model
+class CounselorUnavailableSlot extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'counselor_id',
         'unavailable_date',
-        'reason',
+        'time_slot_id',
     ];
 
     protected $casts = [
         'unavailable_date' => 'date',
     ];
 
-    /**
-     * Get the counselor who set this unavailable date.
-     */
     public function counselor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'counselor_id');
     }
 
-    /**
-     * Check if a specific date is unavailable for a counselor.
-     */
-    public static function isUnavailable(int $counselorId, string $date): bool
+    public function timeSlot(): BelongsTo
+    {
+        return $this->belongsTo(TimeSlot::class);
+    }
+
+    public static function isSlotUnavailable(int $counselorId, string $date, int $timeSlotId): bool
     {
         return self::where('counselor_id', $counselorId)
             ->where('unavailable_date', $date)
+            ->where('time_slot_id', $timeSlotId)
             ->exists();
     }
 
-    /**
-     * Get all unavailable dates for a counselor as an array of Y-m-d strings.
-     */
-    public static function getUnavailableDatesArray(int $counselorId): array
+    public static function getUnavailableSlotIdsForDate(int $counselorId, string $date): array
     {
         return self::where('counselor_id', $counselorId)
-            ->pluck('unavailable_date')
-            ->map(fn ($date) => $date->format('Y-m-d'))
+            ->where('unavailable_date', $date)
+            ->pluck('time_slot_id')
             ->toArray();
     }
 }

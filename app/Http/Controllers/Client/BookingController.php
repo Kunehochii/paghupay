@@ -7,6 +7,7 @@ use App\Mail\AppointmentConfirmation;
 use App\Models\Appointment;
 use App\Models\BlockedDate;
 use App\Models\CounselorUnavailableDate;
+use App\Models\CounselorUnavailableSlot;
 use App\Models\TimeSlot;
 use App\Models\User;
 use Carbon\Carbon;
@@ -25,8 +26,8 @@ class BookingController extends Controller
         $client = Auth::user();
 
         // Check if user has agreed to confidentiality
-        if (!$client->agreed_to_confidentiality) {
-            return redirect()->to('/agreement');
+        if (! $client->agreed_to_confidentiality) {
+            return redirect()->route('client.agreement');
         }
 
         $upcomingAppointments = Appointment::with('counselor')
@@ -205,6 +206,11 @@ class BookingController extends Controller
             return back()->with('error', 'This time slot is already booked. Please select another.');
         }
 
+        // Check if the counselor has marked this specific slot as unavailable
+        if (CounselorUnavailableSlot::isSlotUnavailable($counselor->id, $request->scheduled_date, $request->time_slot_id)) {
+            return back()->with('error', 'This time slot is unavailable. Please select another.');
+        }
+
         // Store in session
         $request->session()->put('booking.counselor_id', $counselor->id);
         $request->session()->put('booking.scheduled_date', $request->scheduled_date);
@@ -225,9 +231,9 @@ class BookingController extends Controller
     {
         // Validate that we have the required session data
         if (
-            !$request->session()->has('booking.counselor_id') ||
-            !$request->session()->has('booking.scheduled_date') ||
-            !$request->session()->has('booking.time_slot_id')
+            ! $request->session()->has('booking.counselor_id') ||
+            ! $request->session()->has('booking.scheduled_date') ||
+            ! $request->session()->has('booking.time_slot_id')
         ) {
             return redirect()->to('/booking/counselors')
                 ->with('error', 'Please select a counselor and schedule first.');
@@ -251,9 +257,9 @@ class BookingController extends Controller
 
         // Validate session data
         if (
-            !$request->session()->has('booking.counselor_id') ||
-            !$request->session()->has('booking.scheduled_date') ||
-            !$request->session()->has('booking.time_slot_id')
+            ! $request->session()->has('booking.counselor_id') ||
+            ! $request->session()->has('booking.scheduled_date') ||
+            ! $request->session()->has('booking.time_slot_id')
         ) {
             return redirect()->to('/booking/counselors')
                 ->with('error', 'Session expired. Please start the booking process again.');
@@ -311,7 +317,7 @@ class BookingController extends Controller
             $appointment->update(['email_sent' => true]);
         } catch (\Exception $e) {
             // Log the error but don't fail the booking
-            Log::error('Failed to send appointment confirmation email: ' . $e->getMessage());
+            Log::error('Failed to send appointment confirmation email: '.$e->getMessage());
         }
 
         // Clear booking session
@@ -330,14 +336,14 @@ class BookingController extends Controller
     {
         $appointmentId = $request->session()->get('last_appointment_id');
 
-        if (!$appointmentId) {
-            return redirect()->to('/booking');
+        if (! $appointmentId) {
+            return redirect()->route('booking.index');
         }
 
         $appointment = Appointment::with(['counselor', 'client'])->find($appointmentId);
 
-        if (!$appointment || $appointment->client_id !== Auth::id()) {
-            return redirect()->to('/booking');
+        if (! $appointment || $appointment->client_id !== Auth::id()) {
+            return redirect()->route('booking.index');
         }
 
         return view('client.booking.thankyou', compact('appointment'));
@@ -432,15 +438,18 @@ class BookingController extends Controller
             })
             ->toArray();
 
+        // Get per-slot unavailability for this counselor and date
+        $unavailableSlotIds = CounselorUnavailableSlot::getUnavailableSlotIdsForDate($counselor->id, $date);
+
         // Mark slots as available or not
-        $availableSlots = $allSlots->map(function ($slot) use ($bookedSlots) {
+        $availableSlots = $allSlots->map(function ($slot) use ($bookedSlots, $unavailableSlotIds) {
             return [
                 'id' => $slot->id,
                 'type' => $slot->type,
                 'start_time' => $slot->start_time,
                 'end_time' => $slot->end_time,
                 'formatted_time' => $slot->formatted_time,
-                'is_available' => !in_array($slot->start_time, $bookedSlots),
+                'is_available' => ! in_array($slot->start_time, $bookedSlots) && ! in_array($slot->id, $unavailableSlotIds),
             ];
         });
 

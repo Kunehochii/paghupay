@@ -23,8 +23,8 @@ class TreatmentGoal extends Model
 
     /**
      * Get the attributes that should be cast.
-     * 
-     * Security: description is encrypted using Laravel's 
+     *
+     * Security: description is encrypted using Laravel's
      * built-in encryption (AES-256-CBC).
      *
      * @return array<string, string>

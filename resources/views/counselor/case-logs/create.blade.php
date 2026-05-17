@@ -590,7 +590,7 @@
         
         const goalHtml = `
             <tr class="goal-row" data-goal-index="${goalIndex}">
-                <td class="goal-row-header" rowspan="3" style="position: relative;">
+                <td class="goal-row-header" rowspan="3" style="position: relative;" id="goal-header-${goalIndex}">
                     GOAL ${goalIndex}
                     <button type="button" class="remove-goal-btn" onclick="removeGoal(this)" title="Remove Goal">
                         <i class="bi bi-x"></i>
@@ -602,41 +602,31 @@
                               placeholder="Enter goal description..."></textarea>
                 </td>
             </tr>
-            <tr class="goal-row" data-goal-index="${goalIndex}">
-                <td class="activity-header">ACTIVITY 1</td>
-                <td class="activity-header">ACTIVITY 2</td>
-                <td class="activity-header">ACTIVITY 3</td>
+            <tr class="goal-row activity-row" data-goal-index="${goalIndex}" data-activity-num="1">
+                <td class="activity-header" colspan="3">
+                    ACTIVITY 1
+                    <button type="button" class="btn btn-sm text-danger ms-2" onclick="removeActivity(${goalIndex}, 1)" title="Remove Activity" style="font-size:11px;padding:0 4px;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </td>
             </tr>
-            <tr class="goal-row" data-goal-index="${goalIndex}">
-                <td class="activity-cell">
+            <tr class="goal-row activity-row" data-goal-index="${goalIndex}" data-activity-num="1">
+                <td class="activity-cell" colspan="3">
                     <textarea class="activity-input" 
                               name="goals[${goalIndex}][activities][1][description]" 
-                              placeholder=""></textarea>
+                              placeholder="Enter activity description..."></textarea>
                     <div class="date-input-wrapper">
                         <div class="date-label">Date:</div>
                         <input type="date" class="date-input" 
                                name="goals[${goalIndex}][activities][1][activity_date]">
                     </div>
                 </td>
-                <td class="activity-cell">
-                    <textarea class="activity-input" 
-                              name="goals[${goalIndex}][activities][2][description]" 
-                              placeholder=""></textarea>
-                    <div class="date-input-wrapper">
-                        <div class="date-label">Date:</div>
-                        <input type="date" class="date-input" 
-                               name="goals[${goalIndex}][activities][2][activity_date]">
-                    </div>
-                </td>
-                <td class="activity-cell">
-                    <textarea class="activity-input" 
-                              name="goals[${goalIndex}][activities][3][description]" 
-                              placeholder=""></textarea>
-                    <div class="date-input-wrapper">
-                        <div class="date-label">Date:</div>
-                        <input type="date" class="date-input" 
-                               name="goals[${goalIndex}][activities][3][activity_date]">
-                    </div>
+            </tr>
+            <tr class="goal-row add-activity-row" data-goal-index="${goalIndex}">
+                <td class="text-center" colspan="3" style="padding:6px;">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addActivity(${goalIndex})" style="border:1px dashed #dee2e6;">
+                        <i class="bi bi-plus-circle me-1"></i>Add Activity
+                    </button>
                 </td>
             </tr>
         `;
@@ -644,16 +634,106 @@
         tbody.insertAdjacentHTML('beforeend', goalHtml);
     }
 
+    // Add an activity to an existing goal
+    function addActivity(goalIdx) {
+        const addRow = document.querySelector(`tr.add-activity-row[data-goal-index="${goalIdx}"]`);
+        if (!addRow) return;
+
+        const goalHeader = document.getElementById(`goal-header-${goalIdx}`);
+        const currentRowspan = parseInt(goalHeader.getAttribute('rowspan'));
+        goalHeader.setAttribute('rowspan', currentRowspan + 2);
+
+        const existingActivities = document.querySelectorAll(`tr.activity-row[data-goal-index="${goalIdx}"]`);
+        const newActivityNum = (existingActivities.length / 2) + 1;
+
+        const activityHtml = `
+            <tr class="goal-row activity-row" data-goal-index="${goalIdx}" data-activity-num="${newActivityNum}">
+                <td class="activity-header" colspan="3">
+                    ACTIVITY ${newActivityNum}
+                    <button type="button" class="btn btn-sm text-danger ms-2" onclick="removeActivity(${goalIdx}, ${newActivityNum})" title="Remove Activity" style="font-size:11px;padding:0 4px;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </td>
+            </tr>
+            <tr class="goal-row activity-row" data-goal-index="${goalIdx}" data-activity-num="${newActivityNum}">
+                <td class="activity-cell" colspan="3">
+                    <textarea class="activity-input" 
+                              name="goals[${goalIdx}][activities][${newActivityNum}][description]" 
+                              placeholder="Enter activity description..."></textarea>
+                    <div class="date-input-wrapper">
+                        <div class="date-label">Date:</div>
+                        <input type="date" class="date-input" 
+                               name="goals[${goalIdx}][activities][${newActivityNum}][activity_date]">
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        addRow.insertAdjacentHTML('beforebegin', activityHtml);
+    }
+
+    // Remove a single activity from a goal
+    function removeActivity(goalIdx, activityNum) {
+        const rows = document.querySelectorAll(`tr.activity-row[data-goal-index="${goalIdx}"][data-activity-num="${activityNum}"]`);
+        rows.forEach(r => r.remove());
+
+        const goalHeader = document.getElementById(`goal-header-${goalIdx}`);
+        const currentRowspan = parseInt(goalHeader.getAttribute('rowspan'));
+        goalHeader.setAttribute('rowspan', currentRowspan - 2);
+
+        renumberActivities(goalIdx);
+    }
+
+    // Renumber activities after removal
+    function renumberActivities(goalIdx) {
+        const activityRows = document.querySelectorAll(`tr.activity-row[data-goal-index="${goalIdx}"]`);
+        const seenHeaders = new Set();
+        let num = 1;
+        const newNums = {};
+
+        activityRows.forEach(row => {
+            const oldNum = parseInt(row.getAttribute('data-activity-num'));
+            if (!seenHeaders.has(oldNum)) {
+                newNums[oldNum] = num;
+                seenHeaders.add(oldNum);
+                num++;
+            }
+        });
+
+        activityRows.forEach(row => {
+            const oldNum = parseInt(row.getAttribute('data-activity-num'));
+            const newNum = newNums[oldNum];
+            row.setAttribute('data-activity-num', newNum);
+
+            const headerCell = row.querySelector('.activity-header');
+            if (headerCell) {
+                const textNode = headerCell.childNodes[0];
+                textNode.textContent = `ACTIVITY ${newNum}`;
+                const removeBtn = headerCell.querySelector('button');
+                if (removeBtn) {
+                    removeBtn.setAttribute('onclick', `removeActivity(${goalIdx}, ${newNum})`);
+                }
+            }
+
+            const textarea = row.querySelector('.activity-input');
+            if (textarea) {
+                textarea.setAttribute('name', `goals[${goalIdx}][activities][${newNum}][description]`);
+            }
+            const dateInput = row.querySelector('.date-input');
+            if (dateInput) {
+                dateInput.setAttribute('name', `goals[${goalIdx}][activities][${newNum}][activity_date]`);
+            }
+        });
+    }
+
     // Remove a goal
     function removeGoal(btn) {
         const row = btn.closest('tr');
         const goalIdx = row.dataset.goalIndex;
         
-        // Remove both rows for this goal (header row and content row)
         const rows = document.querySelectorAll(`tr[data-goal-index="${goalIdx}"]`);
         rows.forEach(r => r.remove());
         
-        // Renumber remaining goals
         renumberGoals();
     }
 

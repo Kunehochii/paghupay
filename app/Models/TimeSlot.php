@@ -35,6 +35,7 @@ class TimeSlot extends Model
         if (preg_match('/(\d{2}:\d{2}:\d{2})/', $value, $matches)) {
             return $matches[1];
         }
+
         return $value;
     }
 
@@ -49,6 +50,7 @@ class TimeSlot extends Model
         if (preg_match('/(\d{2}:\d{2}:\d{2})/', $value, $matches)) {
             return $matches[1];
         }
+
         return $value;
     }
 
@@ -81,6 +83,6 @@ class TimeSlot extends Model
      */
     public function getFormattedTimeAttribute(): string
     {
-        return date('g:i A', strtotime($this->start_time)) . ' - ' . date('g:i A', strtotime($this->end_time));
+        return date('g:i A', strtotime($this->start_time)).' - '.date('g:i A', strtotime($this->end_time));
     }
 }

@@ -385,6 +385,18 @@
                     TUPV ID: {{ $caseLog->client->tupv_id ?? 'N/A' }} 
                     <span class="ms-3 text-muted">|</span>
                     <span class="ms-3">{{ $caseLog->client->name }}</span>
+                    @if($caseLog->client->course_year_section)
+                    <span class="ms-3 text-muted">|</span>
+                    <span class="ms-3">{{ $caseLog->client->course_year_section }}</span>
+                    @endif
+                </div>
+
+                {{-- Student Details --}}
+                <div class="row small text-muted mb-3 px-2">
+                    <div class="col-md-3">Nickname: {{ $caseLog->client->nickname ?? 'N/A' }}</div>
+                    <div class="col-md-3">Sex: {{ $caseLog->client->sex ?? 'N/A' }}</div>
+                    <div class="col-md-3">Contact: {{ $caseLog->client->contact_number ?? 'N/A' }}</div>
+                    <div class="col-md-3">Email: {{ $caseLog->client->email ?? 'N/A' }}</div>
                 </div>
 
                 {{-- Session Info Bar --}}
@@ -458,58 +470,54 @@
                             @foreach($caseLog->treatmentGoals as $goalIndex => $goal)
                             @php
                                 $activities = $goal->activities->values();
+                                $activityCount = max(1, $activities->count());
+                                $goalNum = $goalIndex + 1;
+                                $rowspan = 1 + ($activityCount * 2);
                             @endphp
-                            <tr class="goal-row" data-goal-index="{{ $goalIndex + 1 }}">
-                                <td class="goal-row-header" rowspan="3" style="position: relative;">
-                                    GOAL {{ $goalIndex + 1 }}
+                            <tr class="goal-row" data-goal-index="{{ $goalNum }}">
+                                <td class="goal-row-header" rowspan="{{ $rowspan }}" style="position: relative;" id="goal-header-{{ $goalNum }}">
+                                    GOAL {{ $goalNum }}
                                     <button type="button" class="remove-goal-btn" onclick="removeGoal(this)" title="Remove Goal">
                                         <i class="bi bi-x"></i>
                                     </button>
                                 </td>
                                 <td class="goal-description-cell" colspan="3">
                                     <textarea class="goal-description-input" 
-                                              name="goals[{{ $goalIndex + 1 }}][description]" 
+                                              name="goals[{{ $goalNum }}][description]" 
                                               placeholder="Enter goal description...">{{ $goal->description }}</textarea>
                                 </td>
                             </tr>
-                            <tr class="goal-row" data-goal-index="{{ $goalIndex + 1 }}">
-                                <td class="activity-header">ACTIVITY 1</td>
-                                <td class="activity-header">ACTIVITY 2</td>
-                                <td class="activity-header">ACTIVITY 3</td>
+                            @for($a = 1; $a <= $activityCount; $a++)
+                            @php $activity = $activities->get($a - 1); @endphp
+                            <tr class="goal-row activity-row" data-goal-index="{{ $goalNum }}" data-activity-num="{{ $a }}">
+                                <td class="activity-header" colspan="3">
+                                    ACTIVITY {{ $a }}
+                                    @if($a > 1)
+                                    <button type="button" class="btn btn-sm text-danger ms-2" onclick="removeActivity({{ $goalNum }}, {{ $a }})" title="Remove Activity" style="font-size:11px;padding:0 4px;">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                    @endif
+                                </td>
                             </tr>
-                            <tr class="goal-row" data-goal-index="{{ $goalIndex + 1 }}">
-                                <td class="activity-cell">
+                            <tr class="goal-row activity-row" data-goal-index="{{ $goalNum }}" data-activity-num="{{ $a }}">
+                                <td class="activity-cell" colspan="3">
                                     <textarea class="activity-input" 
-                                              name="goals[{{ $goalIndex + 1 }}][activities][1][description]" 
-                                              placeholder="">{{ $activities->get(0)?->description ?? '' }}</textarea>
+                                              name="goals[{{ $goalNum }}][activities][{{ $a }}][description]" 
+                                              placeholder="Enter activity description...">{{ $activity?->description ?? '' }}</textarea>
                                     <div class="date-input-wrapper">
                                         <div class="date-label">Date:</div>
                                         <input type="date" class="date-input" 
-                                               name="goals[{{ $goalIndex + 1 }}][activities][1][activity_date]"
-                                               value="{{ $activities->get(0)?->activity_date?->format('Y-m-d') ?? '' }}">
+                                               name="goals[{{ $goalNum }}][activities][{{ $a }}][activity_date]"
+                                               value="{{ $activity?->activity_date?->format('Y-m-d') ?? '' }}">
                                     </div>
                                 </td>
-                                <td class="activity-cell">
-                                    <textarea class="activity-input" 
-                                              name="goals[{{ $goalIndex + 1 }}][activities][2][description]" 
-                                              placeholder="">{{ $activities->get(1)?->description ?? '' }}</textarea>
-                                    <div class="date-input-wrapper">
-                                        <div class="date-label">Date:</div>
-                                        <input type="date" class="date-input" 
-                                               name="goals[{{ $goalIndex + 1 }}][activities][2][activity_date]"
-                                               value="{{ $activities->get(1)?->activity_date?->format('Y-m-d') ?? '' }}">
-                                    </div>
-                                </td>
-                                <td class="activity-cell">
-                                    <textarea class="activity-input" 
-                                              name="goals[{{ $goalIndex + 1 }}][activities][3][description]" 
-                                              placeholder="">{{ $activities->get(2)?->description ?? '' }}</textarea>
-                                    <div class="date-input-wrapper">
-                                        <div class="date-label">Date:</div>
-                                        <input type="date" class="date-input" 
-                                               name="goals[{{ $goalIndex + 1 }}][activities][3][activity_date]"
-                                               value="{{ $activities->get(2)?->activity_date?->format('Y-m-d') ?? '' }}">
-                                    </div>
+                            </tr>
+                            @endfor
+                            <tr class="goal-row add-activity-row" data-goal-index="{{ $goalNum }}">
+                                <td class="text-center" colspan="3" style="padding:6px;">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addActivity({{ $goalNum }})" style="border:1px dashed #dee2e6;">
+                                        <i class="bi bi-plus-circle me-1"></i>Add Activity
+                                    </button>
                                 </td>
                             </tr>
                             @endforeach
@@ -548,7 +556,7 @@
         
         const goalHtml = `
             <tr class="goal-row" data-goal-index="${goalIndex}">
-                <td class="goal-row-header" rowspan="3" style="position: relative;">
+                <td class="goal-row-header" rowspan="3" style="position: relative;" id="goal-header-${goalIndex}">
                     GOAL ${goalIndex}
                     <button type="button" class="remove-goal-btn" onclick="removeGoal(this)" title="Remove Goal">
                         <i class="bi bi-x"></i>
@@ -560,41 +568,31 @@
                               placeholder="Enter goal description..."></textarea>
                 </td>
             </tr>
-            <tr class="goal-row" data-goal-index="${goalIndex}">
-                <td class="activity-header">ACTIVITY 1</td>
-                <td class="activity-header">ACTIVITY 2</td>
-                <td class="activity-header">ACTIVITY 3</td>
+            <tr class="goal-row activity-row" data-goal-index="${goalIndex}" data-activity-num="1">
+                <td class="activity-header" colspan="3">
+                    ACTIVITY 1
+                    <button type="button" class="btn btn-sm text-danger ms-2" onclick="removeActivity(${goalIndex}, 1)" title="Remove Activity" style="font-size:11px;padding:0 4px;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </td>
             </tr>
-            <tr class="goal-row" data-goal-index="${goalIndex}">
-                <td class="activity-cell">
+            <tr class="goal-row activity-row" data-goal-index="${goalIndex}" data-activity-num="1">
+                <td class="activity-cell" colspan="3">
                     <textarea class="activity-input" 
                               name="goals[${goalIndex}][activities][1][description]" 
-                              placeholder=""></textarea>
+                              placeholder="Enter activity description..."></textarea>
                     <div class="date-input-wrapper">
                         <div class="date-label">Date:</div>
                         <input type="date" class="date-input" 
                                name="goals[${goalIndex}][activities][1][activity_date]">
                     </div>
                 </td>
-                <td class="activity-cell">
-                    <textarea class="activity-input" 
-                              name="goals[${goalIndex}][activities][2][description]" 
-                              placeholder=""></textarea>
-                    <div class="date-input-wrapper">
-                        <div class="date-label">Date:</div>
-                        <input type="date" class="date-input" 
-                               name="goals[${goalIndex}][activities][2][activity_date]">
-                    </div>
-                </td>
-                <td class="activity-cell">
-                    <textarea class="activity-input" 
-                              name="goals[${goalIndex}][activities][3][description]" 
-                              placeholder=""></textarea>
-                    <div class="date-input-wrapper">
-                        <div class="date-label">Date:</div>
-                        <input type="date" class="date-input" 
-                               name="goals[${goalIndex}][activities][3][activity_date]">
-                    </div>
+            </tr>
+            <tr class="goal-row add-activity-row" data-goal-index="${goalIndex}">
+                <td class="text-center" colspan="3" style="padding:6px;">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addActivity(${goalIndex})" style="border:1px dashed #dee2e6;">
+                        <i class="bi bi-plus-circle me-1"></i>Add Activity
+                    </button>
                 </td>
             </tr>
         `;
@@ -602,16 +600,106 @@
         tbody.insertAdjacentHTML('beforeend', goalHtml);
     }
 
+    // Add an activity to an existing goal
+    function addActivity(goalIdx) {
+        const addRow = document.querySelector(`tr.add-activity-row[data-goal-index="${goalIdx}"]`);
+        if (!addRow) return;
+
+        const goalHeader = document.getElementById(`goal-header-${goalIdx}`);
+        const currentRowspan = parseInt(goalHeader.getAttribute('rowspan'));
+        goalHeader.setAttribute('rowspan', currentRowspan + 2);
+
+        const existingActivities = document.querySelectorAll(`tr.activity-row[data-goal-index="${goalIdx}"]`);
+        const newActivityNum = (existingActivities.length / 2) + 1;
+
+        const activityHtml = `
+            <tr class="goal-row activity-row" data-goal-index="${goalIdx}" data-activity-num="${newActivityNum}">
+                <td class="activity-header" colspan="3">
+                    ACTIVITY ${newActivityNum}
+                    <button type="button" class="btn btn-sm text-danger ms-2" onclick="removeActivity(${goalIdx}, ${newActivityNum})" title="Remove Activity" style="font-size:11px;padding:0 4px;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </td>
+            </tr>
+            <tr class="goal-row activity-row" data-goal-index="${goalIdx}" data-activity-num="${newActivityNum}">
+                <td class="activity-cell" colspan="3">
+                    <textarea class="activity-input" 
+                              name="goals[${goalIdx}][activities][${newActivityNum}][description]" 
+                              placeholder="Enter activity description..."></textarea>
+                    <div class="date-input-wrapper">
+                        <div class="date-label">Date:</div>
+                        <input type="date" class="date-input" 
+                               name="goals[${goalIdx}][activities][${newActivityNum}][activity_date]">
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        addRow.insertAdjacentHTML('beforebegin', activityHtml);
+    }
+
+    // Remove a single activity from a goal
+    function removeActivity(goalIdx, activityNum) {
+        const rows = document.querySelectorAll(`tr.activity-row[data-goal-index="${goalIdx}"][data-activity-num="${activityNum}"]`);
+        rows.forEach(r => r.remove());
+
+        const goalHeader = document.getElementById(`goal-header-${goalIdx}`);
+        const currentRowspan = parseInt(goalHeader.getAttribute('rowspan'));
+        goalHeader.setAttribute('rowspan', currentRowspan - 2);
+
+        renumberActivities(goalIdx);
+    }
+
+    // Renumber activities after removal
+    function renumberActivities(goalIdx) {
+        const activityRows = document.querySelectorAll(`tr.activity-row[data-goal-index="${goalIdx}"]`);
+        const seenHeaders = new Set();
+        let num = 1;
+        const newNums = {};
+
+        activityRows.forEach(row => {
+            const oldNum = parseInt(row.getAttribute('data-activity-num'));
+            if (!seenHeaders.has(oldNum)) {
+                newNums[oldNum] = num;
+                seenHeaders.add(oldNum);
+                num++;
+            }
+        });
+
+        activityRows.forEach(row => {
+            const oldNum = parseInt(row.getAttribute('data-activity-num'));
+            const newNum = newNums[oldNum];
+            row.setAttribute('data-activity-num', newNum);
+
+            const headerCell = row.querySelector('.activity-header');
+            if (headerCell) {
+                const textNode = headerCell.childNodes[0];
+                textNode.textContent = `ACTIVITY ${newNum}`;
+                const removeBtn = headerCell.querySelector('button');
+                if (removeBtn) {
+                    removeBtn.setAttribute('onclick', `removeActivity(${goalIdx}, ${newNum})`);
+                }
+            }
+
+            const textarea = row.querySelector('.activity-input');
+            if (textarea) {
+                textarea.setAttribute('name', `goals[${goalIdx}][activities][${newNum}][description]`);
+            }
+            const dateInput = row.querySelector('.date-input');
+            if (dateInput) {
+                dateInput.setAttribute('name', `goals[${goalIdx}][activities][${newNum}][activity_date]`);
+            }
+        });
+    }
+
     // Remove a goal
     function removeGoal(btn) {
         const row = btn.closest('tr');
         const goalIdx = row.dataset.goalIndex;
         
-        // Remove all rows for this goal (header row, description row, and activities row)
         const rows = document.querySelectorAll(`tr[data-goal-index="${goalIdx}"]`);
         rows.forEach(r => r.remove());
         
-        // Renumber remaining goals
         renumberGoals();
     }
 

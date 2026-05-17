@@ -23,8 +23,8 @@ class TreatmentActivity extends Model
 
     /**
      * Get the attributes that should be cast.
-     * 
-     * Security: description is encrypted using Laravel's 
+     *
+     * Security: description is encrypted using Laravel's
      * built-in encryption (AES-256-CBC).
      *
      * @return array<string, string>
@@ -59,7 +59,7 @@ class TreatmentActivity extends Model
     public function scopeUpcoming($query)
     {
         return $query->where('activity_date', '>=', today())
-                     ->orderBy('activity_date', 'asc');
+            ->orderBy('activity_date', 'asc');
     }
 
     /**
@@ -68,6 +68,6 @@ class TreatmentActivity extends Model
     public function scopePast($query)
     {
         return $query->where('activity_date', '<', today())
-                     ->orderBy('activity_date', 'desc');
+            ->orderBy('activity_date', 'desc');
     }
 }

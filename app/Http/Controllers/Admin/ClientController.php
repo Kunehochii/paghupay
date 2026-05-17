@@ -4,15 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\StudentInvitation;
-use App\Models\User;
 use App\Models\Appointment;
 use App\Models\CaseLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 class ClientController extends Controller
 {
@@ -40,7 +39,7 @@ class ClientController extends Controller
 
     /**
      * Store a newly created client.
-     * 
+     *
      * Per spec: Admin provides TUPV ID (required) and email (optional).
      * System generates temp_password and creates inactive client.
      */
@@ -61,7 +60,7 @@ class ClientController extends Controller
                     if ($value) {
                         $email = strtolower($value);
                         // Allow @tupv.edu.ph (production) and @gmail.com (testing)
-                        if (!str_ends_with($email, '@tupv.edu.ph') && !str_ends_with($email, '@gmail.com')) {
+                        if (! str_ends_with($email, '@tupv.edu.ph') && ! str_ends_with($email, '@gmail.com')) {
                             $fail('Only @tupv.edu.ph email addresses are allowed.');
                         }
                     }
@@ -98,7 +97,7 @@ class ClientController extends Controller
                 $emailSent = true;
             } catch (\Exception $e) {
                 // Log the error but don't fail the request
-                Log::error('Failed to send student invitation email: ' . $e->getMessage());
+                Log::error('Failed to send student invitation email: '.$e->getMessage());
             }
         }
 
@@ -109,14 +108,14 @@ class ClientController extends Controller
                 'tupv_id' => $user->tupv_id,
                 'email' => $user->email,
                 'email_sent' => $emailSent,
-                'temp_password' => !$emailSent ? $tempPassword : null, // Show if no email sent (no email provided or delivery failed)
+                'temp_password' => ! $emailSent ? $tempPassword : null, // Show if no email sent (no email provided or delivery failed)
             ]);
         }
 
-        $message = $emailSent 
-            ? "Invitation sent to {$user->email}. TUPV ID: {$user->tupv_id}" 
-            : ($user->email 
-                ? "Account created for TUPV ID: {$user->tupv_id}, but email delivery failed." 
+        $message = $emailSent
+            ? "Invitation sent to {$user->email}. TUPV ID: {$user->tupv_id}"
+            : ($user->email
+                ? "Account created for TUPV ID: {$user->tupv_id}, but email delivery failed."
                 : "Account created for TUPV ID: {$user->tupv_id}. Default password is their TUPV ID.");
 
         return redirect()
@@ -143,15 +142,15 @@ class ClientController extends Controller
     public function search(Request $request)
     {
         $query = trim($request->get('q', ''));
-        
+
         // Normalize the query - convert to uppercase for TUPV ID format
         $query = strtoupper($query);
-        
+
         if (strlen($query) < 4) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please enter at least 4 characters (e.g., TUPV or the year like 24).',
-                'results' => []
+                'results' => [],
             ]);
         }
 
@@ -180,7 +179,7 @@ class ClientController extends Controller
         return response()->json([
             'success' => true,
             'results' => $results,
-            'count' => $results->count()
+            'count' => $results->count(),
         ]);
     }
 
@@ -254,7 +253,7 @@ class ClientController extends Controller
 
         // Pre-check for collisions
         $collisions = User::whereIn('tupv_id', $ids)->pluck('tupv_id')->all();
-        if (!empty($collisions)) {
+        if (! empty($collisions)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Some TUPV IDs already exist.',

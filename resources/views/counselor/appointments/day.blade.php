@@ -254,7 +254,7 @@
         color: white;
     }
 
-    .btn-reject-pending {
+    .btn-decline-pending {
         padding: 10px 25px;
         background-color: #dc3545;
         color: white;
@@ -267,7 +267,7 @@
         white-space: nowrap;
     }
 
-    .btn-reject-pending:hover {
+    .btn-decline-pending:hover {
         background-color: #c82333;
         color: white;
     }
@@ -445,6 +445,12 @@
                             <p class="appointment-reason text-muted small mt-1 mb-2">
                                 <i class="bi bi-chat-quote me-1"></i>{{ Str::limit($appointment->reason, 200) }}
                             </p>
+                            <div class="small text-muted mt-1">
+                                @if($appointment->client->contact_number)<span class="me-3"><i class="bi bi-telephone"></i> {{ $appointment->client->contact_number }}</span>@endif
+                                @if($appointment->client->email)<span class="me-3"><i class="bi bi-envelope"></i> {{ $appointment->client->email }}</span>@endif
+                                <br>
+                                @if($appointment->client->address)<span><i class="bi bi-geo-alt"></i> {{ $appointment->client->address }}</span>@endif
+                            </div>
                             <span class="pending-badge">PENDING</span>
                         </div>
                         <div class="appointment-actions">
@@ -452,12 +458,12 @@
                                 @csrf
                                 <button type="submit" class="btn-accept-pending">Accept</button>
                             </form>
-                            <button type="button" class="btn-reject-pending"
+                            <button type="button" class="btn-decline-pending"
                                     data-bs-toggle="modal" 
-                                    data-bs-target="#rejectModal"
+                                    data-bs-target="#declineModal"
                                     data-appointment-id="{{ $appointment->id }}"
                                     data-client-name="{{ $appointment->client->name }}">
-                                Reject
+                                Decline
                             </button>
                         </div>
                     </div>
@@ -532,6 +538,12 @@
                             <p class="appointment-reason text-muted small mt-1 mb-2">
                                 <i class="bi bi-chat-quote me-1"></i>{{ Str::limit($appointment->reason, 200) }}
                             </p>
+                            <div class="small text-muted mt-1">
+                                @if($appointment->client->contact_number)<span class="me-3"><i class="bi bi-telephone"></i> {{ $appointment->client->contact_number }}</span>@endif
+                                @if($appointment->client->email)<span class="me-3"><i class="bi bi-envelope"></i> {{ $appointment->client->email }}</span>@endif
+                                <br>
+                                @if($appointment->client->address)<span><i class="bi bi-geo-alt"></i> {{ $appointment->client->address }}</span>@endif
+                            </div>
                             <span class="pending-badge">PENDING</span>
                         </div>
                         <div class="appointment-actions">
@@ -539,12 +551,12 @@
                                 @csrf
                                 <button type="submit" class="btn-accept-pending">Accept</button>
                             </form>
-                            <button type="button" class="btn-reject-pending"
+                            <button type="button" class="btn-decline-pending"
                                     data-bs-toggle="modal" 
-                                    data-bs-target="#rejectModal"
+                                    data-bs-target="#declineModal"
                                     data-appointment-id="{{ $appointment->id }}"
                                     data-client-name="{{ $appointment->client->name }}">
-                                Reject
+                                Decline
                             </button>
                         </div>
                     </div>
@@ -617,21 +629,21 @@
     </div>
 </div>
 
-{{-- Reject Modal (for pending appointments) --}}
-<div class="modal fade" id="rejectModal" tabindex="-1">
+{{-- Decline Modal (for pending appointments) --}}
+<div class="modal fade" id="declineModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Reject Appointment</h5>
+                <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Decline Appointment</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="rejectForm" method="POST">
+            <form id="declineForm" method="POST">
                 @csrf
                 <div class="modal-body">
-                    <p>You are about to reject the appointment request from <strong id="rejectClientName"></strong>.</p>
+                    <p>You are about to decline the appointment request from <strong id="declineClientName"></strong>.</p>
                     <div class="mb-3">
-                        <label for="rejectReason" class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="rejectReason" name="reason" rows="3" required 
+                        <label for="declineReason" class="form-label">Reason for Declining <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="declineReason" name="reason" rows="3" required 
                                   placeholder="e.g., Schedule conflict, please book another time slot..."></textarea>
                     </div>
                     <div class="alert alert-info mb-0">
@@ -641,7 +653,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Reject Appointment</button>
+                    <button type="submit" class="btn btn-danger">Decline Appointment</button>
                 </div>
             </form>
         </div>
@@ -768,16 +780,16 @@
         });
     }
 
-    // Reject modal (for pending appointments)
-    const rejectModal = document.getElementById('rejectModal');
-    if (rejectModal) {
-        rejectModal.addEventListener('show.bs.modal', function(event) {
+    // Decline modal (for pending appointments)
+    const declineModal = document.getElementById('declineModal');
+    if (declineModal) {
+        declineModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const appointmentId = button.getAttribute('data-appointment-id');
             const clientName = button.getAttribute('data-client-name');
             
-            document.getElementById('rejectClientName').textContent = clientName;
-            document.getElementById('rejectForm').action = `/counselor/appointments/${appointmentId}/reject`;
+            document.getElementById('declineClientName').textContent = clientName;
+            document.getElementById('declineForm').action = `{{ route('counselor.appointments.decline', '') }}/${appointmentId}`;
         });
     }
 </script>

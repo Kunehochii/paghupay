@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\CounselorInvitation;
-use App\Models\Appointment;
-use App\Models\CaseLog;
 use App\Models\CounselorProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -88,7 +86,7 @@ class CounselorController extends Controller
             ));
             $emailSent = true;
         } catch (\Exception $e) {
-            \Log::error('Failed to send counselor invitation email: ' . $e->getMessage());
+            \Log::error('Failed to send counselor invitation email: '.$e->getMessage());
         }
 
         $message = $emailSent
@@ -123,7 +121,7 @@ class CounselorController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => 'required|email|unique:users,email,'.$id,
             'position' => 'nullable|string|max:255',
             'picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
@@ -180,7 +178,7 @@ class CounselorController extends Controller
 
     /**
      * Reset device lock for a counselor.
-     * 
+     *
      * Use Cases:
      * - Counselor cleared browser cookies/cache
      * - Counselor switched to a different workstation
@@ -198,7 +196,7 @@ class CounselorController extends Controller
         // Reset device lock
         $profile->update([
             'device_token' => null,
-            'device_bound_at' => null
+            'device_bound_at' => null,
         ]);
 
         // Optional: Log this action for audit trail

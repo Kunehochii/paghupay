@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Counselor;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\CaseLog;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * Security Note: progress_report and additional_notes are encrypted
      * at the application level using Laravel's built-in encryption (AES-256-CBC).
      */

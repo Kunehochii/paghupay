@@ -130,7 +130,7 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
             Route::get('/day', [AppointmentController::class, 'dayView'])->name('day');
             Route::get('/calendar', [AppointmentController::class, 'calendar'])->name('calendar');
             Route::post('/{appointment}/accept', [AppointmentController::class, 'accept'])->name('accept');
-            Route::post('/{appointment}/reject', [AppointmentController::class, 'reject'])->name('reject');
+            Route::post('/{appointment}/decline', [AppointmentController::class, 'decline'])->name('decline');
             Route::post('/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('cancel');
             Route::post('/{appointment}/start-session', [AppointmentController::class, 'startSession'])->name('start-session');
             Route::post('/{appointment}/end-session', [AppointmentController::class, 'endSession'])->name('end-session');
@@ -156,6 +156,8 @@ Route::middleware(['auth', 'role:counselor', 'verify.device'])
         Route::prefix('availability')->name('availability.')->group(function () {
             Route::get('/', [AvailabilityController::class, 'index'])->name('index');
             Route::post('/toggle', [AvailabilityController::class, 'toggle'])->name('toggle');
+            Route::post('/toggle-slot', [AvailabilityController::class, 'toggleSlot'])->name('toggle-slot');
+            Route::get('/slots', [AvailabilityController::class, 'getSlotsForDate'])->name('slots');
         });
 
         // About Page
