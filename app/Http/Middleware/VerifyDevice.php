@@ -31,8 +31,9 @@ class VerifyDevice
         $profile = $user->counselorProfile;
 
         // Counselor must have a profile
-        if (!$profile) {
+        if (! $profile) {
             Auth::logout();
+
             return redirect('/counselor/login')->with(
                 'error',
                 'Counselor profile not found. Contact admin.'
@@ -45,7 +46,7 @@ class VerifyDevice
 
             $profile->update([
                 'device_token' => $deviceToken,
-                'device_bound_at' => now()
+                'device_bound_at' => now(),
             ]);
 
             // Set long-lived cookie (1 year = 525600 minutes)
@@ -62,6 +63,7 @@ class VerifyDevice
 
         if ($storedToken !== $currentToken) {
             Auth::logout();
+
             return redirect('/counselor/login')->with(
                 'error',
                 'Unauthorized Device. This account is locked to a different device. Contact admin to reset.'
@@ -73,16 +75,13 @@ class VerifyDevice
 
     /**
      * Generate a unique device token using SHA-256.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return string
      */
     private function generateDeviceToken(Request $request): string
     {
         return hash(
             'sha256',
-            uniqid(mt_rand(), true) .
-                $request->userAgent() .
+            uniqid(mt_rand(), true).
+                $request->userAgent().
                 $request->ip()
         );
     }

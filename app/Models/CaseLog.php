@@ -33,7 +33,7 @@ class CaseLog extends Model
 
     /**
      * Get the attributes that should be cast.
-     * 
+     *
      * Security: progress_report and additional_notes are encrypted
      * using Laravel's built-in encryption (AES-256-CBC).
      *
@@ -62,7 +62,7 @@ class CaseLog extends Model
         // Auto-generate case_log_id on creation
         static::creating(function ($caseLog) {
             if (empty($caseLog->case_log_id)) {
-                $caseLog->case_log_id = 'TUPV-' . Str::uuid();
+                $caseLog->case_log_id = 'TUPV-'.Str::uuid();
             }
         });
     }
@@ -117,7 +117,7 @@ class CaseLog extends Model
      */
     public function getFormattedDurationAttribute(): string
     {
-        if (!$this->session_duration) {
+        if (! $this->session_duration) {
             return 'N/A';
         }
 
@@ -192,7 +192,7 @@ class CaseLog extends Model
      */
     public function resumeSession(): bool
     {
-        if (!$this->isPaused()) {
+        if (! $this->isPaused()) {
             return false;
         }
 

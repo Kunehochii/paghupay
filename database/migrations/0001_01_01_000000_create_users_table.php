@@ -36,7 +36,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(false); // Default false until profile completion
             $table->rememberToken();
             $table->timestamps();
-            
+
             // Indexes for login performance
             $table->index('tupv_id', 'idx_users_tupv_id');
             $table->index('admin_id', 'idx_users_admin_id');

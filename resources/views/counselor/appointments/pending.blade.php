@@ -180,7 +180,7 @@
         background-color: #358a87;
     }
 
-    .btn-reject {
+    .btn-decline {
         padding: 8px 16px;
         background-color: #dc3545;
         color: white;
@@ -192,7 +192,7 @@
         transition: all 0.2s;
     }
 
-    .btn-reject:hover {
+    .btn-decline:hover {
         background-color: #c82333;
     }
 
@@ -621,17 +621,26 @@
                     <div class="upcoming-item" data-name="{{ strtolower($appointment->client->name) }}">
                         <div class="upcoming-client-name">{{ $appointment->client->name }}</div>
                         <div class="upcoming-date">{{ $appointment->scheduled_at->format('F j, Y') }}</div>
+                        @if($appointment->client->course_year_section)
+                        <div class="small text-muted mb-1">{{ $appointment->client->course_year_section }}</div>
+                        @endif
+                        @if($appointment->client->contact_number || $appointment->client->email)
+                        <div class="small text-muted mb-2">
+                            @if($appointment->client->contact_number)<span class="me-2"><i class="bi bi-telephone"></i> {{ $appointment->client->contact_number }}</span>@endif
+                            @if($appointment->client->email)<span><i class="bi bi-envelope"></i> {{ $appointment->client->email }}</span>@endif
+                        </div>
+                        @endif
                         <div class="upcoming-actions">
                             <form action="{{ route('counselor.appointments.accept', $appointment->id) }}" method="POST" style="flex: 1;">
                                 @csrf
                                 <button type="submit" class="btn-accept" style="width: 100%;">Accept</button>
                             </form>
-                            <button type="button" class="btn-reject"
+                            <button type="button" class="btn-decline"
                                     data-bs-toggle="modal" 
-                                    data-bs-target="#rejectModal"
+                                    data-bs-target="#declineModal"
                                     data-appointment-id="{{ $appointment->id }}"
                                     data-client-name="{{ $appointment->client->name }}">
-                                Reject
+                                Decline
                             </button>
                         </div>
                     </div>
@@ -723,21 +732,21 @@
     </div>
 </div>
 
-{{-- Reject Modal --}}
-<div class="modal fade" id="rejectModal" tabindex="-1">
+{{-- Decline Modal --}}
+<div class="modal fade" id="declineModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Reject Appointment</h5>
+                <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Decline Appointment</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="rejectForm" method="POST">
+            <form id="declineForm" method="POST">
                 @csrf
                 <div class="modal-body">
-                    <p>You are about to reject the appointment request from <strong id="rejectClientName"></strong>.</p>
+                    <p>You are about to decline the appointment request from <strong id="declineClientName"></strong>.</p>
                     <div class="mb-3">
-                        <label for="rejectReason" class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="rejectReason" name="reason" rows="3" required 
+                        <label for="declineReason" class="form-label">Reason for Declining <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="declineReason" name="reason" rows="3" required 
                                   placeholder="e.g., Schedule conflict, please book another time slot..."></textarea>
                     </div>
                     <div class="alert alert-info mb-0">
@@ -747,7 +756,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Reject Appointment</button>
+                    <button type="submit" class="btn btn-danger">Decline Appointment</button>
                 </div>
             </form>
         </div>
@@ -790,16 +799,16 @@
         window.location.href = `{{ route('counselor.appointments.day') }}?date=${date}`;
     }
 
-    // Reject modal
-    const rejectModal = document.getElementById('rejectModal');
-    if (rejectModal) {
-        rejectModal.addEventListener('show.bs.modal', function(event) {
+    // Decline modal
+    const declineModal = document.getElementById('declineModal');
+    if (declineModal) {
+        declineModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const appointmentId = button.getAttribute('data-appointment-id');
             const clientName = button.getAttribute('data-client-name');
             
-            document.getElementById('rejectClientName').textContent = clientName;
-            document.getElementById('rejectForm').action = `/counselor/appointments/${appointmentId}/reject`;
+            document.getElementById('declineClientName').textContent = clientName;
+            document.getElementById('declineForm').action = `{{ route('counselor.appointments.decline', '') }}/${appointmentId}`;
         });
     }
 </script>

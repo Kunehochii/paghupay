@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
@@ -21,12 +20,12 @@ class StudentInvitation extends Mailable
     public function headers(): Headers
     {
         return new Headers(
-            messageId: uniqid('paghupay-', true) . '@' . parse_url(config('app.url'), PHP_URL_HOST),
+            messageId: uniqid('paghupay-', true).'@'.parse_url(config('app.url'), PHP_URL_HOST),
             references: [],
             text: [
                 'X-Mailer' => 'Paghupay/1.0',
                 'X-Priority' => '3',
-                'List-Unsubscribe' => '<mailto:' . config('mail.from.address') . '?subject=Unsubscribe>',
+                'List-Unsubscribe' => '<mailto:'.config('mail.from.address').'?subject=Unsubscribe>',
             ],
         );
     }

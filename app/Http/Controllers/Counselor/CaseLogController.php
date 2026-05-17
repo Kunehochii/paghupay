@@ -28,8 +28,8 @@ class CaseLogController extends Controller
             ->where('counselor_id', $counselorId)
             ->when($search !== '', function ($q) use ($search): void {
                 $q->whereHas('client', fn ($sub) => $sub->whereRaw(
-                    "name ILIKE ?",
-                    ['%' . $search . '%']
+                    'name ILIKE ?',
+                    ['%'.$search.'%']
                 ));
             })
             ->orderBy('created_at', 'desc')
@@ -86,6 +86,19 @@ class CaseLogController extends Controller
                     'id' => $client->id,
                     'name' => $client->name,
                     'tupv_id' => $client->tupv_id,
+                    'nickname' => $client->nickname,
+                    'course_year_section' => $client->course_year_section,
+                    'sex' => $client->sex,
+                    'birthdate' => $client->birthdate?->format('Y-m-d'),
+                    'birthplace' => $client->birthplace,
+                    'contact_number' => $client->contact_number,
+                    'email' => $client->email,
+                    'nationality' => $client->nationality,
+                    'address' => $client->address,
+                    'home_address' => $client->home_address,
+                    'guardian_name' => $client->guardian_name,
+                    'guardian_relationship' => $client->guardian_relationship,
+                    'guardian_contact' => $client->guardian_contact,
                 ],
             ]);
         }
@@ -123,7 +136,7 @@ class CaseLogController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$client) {
+        if (! $client) {
             return redirect()
                 ->back()
                 ->withInput()
@@ -147,14 +160,14 @@ class CaseLogController extends Controller
             $caseLog->calculateDuration();
 
             // Create treatment goals and activities
-            if (!empty($validated['goals'])) {
+            if (! empty($validated['goals'])) {
                 foreach ($validated['goals'] as $goalData) {
                     $goal = TreatmentGoal::create([
                         'case_log_id' => $caseLog->id,
                         'description' => $goalData['description'],
                     ]);
 
-                    if (!empty($goalData['activities'])) {
+                    if (! empty($goalData['activities'])) {
                         foreach ($goalData['activities'] as $activityData) {
                             TreatmentActivity::create([
                                 'goal_id' => $goal->id,
@@ -173,10 +186,11 @@ class CaseLogController extends Controller
                 ->with('success', 'Case log created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Failed to create case log: ' . $e->getMessage());
+                ->with('error', 'Failed to create case log: '.$e->getMessage());
         }
     }
 
@@ -220,9 +234,10 @@ class CaseLogController extends Controller
                 ->with('success', 'Case log deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()
                 ->back()
-                ->with('error', 'Failed to delete case log: ' . $e->getMessage());
+                ->with('error', 'Failed to delete case log: '.$e->getMessage());
         }
     }
 
@@ -292,14 +307,14 @@ class CaseLogController extends Controller
             });
 
             // Create new treatment goals and activities
-            if (!empty($validated['goals'])) {
+            if (! empty($validated['goals'])) {
                 foreach ($validated['goals'] as $goalData) {
                     $goal = TreatmentGoal::create([
                         'case_log_id' => $caseLog->id,
                         'description' => $goalData['description'],
                     ]);
 
-                    if (!empty($goalData['activities'])) {
+                    if (! empty($goalData['activities'])) {
                         foreach ($goalData['activities'] as $activityData) {
                             TreatmentActivity::create([
                                 'goal_id' => $goal->id,
@@ -321,7 +336,7 @@ class CaseLogController extends Controller
                             ->send(new AppointmentCompleted($caseLog->appointment, $caseLog));
                     }
                 } catch (\Exception $e) {
-                    \Log::error('Failed to send completion email: ' . $e->getMessage());
+                    \Log::error('Failed to send completion email: '.$e->getMessage());
                 }
             }
 
@@ -329,13 +344,14 @@ class CaseLogController extends Controller
 
             return redirect()
                 ->route('counselor.case-logs.index')
-                ->with('success', 'Case log saved successfully.' . ($isFirstSave ? ' Client has been notified via email.' : ''));
+                ->with('success', 'Case log saved successfully.'.($isFirstSave ? ' Client has been notified via email.' : ''));
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Failed to update case log: ' . $e->getMessage());
+                ->with('error', 'Failed to update case log: '.$e->getMessage());
         }
     }
 

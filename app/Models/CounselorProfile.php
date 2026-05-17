@@ -59,7 +59,7 @@ class CounselorProfile extends Model
      */
     public function isDeviceBound(): bool
     {
-        return !is_null($this->device_token);
+        return ! is_null($this->device_token);
     }
 
     /**

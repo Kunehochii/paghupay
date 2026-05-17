@@ -9,7 +9,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * This migration converts session_duration from minutes to seconds.
      * Existing data is multiplied by 60 to preserve accuracy.
      */

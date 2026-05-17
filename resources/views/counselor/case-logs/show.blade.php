@@ -28,6 +28,78 @@
     </div>
 </div>
 
+{{-- Student Information Card --}}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-success bg-opacity-10 py-3">
+        <h5 class="mb-0 text-success"><i class="bi bi-person-badge me-2"></i>Student Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Full Name</strong>
+                <span>{{ $caseLog->client->name }}</span>
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Nickname</strong>
+                <span>{{ $caseLog->client->nickname ?? 'N/A' }}</span>
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">TUPV ID</strong>
+                <span>{{ $caseLog->client->tupv_id ?? 'N/A' }}</span>
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Course/Year/Section</strong>
+                <span>{{ $caseLog->client->course_year_section ?? 'N/A' }}</span>
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Sex</strong>
+                <span>{{ $caseLog->client->sex ?? 'N/A' }}</span>
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Birthdate</strong>
+                <span>{{ $caseLog->client->birthdate ? $caseLog->client->birthdate->format('F j, Y') : 'N/A' }}</span>
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Birthplace</strong>
+                <span>{{ $caseLog->client->birthplace ?? 'N/A' }}</span>
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Nationality</strong>
+                <span>{{ $caseLog->client->nationality ?? 'N/A' }}</span>
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Contact Number</strong>
+                <span>{{ $caseLog->client->contact_number ?? 'N/A' }}</span>
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Email</strong>
+                <span>{{ $caseLog->client->email ?? 'N/A' }}</span>
+            </div>
+            <div class="col-md-6 mb-2">
+                <strong class="small text-muted d-block">Current Address</strong>
+                <span>{{ $caseLog->client->address ?? 'N/A' }}</span>
+            </div>
+            <div class="col-md-6 mb-2">
+                <strong class="small text-muted d-block">Home Address</strong>
+                <span>{{ $caseLog->client->home_address ?? 'N/A' }}</span>
+            </div>
+            <hr class="mt-2 mb-2">
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Guardian Name</strong>
+                <span>{{ $caseLog->client->guardian_name ?? 'N/A' }}</span>
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Relationship</strong>
+                <span>{{ $caseLog->client->guardian_relationship ?? 'N/A' }}</span>
+            </div>
+            <div class="col-md-4 mb-2">
+                <strong class="small text-muted d-block">Guardian Contact</strong>
+                <span>{{ $caseLog->client->guardian_contact ?? 'N/A' }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Session Info Card --}}
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-primary bg-opacity-10 py-3">

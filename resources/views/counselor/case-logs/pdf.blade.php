@@ -199,6 +199,72 @@
     </div>
 
     <div class="section">
+        <div class="section-title">Student Information</div>
+        <div class="info-grid">
+            <div class="info-item">
+                <label>TUPV ID</label>
+                <strong>{{ $caseLog->client->tupv_id ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Student Name</label>
+                <strong>{{ $caseLog->client->name }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Nickname</label>
+                <strong>{{ $caseLog->client->nickname ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Course/Year/Section</label>
+                <strong>{{ $caseLog->client->course_year_section ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Sex</label>
+                <strong>{{ $caseLog->client->sex ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Birthdate</label>
+                <strong>{{ $caseLog->client->birthdate ? $caseLog->client->birthdate->format('F j, Y') : 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Birthplace</label>
+                <strong>{{ $caseLog->client->birthplace ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Nationality</label>
+                <strong>{{ $caseLog->client->nationality ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Contact Number</label>
+                <strong>{{ $caseLog->client->contact_number ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Email</label>
+                <strong>{{ $caseLog->client->email ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Current Address</label>
+                <strong>{{ $caseLog->client->address ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Home Address</label>
+                <strong>{{ $caseLog->client->home_address ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Guardian Name</label>
+                <strong>{{ $caseLog->client->guardian_name ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Relationship</label>
+                <strong>{{ $caseLog->client->guardian_relationship ?? 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Guardian Contact</label>
+                <strong>{{ $caseLog->client->guardian_contact ?? 'N/A' }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
         <div class="section-title">Session Information</div>
         <div class="info-grid">
             <div class="info-item">

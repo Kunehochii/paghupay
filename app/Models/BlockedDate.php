@@ -42,7 +42,7 @@ class BlockedDate extends Model
     public static function getBlockedDatesArray(): array
     {
         return self::pluck('blocked_date')
-            ->map(fn($date) => $date->format('Y-m-d'))
+            ->map(fn ($date) => $date->format('Y-m-d'))
             ->toArray();
     }
 }

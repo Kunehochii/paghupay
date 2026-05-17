@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Counselor;
 use App\Http\Controllers\Controller;
 use App\Mail\AppointmentAccepted;
 use App\Mail\AppointmentCancelled;
-use App\Mail\AppointmentRejected;
+use App\Mail\AppointmentDeclined;
 use App\Models\Appointment;
 use App\Models\CancelReason;
 use App\Models\CaseLog;
@@ -28,10 +28,10 @@ class AppointmentController extends Controller
         $selectedMonth = $request->query('month');
 
         // Parse current month for calendar
-        $currentMonth = $selectedMonth 
+        $currentMonth = $selectedMonth
             ? Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth()
             : now()->startOfMonth();
-        
+
         $prevMonth = $currentMonth->copy()->subMonth();
         $nextMonth = $currentMonth->copy()->addMonth();
 
@@ -100,7 +100,7 @@ class AppointmentController extends Controller
     {
         $startOfMonth = $month->copy()->startOfMonth();
         $endOfMonth = $month->copy()->endOfMonth();
-        
+
         // Start from the beginning of the week containing the first day
         $startDate = $startOfMonth->copy()->startOfWeek(Carbon::SUNDAY);
         // End at the end of the week containing the last day
@@ -145,17 +145,17 @@ class AppointmentController extends Controller
         $selectedDate = $request->query('date');
 
         // Parse the selected date or default to today
-        $date = $selectedDate 
+        $date = $selectedDate
             ? Carbon::parse($selectedDate)
             : now();
 
         $isToday = $date->isToday();
         $displayDate = $date->format('j M Y');
-        
+
         // Format for title display (e.g., "JANUARY 14'S APPOINTMENTS")
-        $dateTitle = $isToday 
-            ? "Today's Appointments" 
-            : strtoupper($date->format('F j')) . "'S APPOINTMENTS";
+        $dateTitle = $isToday
+            ? "Today's Appointments"
+            : strtoupper($date->format('F j'))."'S APPOINTMENTS";
 
         // Get both pending and accepted appointments for the selected date
         // This allows viewing all appointments for any date clicked from calendar
@@ -184,10 +184,10 @@ class AppointmentController extends Controller
         $selectedMonth = $request->query('month');
 
         // Parse current month for calendar
-        $currentMonth = $selectedMonth 
+        $currentMonth = $selectedMonth
             ? Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth()
             : now()->startOfMonth();
-        
+
         $prevMonth = $currentMonth->copy()->subMonth();
         $nextMonth = $currentMonth->copy()->addMonth();
 
@@ -227,7 +227,7 @@ class AppointmentController extends Controller
     {
         $startOfMonth = $month->copy()->startOfMonth();
         $endOfMonth = $month->copy()->endOfMonth();
-        
+
         // Start from the beginning of the week containing the first day
         $startDate = $startOfMonth->copy()->startOfWeek(Carbon::SUNDAY);
         // End at the end of the week containing the last day
@@ -288,7 +288,7 @@ class AppointmentController extends Controller
             Mail::to($appointment->client->email)
                 ->send(new AppointmentAccepted($appointment));
         } catch (\Exception $e) {
-            Log::error('Failed to send appointment acceptance email: ' . $e->getMessage());
+            Log::error('Failed to send appointment acceptance email: '.$e->getMessage());
         }
 
         return redirect()
@@ -297,9 +297,9 @@ class AppointmentController extends Controller
     }
 
     /**
-     * Reject a pending appointment.
+     * Decline a pending appointment.
      */
-    public function reject(Request $request, Appointment $appointment)
+    public function decline(Request $request, Appointment $appointment)
     {
         if ($appointment->counselor_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
@@ -328,16 +328,16 @@ class AppointmentController extends Controller
 
         $appointment->client->notify(new AppointmentStatusChanged($appointment, 'cancelled', $validated['reason']));
 
-        // Send rejection email to client
+        // Send decline email to client
         try {
             Mail::to($appointment->client->email)
-                ->send(new AppointmentRejected($appointment, $validated['reason']));
-            
+                ->send(new AppointmentDeclined($appointment, $validated['reason']));
+
             // Update email sent flag
             CancelReason::where('appointment_id', $appointment->id)
                 ->update(['email_sent' => true]);
         } catch (\Exception $e) {
-            Log::error('Failed to send appointment rejection email: ' . $e->getMessage());
+            Log::error('Failed to send appointment decline email: '.$e->getMessage());
         }
 
         return redirect()
@@ -380,7 +380,7 @@ class AppointmentController extends Controller
             $cancelReason->update(['email_sent' => true]);
         } catch (\Exception $e) {
             // Log error but don't fail the cancellation
-            Log::error('Failed to send cancellation email: ' . $e->getMessage());
+            Log::error('Failed to send cancellation email: '.$e->getMessage());
         }
 
         return redirect()
@@ -408,7 +408,7 @@ class AppointmentController extends Controller
         // Check if case log already exists
         $caseLog = $appointment->caseLog;
 
-        if (!$caseLog) {
+        if (! $caseLog) {
             // Create a new case log with start time
             $caseLog = CaseLog::create([
                 'appointment_id' => $appointment->id,
@@ -416,7 +416,7 @@ class AppointmentController extends Controller
                 'client_id' => $appointment->client_id,
                 'start_time' => now(),
             ]);
-        } elseif (!$caseLog->start_time) {
+        } elseif (! $caseLog->start_time) {
             // Update existing case log with start time
             $caseLog->update(['start_time' => now()]);
         }
@@ -438,7 +438,7 @@ class AppointmentController extends Controller
 
         $caseLog = $appointment->caseLog;
 
-        if (!$caseLog || !$caseLog->start_time) {
+        if (! $caseLog || ! $caseLog->start_time) {
             return redirect()
                 ->back()
                 ->with('error', 'Session was not started.');
@@ -468,11 +468,11 @@ class AppointmentController extends Controller
             ->where('counselor_id', $counselor->id)
             ->whereHas('caseLog', function ($query) {
                 $query->whereNotNull('start_time')
-                      ->whereNull('end_time');
+                    ->whereNull('end_time');
             })
             ->first();
 
-        if (!$activeAppointment) {
+        if (! $activeAppointment) {
             return response()->json(['active' => false]);
         }
 
@@ -493,13 +493,13 @@ class AppointmentController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        if (!$caseLog->start_time || $caseLog->end_time) {
+        if (! $caseLog->start_time || $caseLog->end_time) {
             return response()->json(['success' => false, 'message' => 'Session is not active.'], 422);
         }
 
         $result = $caseLog->pauseSession();
 
-        if (!$result) {
+        if (! $result) {
             return response()->json(['success' => false, 'message' => 'Session is already paused.'], 422);
         }
 
@@ -521,13 +521,13 @@ class AppointmentController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        if (!$caseLog->start_time || $caseLog->end_time) {
+        if (! $caseLog->start_time || $caseLog->end_time) {
             return response()->json(['success' => false, 'message' => 'Session is not active.'], 422);
         }
 
         $result = $caseLog->resumeSession();
 
-        if (!$result) {
+        if (! $result) {
             return response()->json(['success' => false, 'message' => 'Session is not paused.'], 422);
         }
 

@@ -58,6 +58,7 @@ class AuthController extends Controller
             // Ensure user is a client
             if ($user->role !== 'client') {
                 Auth::logout();
+
                 return back()->withErrors([
                     'tupv_id' => 'Please use the appropriate login page for your role.',
                 ]);
@@ -66,6 +67,7 @@ class AuthController extends Controller
             // Check if account has been deactivated by admin
             if ($user->isDeactivated()) {
                 Auth::logout();
+
                 return back()->withErrors([
                     'tupv_id' => 'Your account has been deactivated. Please contact the Guidance Office.',
                 ]);
@@ -74,7 +76,7 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             // Check if profile needs completion (inactive = needs to change password & complete profile)
-            if (!$user->is_active) {
+            if (! $user->is_active) {
                 return redirect()->route('register')
                     ->with('info', 'Please change your password and complete your profile to continue.');
             }
@@ -103,6 +105,7 @@ class AuthController extends Controller
             // Ensure user is a counselor
             if ($user->role !== 'counselor') {
                 Auth::logout();
+
                 return back()->withErrors([
                     'email' => 'Please use the appropriate login page for your role.',
                 ]);
@@ -111,12 +114,14 @@ class AuthController extends Controller
             // Check if account has been deactivated by admin
             if ($user->isDeactivated()) {
                 Auth::logout();
+
                 return back()->withErrors([
                     'email' => 'Your account has been deactivated. Please contact the administrator.',
                 ]);
             }
 
             $request->session()->regenerate();
+
             return redirect()->intended(route('counselor.dashboard'));
         }
 
@@ -148,12 +153,14 @@ class AuthController extends Controller
             // Ensure user is an admin
             if ($user->role !== 'admin') {
                 Auth::logout();
+
                 return back()->withErrors([
                     'admin_id' => 'Please use the appropriate login page for your role.',
                 ]);
             }
 
             $request->session()->regenerate();
+
             return redirect()->intended(route('admin.dashboard'));
         }
 
@@ -164,14 +171,14 @@ class AuthController extends Controller
 
     /**
      * Show registration form (password change + profile completion).
-     * 
+     *
      * Per spec: Student must be logged in with is_active = false.
      * They were redirected here after logging in with temp password.
      */
     public function showRegistrationForm()
     {
         // If user is logged in and inactive, show the registration form
-        if (Auth::check() && !Auth::user()->is_active && Auth::user()->role === 'client') {
+        if (Auth::check() && ! Auth::user()->is_active && Auth::user()->role === 'client') {
             return view('auth.register');
         }
 
@@ -187,14 +194,14 @@ class AuthController extends Controller
 
     /**
      * Handle student registration (password change + profile completion).
-     * 
+     *
      * Per spec: Student must be logged in with is_active = false.
      * Student provides: current password (temp), new password, and profile fields.
      */
     public function register(Request $request)
     {
         // Ensure user is logged in and inactive
-        if (!Auth::check() || Auth::user()->is_active || Auth::user()->role !== 'client') {
+        if (! Auth::check() || Auth::user()->is_active || Auth::user()->role !== 'client') {
             return redirect()->route('login')
                 ->with('error', 'Invalid registration attempt.');
         }
@@ -209,7 +216,7 @@ class AuthController extends Controller
 
             // Personal information
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
             'nickname' => 'required|string|max:255',
             'course_year_section' => 'required|string|max:255',
             'birthdate' => 'required|date',
@@ -234,7 +241,7 @@ class AuthController extends Controller
         ]);
 
         // Verify current password (the temp password they logged in with)
-        if (!Hash::check($validated['current_password'], $user->password)) {
+        if (! Hash::check($validated['current_password'], $user->password)) {
             return back()
                 ->withInput()
                 ->withErrors(['current_password' => 'The current password is incorrect.']);

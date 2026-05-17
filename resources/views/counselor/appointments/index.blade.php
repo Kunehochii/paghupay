@@ -286,6 +286,12 @@
                                         <i class="bi bi-chat-quote me-1"></i>
                                         {{ Str::limit($appointment->reason, 80) }}
                                     </p>
+                                    @if($appointment->client->contact_number || $appointment->client->email || $appointment->client->address)
+                                    <div class="small text-muted">
+                                        @if($appointment->client->contact_number)<div><i class="bi bi-telephone"></i> {{ $appointment->client->contact_number }}</div>@endif
+                                        @if($appointment->client->email)<div><i class="bi bi-envelope"></i> {{ $appointment->client->email }}</div>@endif
+                                    </div>
+                                    @endif
                                 </div>
                                 <div class="card-footer bg-white d-flex gap-2">
                                     <form action="{{ route('counselor.appointments.accept', $appointment->id) }}" method="POST" class="flex-grow-1">
@@ -296,7 +302,7 @@
                                     </form>
                                     <button type="button" class="btn btn-outline-danger btn-sm" 
                                             data-bs-toggle="modal" 
-                                            data-bs-target="#rejectModal"
+                                            data-bs-target="#declineModal"
                                             data-appointment-id="{{ $appointment->id }}"
                                             data-client-name="{{ $appointment->client->name }}">
                                         <i class="bi bi-x-circle"></i>
@@ -447,6 +453,9 @@
                                                 @if($appointment->client->course_year_section)
                                                 <br><small class="text-muted">{{ $appointment->client->course_year_section }}</small>
                                                 @endif
+                                                @if($appointment->client->contact_number)
+                                                <br><small class="text-muted"><i class="bi bi-telephone"></i> {{ $appointment->client->contact_number }}</small>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>
@@ -498,7 +507,7 @@
                                             </form>
                                             <button type="button" class="btn btn-sm btn-outline-danger ms-1" 
                                                     data-bs-toggle="modal" 
-                                                    data-bs-target="#rejectModal"
+                                                    data-bs-target="#declineModal"
                                                     data-appointment-id="{{ $appointment->id }}"
                                                     data-client-name="{{ $appointment->client->name }}">
                                                 <i class="bi bi-x-circle"></i> Decline
@@ -561,21 +570,21 @@
     </div>
 </div>
 
-{{-- Reject Modal (for declining pending requests) --}}
-<div class="modal fade" id="rejectModal" tabindex="-1">
+{{-- Decline Modal (for declining pending requests) --}}
+<div class="modal fade" id="declineModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-secondary text-white">
                 <h5 class="modal-title"><i class="bi bi-x-circle"></i> Decline Appointment Request</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="rejectForm" method="POST">
+            <form id="declineForm" method="POST">
                 @csrf
                 <div class="modal-body">
-                    <p>You are about to decline the appointment request from <strong id="rejectClientName"></strong>.</p>
+                    <p>You are about to decline the appointment request from <strong id="declineClientName"></strong>.</p>
                     <div class="mb-3">
-                        <label for="rejectReason" class="form-label">Reason for Declining <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="rejectReason" name="reason" rows="3" required 
+                        <label for="declineReason" class="form-label">Reason for Declining <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="declineReason" name="reason" rows="3" required 
                                   placeholder="e.g., Schedule conflict, please book another time slot..."></textarea>
                     </div>
                     <div class="alert alert-info mb-0">
@@ -651,16 +660,16 @@
         });
     }
 
-    // Reject modal (for declining pending requests)
-    const rejectModal = document.getElementById('rejectModal');
-    if (rejectModal) {
-        rejectModal.addEventListener('show.bs.modal', function(event) {
+    // Decline modal (for declining pending requests)
+    const declineModal = document.getElementById('declineModal');
+    if (declineModal) {
+        declineModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const appointmentId = button.getAttribute('data-appointment-id');
             const clientName = button.getAttribute('data-client-name');
             
-            document.getElementById('rejectClientName').textContent = clientName;
-            document.getElementById('rejectForm').action = `/counselor/appointments/${appointmentId}/reject`;
+            document.getElementById('declineClientName').textContent = clientName;
+            document.getElementById('declineForm').action = `{{ route('counselor.appointments.decline', '') }}/${appointmentId}`;
         });
     }
 </script>

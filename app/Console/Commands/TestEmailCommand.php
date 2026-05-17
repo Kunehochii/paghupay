@@ -2,17 +2,17 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\StudentInvitation;
-use App\Mail\CounselorInvitation;
-use App\Mail\AppointmentConfirmation;
 use App\Mail\AppointmentAccepted;
-use App\Mail\AppointmentRejected;
 use App\Mail\AppointmentCancelled;
 use App\Mail\AppointmentCompleted;
+use App\Mail\AppointmentConfirmation;
+use App\Mail\AppointmentDeclined;
+use App\Mail\CounselorInvitation;
+use App\Mail\StudentInvitation;
 use App\Models\Appointment;
 use App\Models\User;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Mail;
 
 class TestEmailCommand extends Command
 {
@@ -28,7 +28,7 @@ class TestEmailCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Test email sending. Types: student, counselor, appointment-confirm, appointment-accepted, appointment-rejected, appointment-cancelled, appointment-completed';
+    protected $description = 'Test email sending. Types: student, counselor, appointment-confirm, appointment-accepted, appointment-declined, appointment-cancelled, appointment-completed';
 
     /**
      * Execute the console command.
@@ -58,8 +58,8 @@ class TestEmailCommand extends Command
                     $this->testAppointmentAccepted($email);
                     break;
 
-                case 'appointment-rejected':
-                    $this->testAppointmentRejected($email);
+                case 'appointment-declined':
+                    $this->testAppointmentDeclined($email);
                     break;
 
                 case 'appointment-cancelled':
@@ -72,15 +72,18 @@ class TestEmailCommand extends Command
 
                 default:
                     $this->error("Unknown email type: {$type}");
-                    $this->info("Available types: student, counselor, appointment-confirm, appointment-accepted, appointment-rejected, appointment-cancelled, appointment-completed");
+                    $this->info('Available types: student, counselor, appointment-confirm, appointment-accepted, appointment-declined, appointment-cancelled, appointment-completed');
+
                     return 1;
             }
 
-            $this->info("✅ Email sent successfully!");
+            $this->info('✅ Email sent successfully!');
+
             return 0;
         } catch (\Exception $e) {
-            $this->error("❌ Failed to send email: " . $e->getMessage());
-            $this->error("Stack trace: " . $e->getTraceAsString());
+            $this->error('❌ Failed to send email: '.$e->getMessage());
+            $this->error('Stack trace: '.$e->getTraceAsString());
+
             return 1;
         }
     }
@@ -127,27 +130,27 @@ class TestEmailCommand extends Command
 
         Mail::to($email)->send(new AppointmentAccepted($appointment));
 
-        $this->line("Appointment accepted notification sent");
+        $this->line('Appointment accepted notification sent');
     }
 
-    private function testAppointmentRejected($email)
+    private function testAppointmentDeclined($email)
     {
         $appointment = $this->createMockAppointment($email);
-        $reason = "Test rejection reason - Schedule conflict";
+        $reason = 'Test decline reason - Schedule conflict';
 
-        Mail::to($email)->send(new AppointmentRejected($appointment, $reason));
+        Mail::to($email)->send(new AppointmentDeclined($appointment, $reason));
 
-        $this->line("Appointment rejected notification sent with reason: {$reason}");
+        $this->line("Appointment declined notification sent with reason: {$reason}");
     }
 
     private function testAppointmentCancelled($email)
     {
         $appointment = $this->createMockAppointment($email);
-        $reason = "Test cancellation - Student requested cancellation";
+        $reason = 'Test cancellation - Student requested cancellation';
 
         Mail::to($email)->send(new AppointmentCancelled($appointment, $reason));
 
-        $this->line("Appointment cancelled notification sent");
+        $this->line('Appointment cancelled notification sent');
     }
 
     private function testAppointmentCompleted($email)
@@ -156,7 +159,7 @@ class TestEmailCommand extends Command
 
         Mail::to($email)->send(new AppointmentCompleted($appointment));
 
-        $this->line("Appointment completed notification sent");
+        $this->line('Appointment completed notification sent');
     }
 
     private function createMockAppointment($clientEmail)
@@ -165,23 +168,23 @@ class TestEmailCommand extends Command
         $client = User::where('role', 'client')->first();
         $counselor = User::where('role', 'counselor')->first();
 
-        if (!$client) {
-            $this->warn("No client user found in database. Using mock data.");
+        if (! $client) {
+            $this->warn('No client user found in database. Using mock data.');
             $client = new User([
                 'id' => 999,
                 'name' => 'Test Student',
                 'email' => $clientEmail,
-                'role' => 'client'
+                'role' => 'client',
             ]);
         }
 
-        if (!$counselor) {
-            $this->warn("No counselor user found in database. Using mock data.");
+        if (! $counselor) {
+            $this->warn('No counselor user found in database. Using mock data.');
             $counselor = new User([
                 'id' => 998,
                 'name' => 'Dr. Maria Santos',
                 'email' => 'maria.santos@tupv.edu.ph',
-                'role' => 'counselor'
+                'role' => 'counselor',
             ]);
         }
 
@@ -192,7 +195,7 @@ class TestEmailCommand extends Command
             'counselor_id' => $counselor->id,
             'scheduled_at' => now()->addDays(3)->setTime(10, 0),
             'reason' => 'Test appointment - Academic stress and time management concerns',
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
 
         // Manually set relationships

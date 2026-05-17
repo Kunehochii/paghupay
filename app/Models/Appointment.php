@@ -15,9 +15,13 @@ class Appointment extends Model
      * Appointment status constants.
      */
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_ACCEPTED = 'accepted';
+
     public const STATUS_RESCHEDULED = 'rescheduled';
+
     public const STATUS_CANCELLED = 'cancelled';
+
     public const STATUS_COMPLETED = 'completed';
 
     /**
@@ -117,6 +121,6 @@ class Appointment extends Model
     public function scopeUpcoming($query)
     {
         return $query->where('scheduled_at', '>=', now())
-                     ->orderBy('scheduled_at', 'asc');
+            ->orderBy('scheduled_at', 'asc');
     }
 }
