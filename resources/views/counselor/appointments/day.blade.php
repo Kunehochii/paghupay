@@ -789,7 +789,7 @@
             const clientName = button.getAttribute('data-client-name');
             
             document.getElementById('declineClientName').textContent = clientName;
-            document.getElementById('declineForm').action = `{{ route('counselor.appointments.decline', '') }}/${appointmentId}`;
+            document.getElementById('declineForm').action = `{{ url('counselor/appointments') }}/${appointmentId}/decline`;
         });
     }
 </script>
